@@ -1,6 +1,8 @@
 package ani.sanin.parsers
 
 import ani.sanin.Mapper
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import kotlinx.serialization.json.*
 
 class TwoDhiveProvider : NativeAnimeParser() {

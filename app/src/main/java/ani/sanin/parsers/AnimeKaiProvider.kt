@@ -1,5 +1,7 @@
 package ani.sanin.parsers
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import okhttp3.Request
 
 class AnimeKaiProvider : NativeAnimeParser() {

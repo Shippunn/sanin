@@ -11,6 +11,8 @@ abstract class NativeAnimeParser : AnimeParser() {
     override val hostUrl: String
         get() = "https://${saveName.lowercase()}.localhost"
 
+    open val baseUrl: String = ""
+
     override suspend fun search(query: String): List<ShowResponse> = emptyList()
 
     override suspend fun getVideoExtractor(server: VideoServer): VideoExtractor {

@@ -1,5 +1,8 @@
 package ani.sanin.parsers
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
+
 class AnimeGGProvider : NativeAnimeParser() {
 
     override val name = "AnimeGG"
@@ -17,7 +20,7 @@ class AnimeGGProvider : NativeAnimeParser() {
                     .find(match.groupValues[2])?.groupValues?.get(1)
                 val title = strong?.let(::stripTags) ?: id.replace('-', ' ')
                 ShowResponse(name = title, link = id, coverUrl = defaultImage, extra = mutableMapOf("slug" to id))
-            }.distinctBy { it.extra?.get("slug") }
+            }.distinctBy { it.extra?.get("slug") }.toList()
     }
 
     override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {

@@ -1,5 +1,8 @@
 package ani.sanin.parsers
 
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
+
 class AniNekoProvider : NativeAnimeParser() {
 
     override val name = "AniNeko"
@@ -15,7 +18,7 @@ class AniNekoProvider : NativeAnimeParser() {
                 val id = Regex("""/watch/([^/?#]+)""").find(href)?.groupValues?.get(1) ?: return@mapNotNull null
                 val title = stripTags(match.groupValues[2]).ifBlank { id.replace('-', ' ') }
                 ShowResponse(name = title, link = id, coverUrl = defaultImage, extra = mutableMapOf("slug" to id))
-            }.distinctBy { it.extra?.get("slug") }
+            }.distinctBy { it.extra?.get("slug") }.toList()
     }
 
     override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {

@@ -2,6 +2,8 @@ package ani.sanin.parsers
 
 import ani.sanin.media.Media
 import ani.sanin.util.Logger
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 
 class AutoParser(private val nativeProviders: List<NativeAnimeParser>) : AnimeParser() {
 

@@ -1,6 +1,8 @@
 package ani.sanin.parsers
 
 import ani.sanin.util.Logger
+import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
