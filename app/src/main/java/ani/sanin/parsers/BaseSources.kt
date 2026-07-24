@@ -36,19 +36,21 @@ abstract class WatchSources : BaseSources() {
         val map = mutableMapOf<String, Episode>()
         val parser = get(i)
         tryWithSuspend(true) {
-            if (sAnime != null) {
-                parser.loadEpisodes(showLink, extra, sAnime).forEach {
-                    map[it.number] = Episode(
-                        it.number,
-                        it.link,
-                        it.title,
-                        it.description,
-                        it.thumbnail,
-                        it.isFiller,
-                        extra = it.extra,
-                        sEpisode = it.sEpisode
-                    )
-                }
+            val anime = sAnime ?: SAnime.create().apply {
+                url = showLink
+                title = ""
+            }
+            parser.loadEpisodes(showLink, extra, anime).forEach {
+                map[it.number] = Episode(
+                    it.number,
+                    it.link,
+                    it.title,
+                    it.description,
+                    it.thumbnail,
+                    it.isFiller,
+                    extra = it.extra,
+                    sEpisode = it.sEpisode
+                )
             }
         }
         return map
