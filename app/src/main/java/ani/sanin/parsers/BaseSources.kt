@@ -90,6 +90,8 @@ abstract class BaseSources {
 
     val names: List<String> get() = list.map { it.name }
 
+    open val displayNames: List<String> get() = names
+
     fun flushText() {
         list.forEach {
             if (it.get.isInitialized())
@@ -103,6 +105,10 @@ abstract class BaseSources {
 
     fun saveResponse(i: Int, mediaId: Int, response: ShowResponse) {
         get(i)?.saveShowResponse(mediaId, response, true)
+    }
+
+    companion object {
+        const val SEPARATOR = "───"
     }
 }
 

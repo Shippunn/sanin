@@ -111,20 +111,21 @@ class AnimeWatchAdapter(
         binding.mediaSourceTitle.isGone = offline
 
         // Source Selection
+        val displayNames = watchSources.displayNames.filter { it != "Local" }
         var source =
             media.selected!!.sourceIndex.let { if (it >= watchSources.names.size) 0 else it }
+        val currentName = if (source in 0 until watchSources.names.size) watchSources.names[source] else ""
         setLanguageList(media.selected!!.langIndex, source)
         if (watchSources.names.isNotEmpty() && source in 0 until watchSources.names.size) {
-            binding.mediaSource.setText(watchSources.names[source])
+            binding.mediaSource.setText(currentName)
             watchSources[source].apply {
                 this.selectDub = media.selected!!.preferDub
                 binding.mediaSourceTitle.text = showUserText
                 showUserTextListener = { MainScope().launch { binding.mediaSourceTitle.text = it } }
-                binding.animeSourceDubbedCont.isVisible = isDubAvailableSeparately()
+                binding.animeSourceDubbedCont.isVisible = true
             }
         }
 
-        val displayNames = watchSources.names.filter { it != "Local" }
         binding.mediaSource.setAdapter(
             FocusableDropdownAdapter(
                 fragment.requireContext(),
@@ -148,7 +149,9 @@ class AnimeWatchAdapter(
             SheetSourceSelector.newInstance(
                 sources = ArrayList(sources.toList()),
                 onSelect = { i ->
-                    binding.mediaSource.onItemClickListener?.onItemClick(null, null, i, 0)
+                    if (i in displayNames.indices && !displayNames[i].startsWith("───")) {
+                        binding.mediaSource.onItemClickListener?.onItemClick(null, null, i, 0)
+                    }
                 },
                 onDismiss = {
                     recycler.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
@@ -162,14 +165,17 @@ class AnimeWatchAdapter(
             true
         }
         binding.mediaSource.setOnItemClickListener { _, _, i, _ ->
-            val actualIndex = watchSources.names.indexOf(displayNames[i])
+            val name = displayNames.getOrNull(i) ?: return@setOnItemClickListener
+            if (name.startsWith("───")) return@setOnItemClickListener
+            val actualIndex = watchSources.names.indexOf(name)
+            if (actualIndex < 0) return@setOnItemClickListener
             fragment.onSourceChange(actualIndex).apply {
                 binding.mediaSourceTitle.text = showUserText
                 showUserTextListener = { MainScope().launch { binding.mediaSourceTitle.text = it } }
                 changing = true
                 binding.animeSourceDubbed.isChecked = selectDub
                 changing = false
-                binding.animeSourceDubbedCont.isVisible = isDubAvailableSeparately()
+                binding.animeSourceDubbedCont.isVisible = true
                 source = actualIndex
                 setLanguageList(0, actualIndex)
             }

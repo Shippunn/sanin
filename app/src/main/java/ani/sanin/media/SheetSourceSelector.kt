@@ -117,10 +117,22 @@ class SheetSourceSelector : DialogFragment() {
 
             override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
                 val tv = holder.itemView as TextView
-                tv.text = sources[position]
-                tv.setOnClickListener {
-                    onSelect?.invoke(position)
-                    dismissAllowingStateLoss()
+                val text = sources[position]
+                tv.text = text
+                if (text.startsWith("───")) {
+                    tv.isFocusable = false
+                    tv.isClickable = false
+                    tv.alpha = 0.5f
+                    tv.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodySmall)
+                } else {
+                    tv.isFocusable = true
+                    tv.isClickable = true
+                    tv.alpha = 1f
+                    tv.setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_TitleMedium)
+                    tv.setOnClickListener {
+                        onSelect?.invoke(position)
+                        dismissAllowingStateLoss()
+                    }
                 }
             }
 
