@@ -1,12 +1,10 @@
 package ani.sanin.media
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import androidx.core.math.MathUtils.clamp
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.activityViewModels
@@ -55,8 +53,6 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
         GlassEffectManager.applyGlassToSheet(binding.mediaListContainer, GlassComponent.SourceSelector, 16f)
 
         val scope = requireActivity().lifecycleScope
-        val imm =
-            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         model.getMedia().observe(viewLifecycleOwner) {
             media = it
             if (media != null) {
@@ -73,7 +69,7 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
 
                 fun search() {
                     binding.searchBarText.clearFocus()
-                    imm.hideSoftInputFromWindow(binding.searchBarText.windowToken, 0)
+                    binding.mediaListContainer.requestFocus()
                     scope.launch {
                         val src = source as? AnimeParser
                         model.responses.postValue(
@@ -89,18 +85,10 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 binding.searchSourceTitle.text = srcName
                 binding.searchBarText.setText(media!!.mainName())
                 TvKeyboardUtil.setupTvInput(binding.searchBarText)
-                dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
-                binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
-                    return@setOnEditorActionListener when (actionId) {
-                        EditorInfo.IME_ACTION_SEARCH -> {
-                            search()
-                            true
-                        }
-
-                        else -> false
-                    }
-                }
                 binding.searchBar.setEndIconOnClickListener { search() }
+                binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
+                    if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { search(); true } else false
+                }
                 if (!searched) search()
                 searched = true
                 model.responses.observe(viewLifecycleOwner) { j ->

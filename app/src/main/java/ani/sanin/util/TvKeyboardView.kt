@@ -6,6 +6,7 @@ import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -154,7 +155,21 @@ class TvKeyboardView(
             }
             R.id.keyHide -> {
                 hide()
-                target?.clearFocus()
+                target?.let { t ->
+                    t.clearFocus()
+                    t.post {
+                        if (t.isFocused || (t.parent as? ViewGroup)?.findFocus() == t) {
+                            var p: View? = t
+                            while (p != null) {
+                                if (p.isFocusable && p !is EditText) {
+                                    p.requestFocus()
+                                    break
+                                }
+                                p = p.parent as? View
+                            }
+                        }
+                    }
+                }
             }
             R.id.keyModeToggle -> toggleMode()
             else -> {

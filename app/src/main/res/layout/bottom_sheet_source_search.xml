@@ -5,7 +5,9 @@
     android:id="@+id/mediaListContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bottom_sheet_background">
+    android:background="@drawable/bottom_sheet_background"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <FrameLayout
         android:id="@+id/mediaListProgressBar"
