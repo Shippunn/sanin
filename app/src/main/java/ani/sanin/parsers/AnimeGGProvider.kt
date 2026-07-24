@@ -23,7 +23,7 @@ class AnimeGGProvider : NativeAnimeParser() {
             }.distinctBy { it.extra?.get("slug") }.toList()
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val slug = extra?.get("slug") ?: return emptyList()
         val html = get("$baseUrl/series/$slug", "$baseUrl/")
         val sub = linkedSetOf<Int>()
@@ -40,9 +40,9 @@ class AnimeGGProvider : NativeAnimeParser() {
         return episodes.map { Episode(number = it.toString(), link = "$baseUrl/series/$slug", extra = extra) }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val slug = extra?.get("slug") ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val series = get("$baseUrl/series/$slug", "$baseUrl/")
         val episodeSlug = Regex("""<li\b[^>]*>([\s\S]*?)</li>""", RegexOption.IGNORE_CASE).findAll(series).mapNotNull { match ->
             val block = match.groupValues[1]

@@ -15,7 +15,7 @@ class AniBdProvider : NativeAnimeParser() {
     override val saveName = "AniBD"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    private val baseUrl = "https://epeng.animeapps.top"
+    override val baseUrl = "https://epeng.animeapps.top"
     private val catalogCache = mutableMapOf<Int, String>()
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
@@ -34,7 +34,7 @@ class AniBdProvider : NativeAnimeParser() {
         return response
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val anilistId = extra?.get("anilist_id")?.toIntOrNull() ?: return emptyList()
         return withContext(Dispatchers.IO) {
             try {
@@ -65,7 +65,7 @@ class AniBdProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val anilistId = extra?.get("anilist_id")?.toIntOrNull()
         val episodeNum = episodeLink.toIntOrNull()
         if (anilistId == null || episodeNum == null) return emptyList()

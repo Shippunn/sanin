@@ -1,6 +1,7 @@
 package ani.sanin.parsers
 
 import ani.sanin.Mapper
+import ani.sanin.okHttpClient
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import okhttp3.MediaType.Companion.toMediaType
@@ -37,7 +38,7 @@ class KickAssAnimeProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val slug = extra?.get("slug") ?: return emptyList()
         val data = parseEpisodeNumbers(slug)
         if (selectDub && data.dub.isEmpty() && data.sub.isNotEmpty()) return emptyList()
@@ -45,9 +46,9 @@ class KickAssAnimeProvider : NativeAnimeParser() {
         return episodes.map { Episode(number = it.toString(), link = "", extra = extra) }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val slug = extra?.get("slug") ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val locale = if (selectDub) "en-US" else "ja-JP"
 
         val epJson = get("$api/show/$slug/episodes?ep=$episodeNum&lang=$locale", "$baseUrl/")

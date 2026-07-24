@@ -24,7 +24,7 @@ class TwoDhiveProvider : NativeAnimeParser() {
         )
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val malId = extra?.get("malId")?.toIntOrNull() ?: return emptyList()
         val fallback = 100
         val referer = "$baseUrl/episode?anime=$malId&ep_num=1"
@@ -64,9 +64,9 @@ class TwoDhiveProvider : NativeAnimeParser() {
         return episodes.map { Episode(number = it.toString(), link = malId.toString(), extra = extra) }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val malId = extra?.get("malId")?.toIntOrNull() ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val audio = if (selectDub) "dub" else "sub"
         val referer = "$baseUrl/episode?anime=$malId&ep_num=$episodeNum"
 

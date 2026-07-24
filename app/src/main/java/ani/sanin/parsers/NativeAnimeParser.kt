@@ -93,8 +93,6 @@ abstract class NativeAnimeParser : AnimeParser() {
         html.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim(),
     )
 
-    protected fun encode(value: String): String = URLEncoder.encode(value, "UTF-8").replace("+", "%20")
-
     protected fun origin(url: String): String = runCatching {
         URI(url).let { "${it.scheme}://${it.authority}" }
     }.getOrDefault(url.substringBefore('/', ""))

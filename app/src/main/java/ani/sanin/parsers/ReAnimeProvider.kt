@@ -57,7 +57,7 @@ class ReAnimeProvider : NativeAnimeParser() {
         return (2.0 * hits) / ((sa.length - 1) + (sb.length - 1))
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val animeId = extra?.get("anime_id") ?: return emptyList()
         val json = get("$api/v1/info?id=${encode(animeId)}", "$baseUrl/")
         val root = Mapper.json.parseToJsonElement(json).jsonObject
@@ -67,9 +67,9 @@ class ReAnimeProvider : NativeAnimeParser() {
         return episodes.map { Episode(number = it.toString(), link = animeId, extra = extra) }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val animeId = extra?.get("anime_id") ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val audio = if (selectDub) "dub" else "sub"
 
         val flix = runCatching {

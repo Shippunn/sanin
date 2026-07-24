@@ -29,7 +29,7 @@ class AnimeKaiProvider : NativeAnimeParser() {
         return emptyList()
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val slug = extra?.get("slug") ?: return emptyList()
         val base = extra?.get("base") ?: mirrors.first()
         for (b in listOf(base) + mirrors) {
@@ -45,9 +45,9 @@ class AnimeKaiProvider : NativeAnimeParser() {
         return emptyList()
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val slug = extra?.get("slug") ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val audio = if (selectDub) "dub" else "sub"
         val bases = listOfNotNull(extra?.get("base")) + mirrors
 

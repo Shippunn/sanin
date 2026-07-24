@@ -15,7 +15,7 @@ class SenshiProvider : NativeAnimeParser() {
     override val saveName = "Senshi"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    private val baseUrl = "https://senshi.live"
+    override val baseUrl = "https://senshi.live"
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)
@@ -34,7 +34,7 @@ class SenshiProvider : NativeAnimeParser() {
         return response
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val malId = extra?.get("mal_id")?.toIntOrNull()
         if (malId == null || malId <= 0) return emptyList()
         return withContext(Dispatchers.IO) {
@@ -61,7 +61,7 @@ class SenshiProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val malId = extra?.get("mal_id")?.toIntOrNull()
         val episodeNum = episodeLink.toIntOrNull()
         if (malId == null || malId <= 0 || episodeNum == null) return emptyList()

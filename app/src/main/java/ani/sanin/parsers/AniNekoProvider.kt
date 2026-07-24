@@ -21,7 +21,7 @@ class AniNekoProvider : NativeAnimeParser() {
             }.distinctBy { it.extra?.get("slug") }.toList()
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val slug = extra?.get("slug") ?: return emptyList()
         val html = get("$baseUrl/watch/$slug", "$baseUrl/")
         val sub = linkedSetOf<Int>()
@@ -38,9 +38,9 @@ class AniNekoProvider : NativeAnimeParser() {
         return episodes.map { Episode(number = it.toString(), link = "$baseUrl/watch/$slug", extra = extra) }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val slug = extra?.get("slug") ?: return emptyList()
-        val episodeNum = sEpisode?.number?.toInt() ?: return emptyList()
+        val episodeNum = sEpisode.episode_number.toInt()
         val watchUrl = "$baseUrl/watch/$slug/ep-$episodeNum"
         val html = get(watchUrl, mapOf("Referer" to "$baseUrl/watch/$slug"))
 

@@ -12,7 +12,7 @@ class AniZoneProvider : NativeAnimeParser() {
     override val saveName = "AniZone"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    private val baseUrl = "https://anizone.to"
+    override val baseUrl = "https://anizone.to"
 
     override suspend fun search(query: String): List<ShowResponse> {
         return withContext(Dispatchers.IO) {
@@ -48,7 +48,7 @@ class AniZoneProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         return withContext(Dispatchers.IO) {
             try {
                 val slug = animeLink.substringAfter("/anime/").substringBefore("?")
@@ -70,7 +70,7 @@ class AniZoneProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val episodeNum = episodeLink.toIntOrNull() ?: return emptyList()
         val slug = extra?.get("slug") ?: return emptyList()
         return withContext(Dispatchers.IO) {

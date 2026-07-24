@@ -15,7 +15,7 @@ class AniKotoProvider : NativeAnimeParser() {
     override val saveName = "AniKoto"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    private val baseUrl = "https://megaplay.buzz"
+    override val baseUrl = "https://megaplay.buzz"
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)
@@ -33,7 +33,7 @@ class AniKotoProvider : NativeAnimeParser() {
         return response
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val anilistId = extra?.get("anilist_id")?.toIntOrNull() ?: return emptyList()
         val malId = extra?.get("mal_id")?.toIntOrNull()
         return withContext(Dispatchers.IO) {
@@ -65,7 +65,7 @@ class AniKotoProvider : NativeAnimeParser() {
         }
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val anilistId = extra?.get("anilist_id")?.toIntOrNull()
         val malId = extra?.get("mal_id")?.toIntOrNull()
         val episodeNum = episodeLink.toIntOrNull()
