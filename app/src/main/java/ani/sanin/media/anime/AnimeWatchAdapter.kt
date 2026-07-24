@@ -160,10 +160,6 @@ class AnimeWatchAdapter(
                 }
             ).show(fragment.childFragmentManager, "sourceSelector")
         }
-        binding.mediaSourceNameContainer.setOnLongClickListener {
-            fragment.loadEpisodes(source, true)
-            true
-        }
         binding.mediaSource.setOnItemClickListener { _, _, i, _ ->
             val name = displayNames.getOrNull(i) ?: return@setOnItemClickListener
             if (name.startsWith("───")) return@setOnItemClickListener
@@ -180,7 +176,7 @@ class AnimeWatchAdapter(
                 setLanguageList(0, actualIndex)
             }
             subscribeButton(false)
-            fragment.loadEpisodes(actualIndex, false)
+            fragment.loadEpisodes(actualIndex, true)
         }
 
         binding.mediaSourceLanguage.setOnItemClickListener { _, _, i, _ ->
@@ -236,12 +232,18 @@ class AnimeWatchAdapter(
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSearch, binding.mediaSourceSearch)
         binding.mediaSourceSearch.nextFocusRightId = R.id.mediaSourceSearch
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSettings, binding.mediaSourceSettings, true)
+        FocusEffectUtil.applyFocusListener(binding.animeSourceDubbed, binding.animeSourceDubbed, true)
+        binding.animeSourceDubbed.nextFocusUpId = R.id.mediaSourceSettings
+        binding.animeSourceDubbed.nextFocusLeftId = R.id.mediaSourceNameContainer
+        binding.animeSourceDubbed.nextFocusRightId = R.id.mediaSourceSearch
+        binding.mediaSourceSettings.nextFocusDownId = R.id.animeSourceDubbed
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSubscribe, binding.mediaSourceSubscribe, true)
         FocusEffectUtil.applyFocusListener(binding.mediaNestedButton, binding.mediaNestedButton, true)
         binding.mediaNestedButton.nextFocusRightId = R.id.mediaNestedButton
         FocusEffectUtil.applyFocusListener(binding.sourceContinue)
         binding.mediaNestedButton.nextFocusDownId = R.id.ScrollTop
         binding.mediaSourceSubscribe.nextFocusDownId = R.id.ScrollTop
+        binding.animeSourceDubbed.nextFocusDownId = R.id.ScrollTop
         binding.faqbutton.nextFocusDownId = R.id.ScrollTop
 
         // Icons
