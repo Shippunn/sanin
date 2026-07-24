@@ -30,7 +30,7 @@ class AutoParser(private val nativeProviders: List<NativeAnimeParser>) : AnimePa
         return null
     }
 
-    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime?): List<Episode> {
+    override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val candidates = if (chosenProvider != null) {
             listOfNotNull(nativeProviders.find { it.saveName == chosenProvider }) + nativeProviders
         } else nativeProviders
@@ -50,7 +50,7 @@ class AutoParser(private val nativeProviders: List<NativeAnimeParser>) : AnimePa
         return emptyList()
     }
 
-    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode?): List<VideoServer> {
+    override suspend fun loadVideoServers(episodeLink: String, extra: Map<String, String>?, sEpisode: SEpisode): List<VideoServer> {
         val candidates = if (chosenProvider != null) {
             listOfNotNull(nativeProviders.find { it.saveName == chosenProvider }) + nativeProviders
         } else nativeProviders

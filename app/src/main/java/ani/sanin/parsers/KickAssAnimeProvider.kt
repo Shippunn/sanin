@@ -4,6 +4,7 @@ import ani.sanin.Mapper
 import ani.sanin.okHttpClient
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody

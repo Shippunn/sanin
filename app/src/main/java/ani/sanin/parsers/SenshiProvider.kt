@@ -20,7 +20,8 @@ class SenshiProvider : NativeAnimeParser() {
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)
         if (saved != null) return saved
-        if (mediaObj.idMAL == null || mediaObj.idMAL <= 0) return null
+        val malId = mediaObj.idMAL ?: return null
+        if (malId <= 0) return null
         val response = ShowResponse(
             name = mediaObj.mainName(),
             link = saveName,

@@ -49,7 +49,7 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
                     "srt" -> SubtitleType.SRT
                     else -> SubtitleType.VTT
                 }
-                Subtitle(language = lang, file = subUrl, type = type)
+                Subtitle(language = lang, file = FileUrl(subUrl), type = type)
             }
         } catch (_: Exception) {
             emptyList()

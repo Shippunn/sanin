@@ -38,8 +38,9 @@ class AnimeKaiProvider : NativeAnimeParser() {
                 val avail = parseAudioEpisodes(html)
                 if (avail.sub.isEmpty() && avail.dub.isEmpty()) continue
                 val episodes = if (selectDub) avail.dub else avail.sub
-                extra?.let { it["base"] = b }
-                return episodes.map { Episode(number = it.toString(), link = "", extra = extra) }
+                val mutableExtra = extra?.toMutableMap() ?: mutableMapOf()
+                mutableExtra["base"] = b
+                return episodes.map { Episode(number = it.toString(), link = "", extra = mutableExtra) }
             } catch (_: Exception) { }
         }
         return emptyList()
