@@ -42,6 +42,7 @@ enum class PrefName(val data: Pref) {
     AnimeExtensionRepos(Pref(Location.General, Set::class, setOf<String>())),
 
     AnimeSourcesOrder(Pref(Location.General, List::class, listOf<String>())),
+    EnabledProviders(Pref(Location.General, Set::class, setOf<String>())),
     SortedAnimeSH(Pref(Location.General, List::class, listOf<SearchHistory>())),
     SortedCharacterSH(Pref(Location.General, List::class, listOf<SearchHistory>())),
     SortedStaffSH(Pref(Location.General, List::class, listOf<SearchHistory>())),

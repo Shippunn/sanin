@@ -892,7 +892,7 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, ani.sanin.settings.SettingsActivity::class.java))
             },
             R.id.rightRailProviders to {
-                startActivity(Intent(this, ani.sanin.settings.SettingsExtensionsActivity::class.java))
+                startActivity(Intent(this, ani.sanin.settings.ProvidersActivity::class.java))
             },
             R.id.rightRailSync to {
                 lifecycleScope.launch(Dispatchers.IO) {

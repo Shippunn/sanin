@@ -12,7 +12,7 @@ object AnimeSources : WatchSources() {
     var pinnedAnimeSources: List<String> = emptyList()
     var isInitialized = false
 
-    val nativeParsers: List<NativeAnimeParser> by lazy {
+    private val allNativeParsers by lazy {
         listOf(
             SenshiProvider(),
             AniBdProvider(),
@@ -27,7 +27,13 @@ object AnimeSources : WatchSources() {
         )
     }
 
-    val autoParser by lazy { AutoParser(nativeParsers) }
+    val nativeParsers: List<NativeAnimeParser> get() {
+        val enabled = PrefManager.getNullableVal<Set<String>>(PrefName.EnabledProviders, null)
+            ?: allNativeParsers.map { it.saveName }.toSet()
+        return allNativeParsers.filter { it.saveName in enabled }
+    }
+
+    val autoParser get() = AutoParser(nativeParsers)
 
     val nativeNames: List<String> = nativeParsers.map { it.name }
 
