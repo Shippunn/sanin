@@ -710,6 +710,8 @@ fun ImageView.loadImage(url: String?, size: Int = 0) {
         } else {
             loadImage(FileUrl(url), size)
         }
+    } else if (tag != "no_fallback") {
+        setImageResource(R.drawable.ic_round_person_24)
     }
 }
 
@@ -723,7 +725,7 @@ fun ImageView.loadImage(file: FileUrl?, size: Int = 0) {
             } else {
                 val glideUrl = GlideUrl(file.url) { file.headers }
                 Glide.with(this.context).load(glideUrl).transition(withCrossFade()).override(size)
-                    .into(this)
+                    .error(R.drawable.ic_round_person_24).into(this)
             }
         }
     }

@@ -73,6 +73,7 @@ class AnilistQueries {
         Anilist.username = user.name
         Anilist.bg = user.bannerImage
         Anilist.avatar = user.avatar?.medium
+        PrefManager.setVal(PrefName.AnilistAvatar, user.avatar?.medium ?: "")
         Anilist.episodesWatched = user.statistics?.anime?.episodesWatched
         Anilist.chapterRead = user.statistics?.manga?.chaptersRead
         Anilist.adult = user.options?.displayAdultContent ?: false

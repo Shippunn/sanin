@@ -267,6 +267,7 @@ object Anilist {
 
     fun getSavedToken(): Boolean {
         token = PrefManager.getVal(PrefName.AnilistToken, null as String?)
+        avatar = PrefManager.getVal(PrefName.AnilistAvatar, null as String?)
         return !token.isNullOrEmpty()
     }
 
@@ -280,6 +281,7 @@ object Anilist {
         episodesWatched = null
         chapterRead = null
         PrefManager.removeVal(PrefName.AnilistToken)
+        PrefManager.removeVal(PrefName.AnilistAvatar)
         // Reset per-section notification counts
         PrefManager.setVal(PrefName.UnreadUserNotifications, 0)
         PrefManager.setVal(PrefName.UnreadMediaNotifications, 0)

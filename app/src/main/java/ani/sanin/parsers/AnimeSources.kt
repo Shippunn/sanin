@@ -16,14 +16,8 @@ object AnimeSources : WatchSources() {
         listOf(
             SenshiProvider(),
             AniBdProvider(),
-            AniKotoProvider(),
             AniZoneProvider(),
             AnimeGGProvider(),
-            AniNekoProvider(),
-            AnimeKaiProvider(),
-            KickAssAnimeProvider(),
-            TwoDhiveProvider(),
-            ReAnimeProvider(),
         )
     }
 

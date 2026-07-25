@@ -101,6 +101,11 @@ class App : Application() {
 
         val scope = CoroutineScope(Dispatchers.IO)
         scope.launch {
+            val anikotoRepo = "https://raw.githubusercontent.com/Confused-Creature-180/aniyomi-extensions/repo/index.min.json"
+            val repos = PrefManager.getVal<Set<String>>(PrefName.AnimeExtensionRepos)
+            if (anikotoRepo !in repos) {
+                PrefManager.setVal(PrefName.AnimeExtensionRepos, repos + anikotoRepo)
+            }
             animeExtensionManager = Injekt.get()
             launch {
                 animeExtensionManager.findAvailableExtensions()

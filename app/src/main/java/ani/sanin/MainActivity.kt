@@ -342,6 +342,7 @@ class MainActivity : AppCompatActivity() {
 
             // Setup avatar and right rail drawer
             binding.mainAvatarContainer.visibility = View.VISIBLE
+            Anilist.getSavedToken()
             loadAvatar()
             binding.mainUserAvatarContainer.setOnClickListener {
                 if (!binding.mainDrawer.isDrawerOpen(Gravity.END)) {

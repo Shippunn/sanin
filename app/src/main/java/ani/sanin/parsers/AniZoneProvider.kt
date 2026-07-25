@@ -18,29 +18,32 @@ class AniZoneProvider : NativeAnimeParser() {
         return withContext(Dispatchers.IO) {
             try {
                 val html = get("$baseUrl/anime?search=${encode(query)}", baseUrl, "text/html,application/json,*/*")
-                val slugs = Regex(
-                    """href=["'](?:https://anizone\.to)?/anime/([a-z0-9-]+)(?:[/?#][^"']*)?["']""",
-                    RegexOption.IGNORE_CASE
-                ).findAll(html)
-                    .map { it.groupValues[1] }
-                    .distinct()
-                    .toList()
 
                 val seen = mutableSetOf<String>()
-                slugs.mapNotNull { slug ->
+                Regex(
+                    """<a\b[^>]*href=["'](?:https://anizone\.to)?/anime/([a-z0-9-]+)(?:[/?#][^"']*)?["'][^>]*>(.*?)</a>""",
+                    RegexOption.IGNORE_CASE + RegexOption.DOT_MATCHES_ALL
+                ).findAll(html).mapNotNull { match ->
+                    val slug = match.groupValues[1]
                     if (!seen.add(slug)) return@mapNotNull null
-                    val name = slug.replace('-', ' ').replaceFirstChar { it.uppercase() }
+                    val anchorContent = match.groupValues[2]
+                    val name = Regex("""<[^>]+>([^<]+)</""", RegexOption.IGNORE_CASE)
+                        .findAll(anchorContent).map { it.groupValues[1].trim() }
+                        .firstOrNull { it.length > 1 && it.any { c -> c.isLetter() } }
+                        ?: Regex("""(?:^|>)\s*([A-Za-z0-9 .,:!?'-]{3,})\s*(?:<|$)""", RegexOption.IGNORE_CASE)
+                            .find(anchorContent)?.groupValues?.get(1)?.trim()
+                        ?: return@mapNotNull null
                     val fullUrl = "$baseUrl/anime/$slug"
                     var coverUrl = defaultImage
-                    Regex("""<img\b[^>]*src=["']([^"']+)["']""", RegexOption.IGNORE_CASE).findAll(html).forEach { match ->
-                        val src = match.groupValues[1]
+                    Regex("""<img\b[^>]*src=["']([^"']+)["']""", RegexOption.IGNORE_CASE).findAll(html).forEach { img ->
+                        val src = img.groupValues[1]
                         if (src.contains(slug, ignoreCase = true)) coverUrl = src
                     }
                     ShowResponse(
                         name = name, link = fullUrl, coverUrl = coverUrl,
                         extra = mutableMapOf("slug" to slug)
                     )
-                }
+                }.toList()
             } catch (e: Exception) {
                 Logger.log("AniZone search error: ${e.message}")
                 emptyList()

@@ -67,9 +67,11 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                     (if (media!!.isAdult) HAnimeSources else AnimeSources)[i!!]
                 } else null
 
-                fun search() {
-                    binding.searchBarText.clearFocus()
-                    binding.mediaListContainer.requestFocus()
+                fun search(keepFocus: Boolean = false) {
+                    if (!keepFocus) {
+                        binding.searchBarText.clearFocus()
+                        binding.mediaListContainer.requestFocus()
+                    }
                     scope.launch {
                         val src = source as? AnimeParser
                         model.responses.postValue(
@@ -89,7 +91,7 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
                     if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { search(); true } else false
                 }
-                if (!searched) search()
+                if (!searched) search(keepFocus = true)
                 searched = true
                 model.responses.observe(viewLifecycleOwner) { j ->
                     if (j != null) {

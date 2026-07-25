@@ -39,7 +39,7 @@ enum class PrefName(val data: Pref) {
             "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
         )
     ),
-    AnimeExtensionRepos(Pref(Location.General, Set::class, setOf<String>())),
+    AnimeExtensionRepos(Pref(Location.General, Set::class, setOf("https://raw.githubusercontent.com/Confused-Creature-180/aniyomi-extensions/repo/index.min.json"))),
 
     AnimeSourcesOrder(Pref(Location.General, List::class, listOf<String>())),
     EnabledProviders(Pref(Location.General, Set::class, setOf<String>())),
@@ -316,6 +316,7 @@ enum class PrefName(val data: Pref) {
     //Protected
 
     AnilistToken(Pref(Location.Protected, String::class, "")),
+    AnilistAvatar(Pref(Location.Protected, String::class, "")),
     AnilistUserName(Pref(Location.Protected, String::class, "")),
     AnilistUserId(Pref(Location.Protected, String::class, "")),
     MALUserName(Pref(Location.Protected, String::class, "")),
