@@ -639,6 +639,7 @@ class MediaDetailsViewModel : ViewModel() {
     private val epsLoaded = mutableMapOf<Int, MutableMap<String, Episode>>()
     fun getEpisodes(): LiveData<MutableMap<Int, MutableMap<String, Episode>>> = episodes
     suspend fun loadEpisodes(media: Media, i: Int, invalidate: Boolean = false) {
+        epsLoaded.keys.removeAll { it != i }
         if (!epsLoaded.containsKey(i) || invalidate) {
             epsLoaded[i] = watchSources?.loadEpisodesFromMedia(i, media) ?: return
         }

@@ -33,16 +33,13 @@ object AnimeSources : WatchSources() {
         return allNativeParsers.filter { it.saveName in enabled }
     }
 
-    val autoParser get() = AutoParser(nativeParsers)
-
     val nativeNames: List<String> get() = nativeParsers.map { it.name }
 
     override val displayNames: List<String> get() {
         val all = list
-        val extNames = all.filter { it.name !in nativeNames && it.name != "Auto" && it.name != "Local" }
+        val extNames = all.filter { it.name !in nativeNames && it.name != "Local" }
             .map { it.name }
         return buildList {
-            add("Auto")
             if (nativeNames.isNotEmpty()) add("─── Built-in ───")
             addAll(nativeNames)
             if (extNames.isNotEmpty()) add("─── Extensions ───")
@@ -67,7 +64,6 @@ object AnimeSources : WatchSources() {
     private fun rebuildList(extensions: List<AnimeExtension.Installed>) {
         val extParsers = createParsersFromExtensions(extensions)
         list = buildList {
-            add(Lazier({ autoParser }, "Auto"))
             nativeParsers.forEach { add(Lazier({ it }, it.saveName)) }
             addAll(extParsers)
             add(Lazier({ LocalAnimeParser() }, "Local"))
@@ -75,10 +71,9 @@ object AnimeSources : WatchSources() {
     }
 
     fun performReorderAnimeSources() {
-        val extParsers = list.filter { it.name !in nativeNames && it.name != "Auto" && it.name != "Local" }
+        val extParsers = list.filter { it.name !in nativeNames && it.name != "Local" }
         val sortedExt = sortPinnedAnimeSources(extParsers, pinnedAnimeSources)
         list = buildList {
-            add(Lazier({ autoParser }, "Auto"))
             nativeParsers.forEach { add(Lazier({ it }, it.saveName)) }
             addAll(sortedExt)
             add(Lazier({ LocalAnimeParser() }, "Local"))
