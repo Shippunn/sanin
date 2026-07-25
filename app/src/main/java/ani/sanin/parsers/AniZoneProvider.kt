@@ -22,7 +22,7 @@ class AniZoneProvider : NativeAnimeParser() {
                 val seen = mutableSetOf<String>()
                 Regex(
                     """<a\b[^>]*href=["'](?:https://anizone\.to)?/anime/([a-z0-9-]+)(?:[/?#][^"']*)?["'][^>]*>(.*?)</a>""",
-                    RegexOption.IGNORE_CASE + RegexOption.DOT_MATCHES_ALL
+                    setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
                 ).findAll(html).mapNotNull { match ->
                     val slug = match.groupValues[1]
                     if (!seen.add(slug)) return@mapNotNull null
