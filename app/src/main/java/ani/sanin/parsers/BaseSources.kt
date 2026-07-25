@@ -7,6 +7,7 @@ import ani.sanin.parsers.MangaChapter
 import ani.sanin.tryWithSuspend
 import ani.sanin.util.Logger
 import eu.kanade.tachiyomi.animesource.model.SAnime
+import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.source.model.SManga
 
 abstract class WatchSources : BaseSources() {
@@ -41,6 +42,11 @@ abstract class WatchSources : BaseSources() {
                 title = ""
             }
             parser.loadEpisodes(showLink, extra, anime).forEach {
+                val sEpisode = it.sEpisode ?: SEpisode.create().apply {
+                    url = it.link
+                    name = it.title ?: ""
+                    episode_number = it.number.toFloatOrNull() ?: 0f
+                }
                 map[it.number] = Episode(
                     it.number,
                     it.link,
@@ -49,7 +55,7 @@ abstract class WatchSources : BaseSources() {
                     it.thumbnail,
                     it.isFiller,
                     extra = it.extra,
-                    sEpisode = it.sEpisode
+                    sEpisode = sEpisode
                 )
             }
         }

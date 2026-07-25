@@ -13,7 +13,7 @@ import ani.sanin.util.FocusEffectUtil
 class ProvidersActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProvidersBinding
-    private val allProviders = AnimeSources.nativeParsers
+    private val allProviders = AnimeSources.allNativeParsers
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
