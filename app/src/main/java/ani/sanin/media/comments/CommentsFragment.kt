@@ -109,8 +109,8 @@ class CommentsFragment : Fragment() {
             if (newMedia != null && newMedia.id != 0) {
                 binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
 
-                if (newMedia.posterImage != null) {
-                    binding.commentsPoster.loadImage(newMedia.posterImage)
+                if (newMedia.cover != null) {
+                    binding.commentsPoster.loadImage(newMedia.cover)
                 }
 
                 val fm = requireActivity().supportFragmentManager
@@ -455,7 +455,7 @@ class CommentsFragment : Fragment() {
     fun showCommentMenu(comment: Comment, position: Int) {
         activity.customAlertDialog().apply {
             setTitle(comment.username)
-            setItems(arrayOf("View Full", "Copy Text", "Report")) { _, which ->
+            singleChoiceItems(arrayOf("View Full", "Copy Text", "Report")) { which ->
                 when (which) {
                     0 -> openCommentDetail(comment)
                     1 -> {
@@ -576,7 +576,7 @@ class CommentsFragment : Fragment() {
         if (result != null) {
             val newComment = Comment(
                 commentId = result.commentId ?: 0,
-                userId = Anilist.userid ?: "",
+                userId = (Anilist.userid ?: 0).toString(),
                 mediaId = mediaId,
                 parentCommentId = parentId,
                 content = text,

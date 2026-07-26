@@ -1,7 +1,6 @@
 package ani.sanin.media.comments
 
 import android.content.Context
-import android.graphics.PointF
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -118,36 +117,7 @@ class CommentsCarouselLayoutManager(
         state: RecyclerView.State,
         position: Int
     ) {
-        val smoothScroller = object : RecyclerView.SmoothScroller() {
-            override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
-                return this@CommentsCarouselLayoutManager.computeScrollVectorForPosition(targetPosition)
-            }
-
-            override fun onStart() {}
-            override fun onStop() {}
-
-            override fun onSeekTargetStep(
-                dx: Int,
-                dy: Int,
-                state: RecyclerView.State,
-                action: RecyclerView.SmoothScroller.Action
-            ) {
-                val target = targetPosition
-                if (target == RecyclerView.NO_POSITION) return
-                val distance = (target - scrollToPosition) * itemHeight.coerceAtLeast(1)
-                if (distance != 0) {
-                    action.update(0, distance, 250, androidx.interpolator.view.animation.FastOutSlowInInterpolator())
-                }
-            }
-        }
-        smoothScroller.targetPosition = position
-        startSmoothScroll(smoothScroller)
-    }
-
-    private fun calculateDistanceToPosition(target: View): Int {
-        val pos = getPosition(target)
-        val targetScroll = pos * itemHeight.coerceAtLeast(1)
-        return targetScroll - (scrollToPosition * itemHeight.coerceAtLeast(1))
+        super.smoothScrollToPosition(recyclerView, state, position)
     }
 
     private fun applyTransformToChildren() {
@@ -189,7 +159,10 @@ class CommentsCarouselLayoutManager(
         immediate: Boolean,
         focusedChildVisible: Boolean
     ): Boolean {
-        smoothScrollToPosition(parent, parent.state, getPosition(child))
+        val pos = getPosition(child)
+        if (pos >= 0) {
+            parent.smoothScrollToPosition(pos)
+        }
         return true
     }
 }

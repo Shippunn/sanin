@@ -1,6 +1,5 @@
 package ani.sanin.media.comments
 
-import android.content.res.ColorStateList
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -67,7 +66,7 @@ class CommentsCarouselAdapter(
 
         val card = b.root as MaterialCardView
         card.setCardBackgroundColor(if (isFocused) 0xFF1E1E1E.toInt() else 0xFF111111.toInt())
-        card.strokeColor = ColorStateList.valueOf(if (isFocused) primaryColor else 0x00000000)
+        card.strokeColor = if (isFocused) primaryColor else 0
         card.strokeWidth = if (isFocused) 2 else 0
 
         b.carouselReply.setOnClickListener {
