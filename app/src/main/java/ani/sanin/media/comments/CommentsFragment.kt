@@ -465,7 +465,7 @@ class CommentsFragment : Fragment() {
                     }
                     2 -> {
                         lifecycleScope.launch {
-                            withContext(Dispatchers.IO) { CommentsAPI.reportComment(comment.commentId) }
+                            withContext(Dispatchers.IO) { CommentsAPI.reportComment(comment.commentId, comment.username, mediaName, comment.userId) }
                             snackString("Reported")
                         }
                     }
