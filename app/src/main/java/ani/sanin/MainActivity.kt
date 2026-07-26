@@ -388,6 +388,7 @@ class MainActivity : AppCompatActivity() {
             // Setup avatar and right rail drawer
             loadAvatar()
             setupRightRail()
+            binding.homeNavRail.post { updateSideRail() }
         }
 
         if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
@@ -633,6 +634,11 @@ class MainActivity : AppCompatActivity() {
             GlassEffectManager.isComponentEnabled(GlassComponent.NavPills)
         )
         updateSideRailGlass()
+        binding.homeNavRail.post { updateSideRail() }
+        updateNavPillFocusChains()
+    }
+
+    private fun updateSideRail() {
         val autoOrientation = PrefManager.getVal<Boolean>(PrefName.SideRailAutoOrientation)
         val show: Boolean
         if (autoOrientation) {
@@ -652,7 +658,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             binding.homeNavRail.visibility = View.GONE
         }
-        updateNavPillFocusChains()
     }
 
     private fun updateSideRailGlass() {

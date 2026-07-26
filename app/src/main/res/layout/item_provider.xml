@@ -33,8 +33,7 @@
             android:focusable="true"
             android:focusableInTouchMode="false"
             android:padding="8dp"
-            android:src="@drawable/ic_round_arrow_back_ios_new_24"
-            android:rotation="-90"
+            android:src="@drawable/ic_download_24"
             app:tint="?attr/colorPrimary" />
 
     </LinearLayout>

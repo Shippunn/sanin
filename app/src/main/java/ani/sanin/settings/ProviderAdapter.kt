@@ -44,14 +44,14 @@ class ProviderAdapter(
     }
 
     private fun showIdle(b: ItemProviderBinding, pos: Int) {
-        b.providerActionIcon.setImageResource(R.drawable.ic_round_arrow_back_ios_new_24)
-        b.providerActionIcon.rotation = -90f
+        b.providerActionIcon.setImageResource(R.drawable.ic_download_24)
         val typedValue = TypedValue()
         b.providerActionIcon.context.theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
         b.providerActionIcon.imageTintList = ColorStateList.valueOf(typedValue.data)
         b.providerActionIcon.visibility = View.VISIBLE
         b.providerProgress.visibility = View.GONE
         b.providerProgress.progress = 0
+        b.providerProgress.progressTintList = ColorStateList.valueOf(typedValue.data)
         b.providerActionIcon.setOnClickListener { startDownload(b, pos) }
     }
 
