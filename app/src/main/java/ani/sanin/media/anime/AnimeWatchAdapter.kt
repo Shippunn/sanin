@@ -131,26 +131,20 @@ class AnimeWatchAdapter(
         }
 
         binding.mediaSourceTitle.isSelected = true
-        binding.mediaSourcePillScroll.removeAllViews()
         val chipGroup = binding.mediaSourceChipGroupPill
         chipGroup.removeAllViews()
         val screenWidth = fragment.screenWidth.px
-        displayNames.forEachIndexed { i, name ->
-            val isSeparator = name.startsWith("───")
+        displayNames.filter { !it.startsWith("───") }.forEachIndexed { _, name ->
             val chip = LayoutInflater.from(chipGroup.context).inflate(R.layout.item_chip, chipGroup, false) as Chip
-            chip.text = if (isSeparator) name else name
-            chip.isCheckable = !isSeparator
-            chip.isClickable = !isSeparator
-            chip.isFocusable = !isSeparator
-            if (isSeparator) {
-                chip.alpha = 0.5f
-                chip.isEnabled = false
-            } else {
-                val actualIndex = watchSources.names.indexOf(name)
-                if (actualIndex >= 0) {
-                    chip.tag = actualIndex
-                    if (actualIndex == source) chip.isChecked = true
-                    chip.setOnClickListener {
+            chip.text = name
+            chip.isCheckable = true
+            chip.isClickable = true
+            chip.isFocusable = true
+            val actualIndex = watchSources.names.indexOf(name)
+            if (actualIndex >= 0) {
+                chip.tag = actualIndex
+                if (actualIndex == source) chip.isChecked = true
+                chip.setOnClickListener {
                         autoSelect = false
                         val idx = chip.tag as Int
                         if (idx == source) return@setOnClickListener
@@ -178,7 +172,6 @@ class AnimeWatchAdapter(
                         )
                     }
                 }
-            }
             chipGroup.addView(chip)
         }
 
