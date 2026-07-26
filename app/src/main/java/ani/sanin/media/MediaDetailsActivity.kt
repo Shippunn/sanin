@@ -186,14 +186,15 @@ class MediaDetailsActivity : AppCompatActivity() {
 
         fun showWatchTab(container: FrameLayout, animate: Boolean) {
             val ft = supportFragmentManager.beginTransaction()
-            if (::watchFragment.isInitialized && watchFragment.isAdded) {
+            val alreadyAdded = ::watchFragment.isInitialized && watchFragment.isAdded
+            if (alreadyAdded) {
                 ft.show(watchFragment)
             } else {
                 watchFragment = AnimeWatchFragment()
                 ft.add(R.id.mediaTabContent, watchFragment, "watch")
             }
             if (::commentsFragment.isInitialized && commentsFragment.isAdded) {
-                if (animate && PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.TransitionAnimations)) {
+                if (animate && alreadyAdded && PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.TransitionAnimations)) {
                     val watchView = watchFragment.requireView()
                     val commentsView = commentsFragment.requireView()
                     watchView.alpha = 0f
@@ -231,23 +232,11 @@ class MediaDetailsActivity : AppCompatActivity() {
                 }
                 ft.add(R.id.mediaTabContent, commentsFragment, "comments")
                 ft.commit()
-                if (animate && PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.TransitionAnimations)) {
-                    container.post {
-                        val commentsView = commentsFragment.requireView()
-                        commentsView.alpha = 0f
-                        commentsView.scaleX = 0.92f
-                        commentsView.scaleY = 0.92f
-                        commentsView.animate()
-                            .alpha(1f).scaleX(1f).scaleY(1f)
-                            .setDuration(300)
-                            .setInterpolator(android.view.animation.OvershootInterpolator())
-                            .start()
-                    }
-                }
             } else {
                 val ft = supportFragmentManager.beginTransaction()
+                val watchAlreadyAdded = ::watchFragment.isInitialized && watchFragment.isAdded
                 ft.show(commentsFragment)
-                if (::watchFragment.isInitialized && watchFragment.isAdded) {
+                if (watchAlreadyAdded) {
                     if (animate && PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.TransitionAnimations)) {
                         val watchView = watchFragment.requireView()
                         val commentsView = commentsFragment.requireView()
