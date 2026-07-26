@@ -1,7 +1,6 @@
 package ani.sanin.media.comments
 
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.R
-import ani.sanin.connections.comments.CommentsAPI
+import ani.sanin.connections.comments.Comment
 import ani.sanin.databinding.ItemCommentCarouselBinding
 import ani.sanin.loadImage
 import com.google.android.material.card.MaterialCardView
@@ -20,7 +19,7 @@ import java.util.TimeZone
 
 class CommentsCarouselAdapter(
     private val fragment: CommentsFragment
-) : ListAdapter<CommentsAPI.Comment, CommentsCarouselAdapter.ViewHolder>(DiffCallback()) {
+) : ListAdapter<Comment, CommentsCarouselAdapter.ViewHolder>(DiffCallback()) {
 
     private var focusedPosition = 0
 
@@ -68,7 +67,7 @@ class CommentsCarouselAdapter(
 
         val card = b.root as MaterialCardView
         card.setCardBackgroundColor(if (isFocused) 0xFF1E1E1E.toInt() else 0xFF111111.toInt())
-        card.strokeColor = if (isFocused) ColorStateList.valueOf(primaryColor) else ColorStateList.valueOf(0x00000000)
+        card.strokeColor = ColorStateList.valueOf(if (isFocused) primaryColor else 0x00000000)
         card.strokeWidth = if (isFocused) 2 else 0
 
         b.carouselReply.setOnClickListener {
@@ -132,11 +131,11 @@ class CommentsCarouselAdapter(
         return typedValue.data
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<CommentsAPI.Comment>() {
-        override fun areItemsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment): Boolean {
+    class DiffCallback : DiffUtil.ItemCallback<Comment>() {
+        override fun areItemsTheSame(a: Comment, b: Comment): Boolean {
             return a.commentId == b.commentId
         }
-        override fun areContentsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment): Boolean {
+        override fun areContentsTheSame(a: Comment, b: Comment): Boolean {
             return a == b
         }
     }

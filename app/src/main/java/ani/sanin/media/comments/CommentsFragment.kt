@@ -17,8 +17,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.R
+import ani.sanin.buildMarkwon
 import ani.sanin.connections.LogoApi
 import ani.sanin.connections.anilist.Anilist
+import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.connections.trakt.TraktAuth
@@ -46,7 +48,7 @@ class CommentsFragment : Fragment() {
     lateinit var binding: FragmentCommentsBinding
     lateinit var activity: MediaDetailsActivity
     private var interactionState = InteractionState.NONE
-    private var commentWithInteraction: CommentsAPI.Comment? = null
+    private var commentWithInteraction: Comment? = null
     private var tag: Int? = null
     private var filterTag: Int? = null
     private var mediaId: Int = -1
@@ -63,7 +65,7 @@ class CommentsFragment : Fragment() {
 
     private var currentSource = CommentSource.DANOTSU
     private var traktResult: TraktSearchResult? = null
-    private var displayedComments = mutableListOf<CommentsAPI.Comment>()
+    private var displayedComments = mutableListOf<Comment>()
     private lateinit var carouselAdapter: CommentsCarouselAdapter
 
     enum class CommentSource { DANOTSU, TRAKT }
@@ -151,7 +153,7 @@ class CommentsFragment : Fragment() {
             }
         }
 
-        binding.commentsPoster.nextFocusRight = binding.commentInput.id
+        binding.commentsPoster.nextFocusRightId = binding.commentInput.id
 
         setupSourceButtons()
         setupInputListeners()
@@ -189,8 +191,7 @@ class CommentsFragment : Fragment() {
                     if (hasFocus) {
                         val pos = binding.commentsList.getChildAdapterPosition(v)
                         if (pos != RecyclerView.NO_POSITION) {
-                            val lm = binding.commentsList.layoutManager as? CommentsCarouselLayoutManager
-                            lm?.smoothScrollToPosition(binding.commentsList, binding.commentsList.state, pos)
+                            binding.commentsList.smoothScrollToPosition(pos)
                         }
                     }
                 }
@@ -363,9 +364,9 @@ class CommentsFragment : Fragment() {
         totalPages = if (traktComments.size < 25) 1 else 2
     }
 
-    private fun traktToComment(tc: TraktComment): CommentsAPI.Comment {
+    private fun traktToComment(tc: TraktComment): Comment {
         val avatarUrl = tc.user.images?.avatar?.full
-        return CommentsAPI.Comment(
+        return Comment(
             commentId = tc.id,
             userId = tc.user.username,
             mediaId = mediaId,
@@ -399,7 +400,7 @@ class CommentsFragment : Fragment() {
         binding.commentsList.visibility = View.VISIBLE
     }
 
-    private fun sortComments(comments: List<CommentsAPI.Comment>?): List<CommentsAPI.Comment> {
+    private fun sortComments(comments: List<Comment>?): List<Comment> {
         if (comments == null) return emptyList()
         return when (PrefManager.getVal(PrefName.CommentSortOrder, "newest")) {
             "newest" -> comments.sortedByDescending { timestampToMillis(it.timestamp) }
@@ -418,7 +419,7 @@ class CommentsFragment : Fragment() {
         } catch (_: Exception) { 0L }
     }
 
-    fun voteComment(comment: CommentsAPI.Comment, voteType: Int, position: Int) {
+    fun voteComment(comment: Comment, voteType: Int, position: Int) {
         if (currentSource == CommentSource.TRAKT) {
             snackString("Voting on Trakt comments coming soon")
             return
@@ -442,7 +443,7 @@ class CommentsFragment : Fragment() {
         }
     }
 
-    fun startReply(comment: CommentsAPI.Comment) {
+    fun startReply(comment: Comment) {
         commentWithInteraction = comment
         binding.commentReplyToContainer.visibility = View.VISIBLE
         binding.commentReplyTo.text = "Replying to ${comment.username}"
@@ -451,7 +452,7 @@ class CommentsFragment : Fragment() {
         interactionState = InteractionState.REPLY
     }
 
-    fun showCommentMenu(comment: CommentsAPI.Comment, position: Int) {
+    fun showCommentMenu(comment: Comment, position: Int) {
         activity.customAlertDialog().apply {
             setTitle(comment.username)
             setItems(arrayOf("View Full", "Copy Text", "Report")) { _, which ->
@@ -474,7 +475,7 @@ class CommentsFragment : Fragment() {
         }
     }
 
-    fun openCommentDetail(comment: CommentsAPI.Comment) {
+    fun openCommentDetail(comment: Comment) {
         val dialog = CommentZoomDialog()
         val bundle = Bundle().apply {
             putInt("commentId", comment.commentId)
@@ -573,7 +574,7 @@ class CommentsFragment : Fragment() {
             CommentsAPI.comment(mediaId, parentId, text, tag)
         }
         if (result != null) {
-            val newComment = CommentsAPI.Comment(
+            val newComment = Comment(
                 commentId = result.commentId ?: 0,
                 userId = Anilist.userid ?: "",
                 mediaId = mediaId,

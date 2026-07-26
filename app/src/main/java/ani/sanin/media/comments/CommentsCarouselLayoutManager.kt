@@ -3,16 +3,15 @@ package ani.sanin.media.comments
 import android.content.Context
 import android.graphics.PointF
 import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 class CommentsCarouselLayoutManager(
     context: Context
-) : RecyclerView.LayoutManager() {
+) : LinearLayoutManager(context, VERTICAL, false) {
 
-    private var verticalScrollOffset = 0
     private var itemHeight = 0
     private var itemWidth = 0
-    private var totalHeight = 0
 
     private val cylinderRadius = 1200f
     private val angleStep = 30f
@@ -21,12 +20,6 @@ class CommentsCarouselLayoutManager(
     private val focusedAlpha = 1f
     private val unfocusedAlpha = 0.55f
     private val focusGap = 140f
-
-    val focusedPosition: Int get() {
-        if (itemCount == 0) return 0
-        val raw = verticalScrollOffset.toFloat() / itemHeight.coerceAtLeast(1)
-        return raw.toInt().coerceIn(0, itemCount - 1)
-    }
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams =
         RecyclerView.LayoutParams(
@@ -43,19 +36,13 @@ class CommentsCarouselLayoutManager(
         val parentHeight = height - paddingTop - paddingBottom
         if (parentWidth <= 0 || parentHeight <= 0) return
 
-        detachAndScrapAttachedViews(recycler)
-
         val view = recycler.getViewForPosition(0)
         measureChildWithMargins(view, 0, 0)
-        itemHeight = view.decoratedMeasuredHeight
+        itemHeight = view.measuredHeight
         itemWidth = (parentWidth * 0.85f).toInt()
         recycler.recycleView(view)
 
         if (itemHeight <= 0) return
-
-        totalHeight = itemCount * itemHeight
-        val maxScroll = (itemCount - 1) * itemHeight
-        verticalScrollOffset = verticalScrollOffset.coerceIn(0, maxScroll.coerceAtLeast(0))
 
         fill(recycler, state)
     }
@@ -68,40 +55,42 @@ class CommentsCarouselLayoutManager(
     private fun fill(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         if (itemCount == 0) return
 
-        val parentHeight = height
-        val centerY = parentHeight / 2f
+        detachAndScrapAttachedViews(recycler)
 
-        val focusIndex = focusedPosition
+        val parentWidth = width
+        val centerY = height / 2f
         val visibleRange = 8
+        val focusIndex = (scrollToPosition).coerceAtLeast(0)
 
         val startPos = (focusIndex - visibleRange).coerceAtLeast(0)
         val endPos = (focusIndex + visibleRange).coerceAtMost(itemCount - 1)
 
-        val viewsToDetach = mutableListOf<View>()
-        for (i in 0 until childCount) {
-            val child = getChildAt(i) ?: continue
-            val pos = getPosition(child)
-            if (pos < startPos || pos > endPos) {
-                viewsToDetach.add(child)
-            }
-        }
-        viewsToDetach.forEach { removeAndRecycleView(it, recycler) }
-
         for (pos in startPos..endPos) {
             val child = recycler.getViewForPosition(pos)
             val offset = pos - focusIndex
-            val yCenter = centerY + offset * (itemHeight.coerceAtLeast(1) + if (offset == 0) focusGap else (focusGap * 0.25f).toInt())
-            val top = yCenter - itemHeight / 2f
+            val gap = if (offset == 0) focusGap else focusGap * 0.25f
+            val yCenter = centerY + offset * (itemHeight.coerceAtLeast(1).toFloat() + gap)
+            val top = (yCenter - itemHeight / 2f).toInt()
+
+            val w = if (offset == 0) (itemWidth * focusedScale).toInt() else itemWidth
+            val h = child.measuredHeight
 
             addView(child)
             measureChildWithMargins(child, 0, 0)
-            val w = if (offset == 0) (itemWidth * focusedScale).toInt() else itemWidth
-            val h = child.measuredHeight
-            layoutDecoratedWithMargins(child, (width - w) / 2, top.toInt(), (width + w) / 2, top.toInt() + h)
+            layoutDecoratedWithMargins(
+                child,
+                (parentWidth - w) / 2,
+                top,
+                (parentWidth + w) / 2,
+                top + h
+            )
         }
 
         applyTransformToChildren()
     }
+
+    private var scrollToPosition = 0
+    val focusedPosition: Int get() = scrollToPosition
 
     override fun scrollVerticallyBy(
         dy: Int,
@@ -110,30 +99,18 @@ class CommentsCarouselLayoutManager(
     ): Int {
         if (itemCount == 0) return 0
         val maxScroll = ((itemCount - 1) * itemHeight.coerceAtLeast(1)).coerceAtLeast(0)
-        val target = (verticalScrollOffset + dy).coerceIn(0, maxScroll)
-        val consumed = target - verticalScrollOffset
-        verticalScrollOffset = target
+        val target = (scrollToPosition * itemHeight.coerceAtLeast(1) + dy).coerceIn(0, maxScroll)
+        val oldPos = scrollToPosition
+        scrollToPosition = (target.toFloat() / itemHeight.coerceAtLeast(1).toFloat()).toInt().coerceIn(0, itemCount - 1)
         fill(recycler, state)
-        return consumed
+        return target - (oldPos * itemHeight.coerceAtLeast(1))
     }
 
     override fun canScrollVertically() = true
 
     override fun computeScrollVectorForPosition(targetPosition: Int): PointF {
-        val direction = if (targetPosition < focusedPosition) -1f else 1f
+        val direction = if (targetPosition < scrollToPosition) -1f else 1f
         return PointF(0f, direction)
-    }
-
-    override fun requestChildRectangleOnScreen(
-        parent: RecyclerView,
-        child: View,
-        rect: android.graphics.Rect,
-        immediate: Boolean,
-        focusedChildVisible: Boolean
-    ): Boolean {
-        val pos = getPosition(child)
-        smoothScrollToPosition(parent, parent.state, pos)
-        return true
     }
 
     override fun smoothScrollToPosition(
@@ -146,14 +123,20 @@ class CommentsCarouselLayoutManager(
                 return this@CommentsCarouselLayoutManager.computeScrollVectorForPosition(targetPosition)
             }
 
-            override fun onTargetFound(
-                targetView: View,
-                state: RecyclerView.SmoothScroller.Action,
+            override fun onStart() {}
+            override fun onStop() {}
+
+            override fun onSeekTargetStep(
+                dx: Int,
+                dy: Int,
+                state: RecyclerView.State,
                 action: RecyclerView.SmoothScroller.Action
             ) {
-                val dy = calculateDistanceToPosition(targetView)
-                if (dy != 0) {
-                    action.update(0, dy, 250, androidx.interpolator.view.animation.FastOutSlowInInterpolator())
+                val target = targetPosition
+                if (target == RecyclerView.NO_POSITION) return
+                val distance = (target - scrollToPosition) * itemHeight.coerceAtLeast(1)
+                if (distance != 0) {
+                    action.update(0, distance, 250, androidx.interpolator.view.animation.FastOutSlowInInterpolator())
                 }
             }
         }
@@ -164,12 +147,11 @@ class CommentsCarouselLayoutManager(
     private fun calculateDistanceToPosition(target: View): Int {
         val pos = getPosition(target)
         val targetScroll = pos * itemHeight.coerceAtLeast(1)
-        return targetScroll - verticalScrollOffset
+        return targetScroll - (scrollToPosition * itemHeight.coerceAtLeast(1))
     }
 
     private fun applyTransformToChildren() {
-        val parentHeight = height
-        val centerY = parentHeight / 2f
+        val centerY = height / 2f
 
         for (i in 0 until childCount) {
             val child = getChildAt(i) ?: continue
@@ -199,4 +181,15 @@ class CommentsCarouselLayoutManager(
     }
 
     override fun isAutoMeasureEnabled() = false
+
+    override fun requestChildRectangleOnScreen(
+        parent: RecyclerView,
+        child: View,
+        rect: android.graphics.Rect,
+        immediate: Boolean,
+        focusedChildVisible: Boolean
+    ): Boolean {
+        smoothScrollToPosition(parent, parent.state, getPosition(child))
+        return true
+    }
 }
