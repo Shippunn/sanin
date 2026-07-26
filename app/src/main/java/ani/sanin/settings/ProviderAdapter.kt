@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.interpolator.view.animator.FastOutSlowInInterpolator
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.R
 import ani.sanin.databinding.ItemProviderBinding
@@ -35,20 +35,20 @@ class ProviderAdapter(
         if (item.saveName in downloading) {
             showDownloading(b)
         } else if (item.isEnabled) {
-            showEnabled(b)
+            showEnabled(b, position)
         } else {
-            showIdle(b)
+            showIdle(b, position)
         }
     }
 
-    private fun showIdle(b: ItemProviderBinding) {
+    private fun showIdle(b: ItemProviderBinding, pos: Int) {
         b.providerActionIcon.setImageResource(R.drawable.ic_extension)
         b.providerActionIcon.clearColorFilter()
         b.providerActionIcon.setColorFilter(Color.parseColor("#FFBB86FC"))
         b.providerActionIcon.visibility = View.VISIBLE
         b.providerProgress.visibility = View.GONE
         b.providerProgress.progress = 0
-        b.providerActionIcon.setOnClickListener { startDownload(b) }
+        b.providerActionIcon.setOnClickListener { startDownload(b, pos) }
     }
 
     private fun showDownloading(b: ItemProviderBinding) {
@@ -56,7 +56,7 @@ class ProviderAdapter(
         b.providerProgress.visibility = View.VISIBLE
     }
 
-    private fun showEnabled(b: ItemProviderBinding) {
+    private fun showEnabled(b: ItemProviderBinding, pos: Int) {
         b.providerActionIcon.setImageResource(R.drawable.ic_round_delete_24)
         b.providerActionIcon.clearColorFilter()
         b.providerActionIcon.setColorFilter(Color.parseColor("#FFCF6679"))
@@ -65,8 +65,6 @@ class ProviderAdapter(
         b.providerProgress.progress = 0
         b.providerActionIcon.setOnClickListener { v ->
             v.isEnabled = false
-            val pos = bindingAdapterPosition
-            if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
             val it = items[pos]
             it.isEnabled = false
             val current = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
@@ -78,9 +76,7 @@ class ProviderAdapter(
         }
     }
 
-    private fun startDownload(b: ItemProviderBinding) {
-        val pos = bindingAdapterPosition
-        if (pos == RecyclerView.NO_POSITION) return
+    private fun startDownload(b: ItemProviderBinding, pos: Int) {
         val item = items[pos]
         downloading.add(item.saveName)
         notifyItemChanged(pos)
@@ -90,7 +86,7 @@ class ProviderAdapter(
 
         val animator = ObjectAnimator.ofInt(b.providerProgress, "progress", 0, 100)
         animator.duration = 2500
-        animator.interpolator = FastOutSlowInInterpolator()
+        animator.interpolator = AccelerateDecelerateInterpolator()
         animator.addListener(object : Animator.AnimatorListener {
             override fun onAnimationStart(a: Animator) {}
             override fun onAnimationEnd(a: Animator) {
