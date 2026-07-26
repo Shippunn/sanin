@@ -624,14 +624,21 @@ class MainActivity : AppCompatActivity() {
             GlassEffectManager.isComponentEnabled(GlassComponent.NavPills)
         )
         updateSideRailGlass()
-        val persist = PrefManager.getVal<Boolean>(PrefName.SideRailPersist)
-        if (persist && ::navPillsViewModel.isInitialized) {
+        val autoOrientation = PrefManager.getVal<Boolean>(PrefName.SideRailAutoOrientation)
+        val show = if (autoOrientation) {
+            resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
+        } else {
+            PrefManager.getVal<Boolean>(PrefName.SideRailPersist)
+        }
+        if (show && ::navPillsViewModel.isInitialized) {
             binding.homeNavRail.visibility = View.VISIBLE
             binding.homeNavRail.translationX = 0f
             binding.homeNavRail.scaleY = 1f
             binding.homeNavRail.alpha = 1f
             updateHomeNavIconTints()
             setHomeNavPillsFocusable(false)
+        } else {
+            binding.homeNavRail.visibility = View.GONE
         }
         updateNavPillFocusChains()
     }

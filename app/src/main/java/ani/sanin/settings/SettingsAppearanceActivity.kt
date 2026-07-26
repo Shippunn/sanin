@@ -51,6 +51,7 @@ class SettingsAppearanceActivity : AppCompatActivity() {
             binding.appearanceHideRedDot,
             binding.appearanceBlurBanners,
             binding.appearancePersistSideRail,
+            binding.appearanceAutoSideRail,
             binding.appearanceBannerBrightness,
             binding.appearanceCardGradientIntensity,
             binding.appearanceStandardCardRoundness,
@@ -214,6 +215,11 @@ class SettingsAppearanceActivity : AppCompatActivity() {
         binding.appearancePersistSideRail.isChecked = PrefManager.getVal(PrefName.SideRailPersist)
         binding.appearancePersistSideRail.setOnCheckedChangeListener { _, isChecked ->
             PrefManager.setVal(PrefName.SideRailPersist, isChecked)
+        }
+
+        binding.appearanceAutoSideRail.isChecked = PrefManager.getVal(PrefName.SideRailAutoOrientation)
+        binding.appearanceAutoSideRail.setOnCheckedChangeListener { _, isChecked ->
+            PrefManager.setVal(PrefName.SideRailAutoOrientation, isChecked)
         }
 
         binding.appearanceGlassMaster.isChecked = PrefManager.getVal(PrefName.GlassEffectEnabled)
