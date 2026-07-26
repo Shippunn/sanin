@@ -3,6 +3,7 @@ package ani.sanin.settings
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -220,7 +221,18 @@ class SettingsAppearanceActivity : AppCompatActivity() {
         binding.appearanceAutoSideRail.isChecked = PrefManager.getVal(PrefName.SideRailAutoOrientation)
         binding.appearanceAutoSideRail.setOnCheckedChangeListener { _, isChecked ->
             PrefManager.setVal(PrefName.SideRailAutoOrientation, isChecked)
+            if (isChecked) {
+                val orient = resources.configuration.orientation
+                val persist = orient != Configuration.ORIENTATION_LANDSCAPE
+                PrefManager.setVal(PrefName.SideRailPersist, persist)
+                binding.appearancePersistSideRail.isChecked = persist
+            }
+            binding.appearancePersistSideRail.isEnabled = !isChecked
+            binding.appearancePersistSideRail.alpha = if (isChecked) 0.4f else 1f
         }
+        val autoOn = PrefManager.getVal<Boolean>(PrefName.SideRailAutoOrientation)
+        binding.appearancePersistSideRail.isEnabled = !autoOn
+        binding.appearancePersistSideRail.alpha = if (autoOn) 0.4f else 1f
 
         binding.appearanceGlassMaster.isChecked = PrefManager.getVal(PrefName.GlassEffectEnabled)
         binding.appearanceGlassMaster.setOnCheckedChangeListener { _, isChecked ->

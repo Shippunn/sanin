@@ -634,10 +634,13 @@ class MainActivity : AppCompatActivity() {
         )
         updateSideRailGlass()
         val autoOrientation = PrefManager.getVal<Boolean>(PrefName.SideRailAutoOrientation)
-        val show = if (autoOrientation) {
-            resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
+        val show: Boolean
+        if (autoOrientation) {
+            val isPortrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE
+            PrefManager.setVal(PrefName.SideRailPersist, isPortrait)
+            show = isPortrait
         } else {
-            PrefManager.getVal<Boolean>(PrefName.SideRailPersist)
+            show = PrefManager.getVal<Boolean>(PrefName.SideRailPersist)
         }
         if (show && ::navPillsViewModel.isInitialized) {
             binding.homeNavRail.visibility = View.VISIBLE
