@@ -1,9 +1,11 @@
 package ani.sanin.media.comments
 
-import android.graphics.drawable.GradientDrawable
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -11,11 +13,10 @@ import ani.sanin.R
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.databinding.ItemCommentCarouselBinding
 import ani.sanin.loadImage
-import ani.sanin.media.comments.CommentsFragment.Companion.resolveColorAttr
-import ani.sanin.settings.saving.PrefManager
-import ani.sanin.settings.saving.PrefName
-import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class CommentsCarouselAdapter(
     private val fragment: CommentsFragment
@@ -49,7 +50,7 @@ class CommentsCarouselAdapter(
         b.carouselCommentText.text = comment.content
         b.carouselVoteCount.text = (comment.upvotes - comment.downvotes).toString()
 
-        val primaryColor = resolveColorAttr(android.R.attr.colorPrimary, b.root.context)
+        val primaryColor = resolvePrimaryColor(b.root.context)
         val isUpvoted = comment.userVoteType == 1
         val isDownvoted = comment.userVoteType == -1
 
@@ -67,7 +68,7 @@ class CommentsCarouselAdapter(
 
         val card = b.root as MaterialCardView
         card.setCardBackgroundColor(if (isFocused) 0xFF1E1E1E.toInt() else 0xFF111111.toInt())
-        card.strokeColor = if (isFocused) primaryColor else 0x00000000
+        card.strokeColor = if (isFocused) ColorStateList.valueOf(primaryColor) else ColorStateList.valueOf(0x00000000)
         card.strokeWidth = if (isFocused) 2 else 0
 
         b.carouselReply.setOnClickListener {
@@ -105,8 +106,8 @@ class CommentsCarouselAdapter(
 
     private fun formatTimestamp(timestamp: String): String {
         try {
-            val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US)
-            dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            dateFormat.timeZone = TimeZone.getTimeZone("UTC")
             val date = dateFormat.parse(timestamp) ?: return timestamp
             val now = System.currentTimeMillis()
             val diff = now - date.time
@@ -125,17 +126,20 @@ class CommentsCarouselAdapter(
         }
     }
 
+    private fun resolvePrimaryColor(context: android.content.Context): Int {
+        val typedValue = TypedValue()
+        context.theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
+        return typedValue.data
+    }
+
     class DiffCallback : DiffUtil.ItemCallback<CommentsAPI.Comment>() {
-        override fun areItemsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment) = a.commentId == b.commentId
-        override fun areContentsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment) = a == b
+        override fun areItemsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment): Boolean {
+            return a.commentId == b.commentId
+        }
+        override fun areContentsTheSame(a: CommentsAPI.Comment, b: CommentsAPI.Comment): Boolean {
+            return a == b
+        }
     }
 
     class ViewHolder(val binding: ItemCommentCarouselBinding) : RecyclerView.ViewHolder(binding.root)
-}
-
-private fun resolveColorAttr(attr: Int, context: android.content.Context): Int {
-    val typedArray = context.obtainStyledAttributes(intArrayOf(attr))
-    val color = typedArray.getColor(0, 0xFFBB86FC.toInt())
-    typedArray.recycle()
-    return color
 }
