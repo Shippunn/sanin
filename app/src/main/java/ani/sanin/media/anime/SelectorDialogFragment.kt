@@ -1,7 +1,5 @@
 package ani.sanin.media.anime
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.ActivityNotFoundException
@@ -17,8 +15,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.animation.DecelerateInterpolator
-import android.view.animation.OvershootInterpolator
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 //import androidx.compose.ui.test.performClick
@@ -118,40 +114,6 @@ class SelectorDialogFragment : DialogFragment() {
                 requireContext().getThemeColor(com.google.android.material.R.attr.colorSurface)
         }
         GlassEffectManager.applyGlassToSheet(binding.selectorContainer, GlassComponent.ServerSheet, 16f)
-        animateEntry()
-    }
-
-    private fun animateEntry() {
-        val density = resources.displayMetrics.density
-        binding.root.apply {
-            pivotY = 0f
-            pivotX = width / 2f
-            rotationX = 10f
-            translationY = 40f * density
-            scaleY = 0.96f
-            alpha = 0.8f
-        }
-        binding.root.post {
-            val lift = ObjectAnimator.ofFloat(binding.root, View.TRANSLATION_Y, 0f).apply {
-                duration = 180
-                interpolator = DecelerateInterpolator()
-            }
-            val tilt = ObjectAnimator.ofFloat(binding.root, View.ROTATION_X, 0f).apply {
-                duration = 220
-                interpolator = DecelerateInterpolator()
-            }
-            val scale = ObjectAnimator.ofFloat(binding.root, View.SCALE_Y, 1f).apply {
-                duration = 280
-                interpolator = OvershootInterpolator(1.5f)
-            }
-            val fade = ObjectAnimator.ofFloat(binding.root, View.ALPHA, 1f).apply {
-                duration = 200
-            }
-            AnimatorSet().apply {
-                playTogether(lift, tilt, scale, fade)
-                start()
-            }
-        }
     }
 
     @Suppress("DEPRECATION")
@@ -163,40 +125,6 @@ class SelectorDialogFragment : DialogFragment() {
         _binding = BottomSheetSelectorBinding.inflate(inflater, container, false)
         FocusEffectUtil.applyFocusListener(binding.root)
         return binding.root
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val density = resources.displayMetrics.density
-        binding.root.apply {
-            pivotY = 0f
-            pivotX = width / 2f
-            rotationX = 10f
-            translationY = 40f * density
-            scaleY = 0.96f
-            alpha = 0.8f
-        }
-        binding.root.post {
-            val lift = ObjectAnimator.ofFloat(binding.root, View.TRANSLATION_Y, 0f).apply {
-                duration = 180
-                interpolator = DecelerateInterpolator()
-            }
-            val tilt = ObjectAnimator.ofFloat(binding.root, View.ROTATION_X, 0f).apply {
-                duration = 220
-                interpolator = DecelerateInterpolator()
-            }
-            val scale = ObjectAnimator.ofFloat(binding.root, View.SCALE_Y, 1f).apply {
-                duration = 280
-                interpolator = OvershootInterpolator(1.5f)
-            }
-            val fade = ObjectAnimator.ofFloat(binding.root, View.ALPHA, 1f).apply {
-                duration = 200
-            }
-            AnimatorSet().apply {
-                playTogether(lift, tilt, scale, fade)
-                start()
-            }
-        }
     }
 
     interface EpisodeDownloadListener {

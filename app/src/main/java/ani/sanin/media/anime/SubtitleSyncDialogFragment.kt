@@ -1,7 +1,5 @@
 package ani.sanin.media.anime
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
@@ -13,8 +11,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import android.view.animation.DecelerateInterpolator
-import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -72,49 +68,6 @@ class SubtitleSyncDialogFragment : DialogFragment() {
             w.navigationBarColor = Color.TRANSPARENT
         }
         GlassEffectManager.applyGlassToSheet(binding.syncRoot, GlassComponent.SubtitleSync, 16f)
-        animateEntry()
-    }
-
-    private fun animateEntry() {
-        val density = resources.displayMetrics.density
-        binding.syncRoot.apply {
-            pivotY = 0f
-            pivotX = width / 2f
-            rotationX = 10f
-            translationY = 40f * density
-            scaleY = 0.96f
-            alpha = 0.8f
-        }
-        if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.TransitionAnimations)) {
-            binding.syncRoot.post {
-                val lift = ObjectAnimator.ofFloat(binding.syncRoot, View.TRANSLATION_Y, 0f).apply {
-                    duration = 180
-                    interpolator = DecelerateInterpolator()
-                }
-                val tilt = ObjectAnimator.ofFloat(binding.syncRoot, View.ROTATION_X, 0f).apply {
-                    duration = 220
-                    interpolator = DecelerateInterpolator()
-                }
-                val scale = ObjectAnimator.ofFloat(binding.syncRoot, View.SCALE_Y, 1f).apply {
-                    duration = 280
-                    interpolator = OvershootInterpolator(1.5f)
-                }
-                val fade = ObjectAnimator.ofFloat(binding.syncRoot, View.ALPHA, 1f).apply {
-                    duration = 200
-                }
-                AnimatorSet().apply {
-                    playTogether(lift, tilt, scale, fade)
-                    start()
-                }
-            }
-        } else {
-            binding.syncRoot.apply {
-                rotationX = 0f
-                translationY = 0f
-                scaleY = 1f
-                alpha = 1f
-            }
-        }
     }
 
     override fun onCreateView(

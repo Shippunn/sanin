@@ -11,6 +11,7 @@ import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.lifecycle.coroutineScope
 import androidx.media3.common.util.UnstableApi
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.R
 import ani.sanin.connections.updateProgress
@@ -62,6 +63,13 @@ class EpisodeAdapter(
     var offlineMode: Boolean
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     val context = fragment.requireContext()
+    private var cachedBlurUnwatched = PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
+    private var cachedGreyWatched = PrefManager.getVal<Boolean>(PrefName.GreyWatchedEpisodes)
+
+    fun refreshCache() {
+        cachedBlurUnwatched = PrefManager.getVal(PrefName.BlurUnwatchedEpisodes)
+        cachedGreyWatched = PrefManager.getVal(PrefName.GreyWatchedEpisodes)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return (when (viewType) {
@@ -145,7 +153,7 @@ class EpisodeAdapter(
                     }
                     val isWatched = media.userProgress != null &&
                         (ep.number.toFloatOrNull() ?: 9999f) <= media.userProgress!!.toFloat()
-                    val blurEnabled = !isWatched && PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
+                    val blurEnabled = !isWatched && cachedBlurUnwatched
                     val glideRequest = Glide.with(binding.itemMediaImage).load(thumb ?: media.cover)
                         .override(400, 0).diskCacheStrategy(DiskCacheStrategy.ALL)
                     if (blurEnabled) {
@@ -195,8 +203,8 @@ class EpisodeAdapter(
 
                 if (media.userProgress != null) {
                     val isWatched = (ep.number.toFloatOrNull() ?: 9999f) <= media.userProgress!!.toFloat()
-                    val blurUnwatched = PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
-                    val greyWatched = PrefManager.getVal<Boolean>(PrefName.GreyWatchedEpisodes)
+                    val blurUnwatched = cachedBlurUnwatched
+                    val greyWatched = cachedGreyWatched
 
                     if (isWatched) {
                         binding.itemEpisodeViewedCover.visibility = View.VISIBLE
@@ -277,7 +285,7 @@ class EpisodeAdapter(
                     }
                     val isWatched = media.userProgress != null &&
                         (ep.number.toFloatOrNull() ?: 9999f) <= media.userProgress!!.toFloat()
-                    val blurEnabled = !isWatched && PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
+                    val blurEnabled = !isWatched && cachedBlurUnwatched
                     val glideRequest = Glide.with(binding.itemMediaImage).load(thumb ?: media.cover)
                         .override(400, 0).diskCacheStrategy(DiskCacheStrategy.ALL)
                     if (blurEnabled) {
@@ -324,8 +332,8 @@ class EpisodeAdapter(
                 }
                 if (media.userProgress != null) {
                     val isWatched = (ep.number.toFloatOrNull() ?: 9999f) <= media.userProgress!!.toFloat()
-                    val blurUnwatched = PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
-                    val greyWatched = PrefManager.getVal<Boolean>(PrefName.GreyWatchedEpisodes)
+                    val blurUnwatched = cachedBlurUnwatched
+                    val greyWatched = cachedGreyWatched
 
                     if (isWatched) {
                         binding.itemEpisodeViewedCover.visibility = View.VISIBLE
@@ -390,8 +398,8 @@ class EpisodeAdapter(
                 binding.itemEpisodeFillerView.isVisible = ep.filler
                 if (media.userProgress != null) {
                     val isWatched = (ep.number.toFloatOrNull() ?: 9999f) <= media.userProgress!!.toFloat()
-                    val blurUnwatched = PrefManager.getVal<Boolean>(PrefName.BlurUnwatchedEpisodes)
-                    val greyWatched = PrefManager.getVal<Boolean>(PrefName.GreyWatchedEpisodes)
+                    val blurUnwatched = cachedBlurUnwatched
+                    val greyWatched = cachedGreyWatched
 
                     if (isWatched) {
                         binding.itemEpisodeViewedCover.visibility = View.VISIBLE
@@ -564,5 +572,33 @@ class EpisodeAdapter(
 
     fun updateType(t: Int) {
         type = t
+    }
+
+    fun submitList(newList: List<Episode>, newType: Int) {
+        if (type != newType) {
+            type = newType
+            arr = newList
+            notifyDataSetChanged()
+            return
+        }
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = arr.size
+            override fun getNewListSize() = newList.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int) =
+                arr[oldPos].number == newList[newPos].number
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
+                val old = arr[oldPos]
+                val new = newList[newPos]
+                return old.title == new.title &&
+                    old.desc == new.desc &&
+                    old.thumb?.url == new.thumb?.url &&
+                    old.filler == new.filler &&
+                    old.date == new.date &&
+                    old.rating == new.rating &&
+                    old.downloadProgress == new.downloadProgress
+            }
+        }, false)
+        arr = newList
+        diff.dispatchUpdatesTo(this)
     }
 }

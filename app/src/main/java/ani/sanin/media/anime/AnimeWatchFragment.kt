@@ -74,6 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import tachiyomi.core.util.lang.launchIO
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -103,6 +104,7 @@ class AnimeWatchFragment : Fragment() {
 
     var continueEp: Boolean = false
     var loaded = false
+    private var loadEpisodesJob: kotlinx.coroutines.Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -275,7 +277,8 @@ class AnimeWatchFragment : Fragment() {
                     binding.mediaSourceRecycler.adapter =
                         ConcatAdapter(headerAdapter, episodeAdapter)
 
-                    lifecycleScope.launch(Dispatchers.IO) {
+                    loadEpisodesJob?.cancel()
+                    loadEpisodesJob = lifecycleScope.launch(Dispatchers.IO) {
                         val offline =
                             !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
                         val isLocal = model.watchSources!!.list.getOrNull(media.selected!!.sourceIndex)?.name == "Local"
@@ -300,37 +303,41 @@ class AnimeWatchFragment : Fragment() {
             if (loadedEpisodes != null) {
                 val episodes = loadedEpisodes[media.selected!!.sourceIndex]
                 if (episodes != null) {
-                    enrichEpisodes(episodes)
-                    media.anime?.episodes = episodes
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        withContext(Dispatchers.Default) {
+                            enrichEpisodes(episodes)
+                        }
+                        media.anime?.episodes = episodes
 
-                    // CHIP GROUP
-                    val total = episodes.size
-                    val divisions = total.toDouble() / 10
-                    start = 0
-                    end = null
-                    val limit = when {
-                        (divisions < 25) -> 25
-                        (divisions < 50) -> 50
-                        else -> 100
-                    }
-                    headerAdapter.clearChips()
-                    if (total > limit) {
-                        val arr = media.anime!!.episodes!!.keys.toTypedArray()
-                        val stored = ceil((total).toDouble() / limit).toInt()
-                        val position = MathUtils.clamp(media.selected!!.chip, 0, stored - 1)
-                        val last = if (position + 1 == stored) total else (limit * (position + 1))
-                        start = limit * (position)
-                        end = last - 1
-                        headerAdapter.updateChips(
-                            limit,
-                            arr,
-                            (1..stored).toList().toTypedArray(),
-                            position
-                        )
-                    }
+                        // CHIP GROUP
+                        val total = episodes.size
+                        val divisions = total.toDouble() / 10
+                        start = 0
+                        end = null
+                        val limit = when {
+                            (divisions < 25) -> 25
+                            (divisions < 50) -> 50
+                            else -> 100
+                        }
+                        headerAdapter.clearChips()
+                        if (total > limit) {
+                            val arr = media.anime!!.episodes!!.keys.toTypedArray()
+                            val stored = ceil((total).toDouble() / limit).toInt()
+                            val position = MathUtils.clamp(media.selected!!.chip, 0, stored - 1)
+                            val last = if (position + 1 == stored) total else (limit * (position + 1))
+                            start = limit * (position)
+                            end = last - 1
+                            headerAdapter.updateChips(
+                                limit,
+                                arr,
+                                (1..stored).toList().toTypedArray(),
+                                position
+                            )
+                        }
 
-                    headerAdapter.subscribeButton(true)
-                    reload()
+                        headerAdapter.subscribeButton(true)
+                        reload()
+                    }
                 }
             }
         }
@@ -417,10 +424,14 @@ class AnimeWatchFragment : Fragment() {
     private fun refreshEpisodes() {
         val eps = media.anime?.episodes
         if (eps != null) {
-            enrichEpisodes(eps)
-            episodeAdapter.notifyItemRangeChanged(
-                0, episodeAdapter.arr.size, "metadata"
-            )
+            viewLifecycleOwner.lifecycleScope.launch {
+                withContext(Dispatchers.Default) {
+                    enrichEpisodes(eps)
+                }
+                episodeAdapter.notifyItemRangeChanged(
+                    0, episodeAdapter.arr.size, "metadata"
+                )
+            }
         }
     }
 
@@ -438,6 +449,7 @@ class AnimeWatchFragment : Fragment() {
     }
 
     fun onSourceChange(i: Int): AnimeParser {
+        loadEpisodesJob?.cancel()
         media.anime?.episodes = null
         val selected = model.loadSelected(media)
         model.watchSources?.get(selected.sourceIndex)?.showUserTextListener = null
@@ -467,7 +479,8 @@ class AnimeWatchFragment : Fragment() {
     }
 
     fun loadEpisodes(i: Int, invalidate: Boolean) {
-        lifecycleScope.launch(Dispatchers.IO) { model.loadEpisodes(media, i, invalidate) }
+        loadEpisodesJob?.cancel()
+        loadEpisodesJob = lifecycleScope.launch(Dispatchers.IO) { model.loadEpisodes(media, i, invalidate) }
     }
 
     fun loadKitsuEpisodesAsync() {
@@ -595,6 +608,7 @@ class AnimeWatchFragment : Fragment() {
 
         model.saveSelected(media.id, selected)
         headerAdapter.handleEpisodes()
+        episodeAdapter.refreshCache()
         val isDownloaded = model.watchSources!!.isDownloadedSource(media.selected!!.sourceIndex)
         episodeAdapter.offlineMode = isDownloaded
         var arr: ArrayList<Episode> = arrayListOf()
@@ -607,9 +621,7 @@ class AnimeWatchFragment : Fragment() {
             if (reverse)
                 arr = (arr.reversed() as? ArrayList<Episode>) ?: arr
         }
-        episodeAdapter.arr = arr
-        episodeAdapter.updateType(style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
-        episodeAdapter.notifyDataSetChanged()
+        episodeAdapter.submitList(arr, style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
     }
 
     override fun onDestroy() {

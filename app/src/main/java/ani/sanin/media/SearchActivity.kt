@@ -462,6 +462,7 @@ class SearchActivity : AppCompatActivity() {
     fun recycler() {
         if (searchType == SearchType.ANIME || searchType == SearchType.MANGA) {
             mediaAdaptor.type = style
+            mediaAdaptor.refreshCache()
             mediaAdaptor.notifyDataSetChanged()
         }
     }

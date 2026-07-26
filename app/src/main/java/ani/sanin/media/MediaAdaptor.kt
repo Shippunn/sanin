@@ -41,7 +41,7 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
 import com.flaviofaria.kenburnsview.RandomTransitionGenerator
 import java.io.Serializable
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -59,6 +59,22 @@ class MediaAdaptor(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private var rawCardStyle = 0
     private var isLandscape = false
+    private var cachedCardRoundness = PrefManager.getVal<Int>(PrefName.StandardCardRoundness).toFloat()
+    private var cachedCardSize = PrefManager.getVal<Float>(PrefName.CardSize)
+    private var cachedBannerAnimations = PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.BannerAnimations)
+    private var cachedAnimationSpeed = PrefManager.getVal<Float>(PrefName.AnimationSpeed)
+    private var cachedCardTitlePosition = PrefManager.getVal<Int>(PrefName.CardTitlePosition)
+    private var cachedCardGradientIntensity = PrefManager.getVal<Float>(PrefName.CardGradientIntensity)
+
+    fun refreshCache() {
+        cachedCardRoundness = PrefManager.getVal<Int>(PrefName.StandardCardRoundness).toFloat()
+        cachedCardSize = PrefManager.getVal(PrefName.CardSize)
+        cachedBannerAnimations = PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.BannerAnimations)
+        cachedAnimationSpeed = PrefManager.getVal(PrefName.AnimationSpeed)
+        cachedCardTitlePosition = PrefManager.getVal(PrefName.CardTitlePosition)
+        cachedCardGradientIntensity = PrefManager.getVal(PrefName.CardGradientIntensity)
+        cachedAnimationSpeed = PrefManager.getVal(PrefName.AnimationSpeed)
+    }
 
     init {
         if (type == 0) {
@@ -130,7 +146,7 @@ class MediaAdaptor(
         position: Int
     ) {
         logoJobs[position]?.cancel()
-        logoJobs[position] = CoroutineScope(Dispatchers.Main).launch {
+        logoJobs[position] = activity.lifecycleScope.launch(Dispatchers.Main) {
             val logoUrl = LogoApi.getLogoUrl(media.id)
             if (!logoUrl.isNullOrBlank()) {
                 clearlogo.visibility = View.VISIBLE
@@ -146,7 +162,7 @@ class MediaAdaptor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val cardRoundness = PrefManager.getVal<Int>(PrefName.StandardCardRoundness).toFloat()
+        val cardRoundness = cachedCardRoundness
 
         if (holder is MediaLandscapeViewHolder) {
             bindLandscape(holder, position, cardRoundness)
@@ -158,7 +174,7 @@ class MediaAdaptor(
                 val media = mediaList?.getOrNull(position)
                 if (media != null) {
                     b.itemCompactImage.loadImage(media.cover)
-                    val cardSize = PrefManager.getVal<Float>(PrefName.CardSize)
+                    val cardSize = cachedCardSize
                     val finalW = (102 * cardSize).toInt()
                     val finalH = (154 * cardSize).toInt()
                     b.itemCompactImage.updateLayoutParams {
@@ -226,12 +242,12 @@ class MediaAdaptor(
                 val media = mediaList?.get(position)
                 if (media != null) {
 
-                    val bannerAnimations: Boolean = PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.BannerAnimations)
+                    val bannerAnimations = cachedBannerAnimations
                     b.itemCompactImage.loadImage(media.cover)
                     if (bannerAnimations)
                         b.itemCompactBanner.setTransitionGenerator(
                             RandomTransitionGenerator(
-                                (10000 + 15000 * ((PrefManager.getVal(PrefName.AnimationSpeed)) as Float)).toLong(),
+                                (10000 + 15000 * cachedAnimationSpeed).toLong(),
                                 AccelerateDecelerateInterpolator()
                             )
                         )
@@ -272,12 +288,12 @@ class MediaAdaptor(
                 val b = (holder as MediaPageSmallViewHolder).binding
                 val media = mediaList?.get(position)
                 if (media != null) {
-                    val bannerAnimations: Boolean = PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.BannerAnimations)
+                    val bannerAnimations = cachedBannerAnimations
                     b.itemCompactImage.loadImage(media.cover)
                     if (bannerAnimations)
                         b.itemCompactBanner.setTransitionGenerator(
                             RandomTransitionGenerator(
-                                (10000 + 15000 * ((PrefManager.getVal(PrefName.AnimationSpeed) as Float))).toLong(),
+                                (10000 + 15000 * cachedAnimationSpeed).toLong(),
                                 AccelerateDecelerateInterpolator()
                             )
                         )
@@ -502,7 +518,7 @@ class MediaAdaptor(
             b.itemCompactImage.scaleType = ImageView.ScaleType.CENTER_CROP
             b.itemCompactImage.loadImage(media.cover)
             backdropJobs[position]?.cancel()
-            backdropJobs[position] = CoroutineScope(Dispatchers.IO).launch {
+            backdropJobs[position] = activity.lifecycleScope.launch(Dispatchers.IO) {
                 val backdropUrl = AniZip.getBackdropUrl(media.id)
                 if (backdropUrl != null) {
                     withContext(Dispatchers.Main) {
@@ -510,11 +526,11 @@ class MediaAdaptor(
                     }
                 }
             }
-            val titlePos = PrefManager.getVal<Int>(PrefName.CardTitlePosition)
+            val titlePos = cachedCardTitlePosition
             when (titlePos) {
                 0 -> {
                     b.itemCompactOverlay.visibility = View.VISIBLE
-                    val intensity = PrefManager.getVal<Float>(PrefName.CardGradientIntensity)
+                    val intensity = cachedCardGradientIntensity
                     if (intensity <= 0f) {
                         b.itemCompactOverlay.background = null
                     } else {
@@ -532,7 +548,7 @@ class MediaAdaptor(
                     }
                     b.itemCompactTitleBelow.visibility = View.GONE
                     logoJobs[position]?.cancel()
-                    logoJobs[position] = CoroutineScope(Dispatchers.Main).launch {
+                    logoJobs[position] = activity.lifecycleScope.launch(Dispatchers.Main) {
                         val logoUrl = LogoApi.getLogoUrl(media.id)
                         if (!logoUrl.isNullOrBlank()) {
                             b.itemCompactClearlogo.visibility = View.VISIBLE
