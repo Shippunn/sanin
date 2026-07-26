@@ -163,7 +163,8 @@ class CommentsFragment : Fragment() {
 
     private fun setupCarousel() {
         carouselAdapter = CommentsCarouselAdapter(this)
-        binding.commentsList.layoutManager = CommentsCarouselLayoutManager(activity)
+        val lm = CommentsCarouselLayoutManager(activity)
+        binding.commentsList.layoutManager = lm
         binding.commentsList.adapter = carouselAdapter
         binding.commentsList.itemAnimator = null
         binding.commentsList.isFocusable = true
@@ -173,31 +174,42 @@ class CommentsFragment : Fragment() {
         binding.commentsList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    val lm = recyclerView.layoutManager as? CommentsCarouselLayoutManager
-                    val focusPos = lm?.focusedPosition ?: return
+                    val focusPos = lm.focusedPosition
                     carouselAdapter.setFocusedPosition(focusPos)
                 }
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                val lm = recyclerView.layoutManager as? CommentsCarouselLayoutManager
-                val focusPos = lm?.focusedPosition ?: return
-                carouselAdapter.setFocusedPosition(focusPos)
+                carouselAdapter.setFocusedPosition(lm.focusedPosition)
             }
         })
 
         binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
-                view.setOnFocusChangeListener { v, hasFocus ->
-                    if (hasFocus) {
-                        val pos = binding.commentsList.getChildAdapterPosition(v)
-                        if (pos != RecyclerView.NO_POSITION) {
-                            binding.commentsList.smoothScrollToPosition(pos)
-                        }
-                    }
-                }
+                view.nextFocusRightId = R.id.commentSourceBar
             }
             override fun onChildViewDetachedFromWindow(view: View) {}
         })
+
+        binding.commentsList.setOnKeyListener { v, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    lm.scrollToNext()
+                    true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                    lm.scrollToPrevious()
+                    true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    val act = activity as MediaDetailsActivity
+                    act.showNavPills()
+                    act.focusNavPillForSelectedTab()
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun setupSourceButtons() {

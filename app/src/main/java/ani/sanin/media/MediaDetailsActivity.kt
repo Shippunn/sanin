@@ -413,12 +413,12 @@ class MediaDetailsActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    private fun showNavPills() {
+    fun showNavPills() {
         binding.mediaNavPills?.visibility = View.VISIBLE
         binding.navPillBg?.doOnLayout { updateMediaNavIconTints(selected) }
     }
 
-    private fun hideNavPills() {
+    fun hideNavPills() {
         if (PrefManager.getVal<Boolean>(PrefName.SideRailPersist)) return
         binding.mediaNavPills?.visibility = View.GONE
         val focusTarget = binding.mediaTabContent
@@ -435,7 +435,7 @@ class MediaDetailsActivity : AppCompatActivity() {
         }
     }
 
-    private fun focusNavPillForSelectedTab() {
+    fun focusNavPillForSelectedTab() {
         val targetId = when (selected) {
             0 -> R.id.navPillInfo
             1 -> R.id.navPillWatch

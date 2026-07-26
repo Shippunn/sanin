@@ -15,8 +15,8 @@ class CommentsCarouselLayoutManager(
 
     private val cylinderRadius = 1200f
     private val angleStep = 30f
-    private val focusedScale = 1.35f
-    private val unfocusedScale = 0.72f
+    private val focusedScale = 1.0f
+    private val unfocusedScale = 1.0f
     private val focusedAlpha = 1f
     private val unfocusedAlpha = 0.55f
     private val focusGap = 140f
@@ -72,7 +72,7 @@ class CommentsCarouselLayoutManager(
             val yCenter = centerY + offset * (itemHeight.coerceAtLeast(1).toFloat() + gap)
             val top = (yCenter - itemHeight / 2f).toInt()
 
-            val w = if (offset == 0) (itemWidth * focusedScale).toInt() else itemWidth
+            val w = itemWidth
             val h = child.measuredHeight
 
             addView(child)
@@ -151,19 +151,19 @@ class CommentsCarouselLayoutManager(
         }
     }
 
-    override fun isAutoMeasureEnabled() = false
-
-    override fun requestChildRectangleOnScreen(
-        parent: RecyclerView,
-        child: View,
-        rect: android.graphics.Rect,
-        immediate: Boolean,
-        focusedChildVisible: Boolean
-    ): Boolean {
-        val pos = getPosition(child)
-        if (pos >= 0) {
-            parent.smoothScrollToPosition(pos)
+    fun scrollToNext() {
+        if (scrollToPosition < itemCount - 1) {
+            scrollToPosition++
+            requestLayout()
         }
-        return true
     }
+
+    fun scrollToPrevious() {
+        if (scrollToPosition > 0) {
+            scrollToPosition--
+            requestLayout()
+        }
+    }
+
+    override fun isAutoMeasureEnabled() = false
 }

@@ -68,6 +68,7 @@ class CommentsCarouselAdapter(
         card.setCardBackgroundColor(if (isFocused) 0xFF1E1E1E.toInt() else 0xFF111111.toInt())
         card.strokeColor = if (isFocused) primaryColor else 0
         card.strokeWidth = if (isFocused) 2 else 0
+        card.isFocusable = isFocused
 
         b.carouselReply.setOnClickListener {
             fragment.startReply(comment)
