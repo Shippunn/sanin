@@ -1,15 +1,24 @@
 package ani.sanin.settings
 
+import android.animation.Animator
+import android.animation.ObjectAnimator
+import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.interpolator.view.animator.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
+import ani.sanin.R
 import ani.sanin.databinding.ItemProviderBinding
-import ani.sanin.util.FocusEffectUtil
+import ani.sanin.settings.saving.PrefManager
+import ani.sanin.settings.saving.PrefName
 
 class ProviderAdapter(
-    private val items: List<ProviderItem>,
-    private val onToggle: (ProviderItem, Boolean) -> Unit
+    private val items: MutableList<ProviderItem>,
+    private val onStateChanged: () -> Unit
 ) : RecyclerView.Adapter<ProviderAdapter.ViewHolder>() {
+
+    private val downloading = mutableSetOf<String>()
 
     class ViewHolder(val binding: ItemProviderBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -22,17 +31,83 @@ class ProviderAdapter(
         val item = items[position]
         val b = holder.binding
         b.providerName.text = item.name
-        b.providerSwitch.isChecked = item.isEnabled
-        b.providerSwitch.isFocusable = true
-        b.providerSwitch.isFocusableInTouchMode = false
-        FocusEffectUtil.applyFocusListener(b.providerSwitch, b.providerSwitch, true)
-        b.providerSwitch.setOnCheckedChangeListener { _, isChecked ->
-            onToggle(item, isChecked)
+
+        if (item.saveName in downloading) {
+            showDownloading(b)
+        } else if (item.isEnabled) {
+            showEnabled(b)
+        } else {
+            showIdle(b)
         }
-        b.root.setOnClickListener { b.providerSwitch.toggle() }
-        b.root.isFocusable = true
-        b.root.isFocusableInTouchMode = false
-        FocusEffectUtil.applyFocusListener(b.root)
+    }
+
+    private fun showIdle(b: ItemProviderBinding) {
+        b.providerActionIcon.setImageResource(R.drawable.ic_extension)
+        b.providerActionIcon.clearColorFilter()
+        b.providerActionIcon.setColorFilter(Color.parseColor("#FFBB86FC"))
+        b.providerActionIcon.visibility = View.VISIBLE
+        b.providerProgress.visibility = View.GONE
+        b.providerProgress.progress = 0
+        b.providerActionIcon.setOnClickListener { startDownload(b) }
+    }
+
+    private fun showDownloading(b: ItemProviderBinding) {
+        b.providerActionIcon.visibility = View.GONE
+        b.providerProgress.visibility = View.VISIBLE
+    }
+
+    private fun showEnabled(b: ItemProviderBinding) {
+        b.providerActionIcon.setImageResource(R.drawable.ic_round_delete_24)
+        b.providerActionIcon.clearColorFilter()
+        b.providerActionIcon.setColorFilter(Color.parseColor("#FFCF6679"))
+        b.providerActionIcon.visibility = View.VISIBLE
+        b.providerProgress.visibility = View.GONE
+        b.providerProgress.progress = 0
+        b.providerActionIcon.setOnClickListener { v ->
+            v.isEnabled = false
+            val pos = bindingAdapterPosition
+            if (pos == RecyclerView.NO_POSITION) return@setOnClickListener
+            val it = items[pos]
+            it.isEnabled = false
+            val current = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
+            PrefManager.setVal(PrefName.EnabledProviders, current - it.saveName)
+            downloading.remove(it.saveName)
+            notifyItemChanged(pos)
+            onStateChanged()
+            v.postDelayed({ v.isEnabled = true }, 300)
+        }
+    }
+
+    private fun startDownload(b: ItemProviderBinding) {
+        val pos = bindingAdapterPosition
+        if (pos == RecyclerView.NO_POSITION) return
+        val item = items[pos]
+        downloading.add(item.saveName)
+        notifyItemChanged(pos)
+
+        b.providerProgress.progress = 0
+        b.providerProgress.visibility = View.VISIBLE
+
+        val animator = ObjectAnimator.ofInt(b.providerProgress, "progress", 0, 100)
+        animator.duration = 2500
+        animator.interpolator = FastOutSlowInInterpolator()
+        animator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(a: Animator) {}
+            override fun onAnimationEnd(a: Animator) {
+                downloading.remove(item.saveName)
+                item.isEnabled = true
+                val current = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
+                PrefManager.setVal(PrefName.EnabledProviders, current + item.saveName)
+                notifyItemChanged(pos)
+                onStateChanged()
+            }
+            override fun onAnimationCancel(a: Animator) {
+                downloading.remove(item.saveName)
+                notifyItemChanged(pos)
+            }
+            override fun onAnimationRepeat(a: Animator) {}
+        })
+        animator.start()
     }
 
     override fun getItemCount(): Int = items.size

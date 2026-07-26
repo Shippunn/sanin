@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
+    android:background="#FF000000"
     android:orientation="vertical">
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_margin="16dp"
-        app:cardBackgroundColor="@color/nav_bg_inv"
+        app:cardBackgroundColor="#FF1A1A1A"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp">
 
@@ -32,7 +31,7 @@
                 android:focusableInTouchMode="false"
                 android:padding="8dp"
                 android:src="@drawable/ic_round_arrow_back_ios_new_24"
-                app:tint="?attr/colorOnSurface" />
+                app:tint="#FFFFFFFF" />
 
             <TextView
                 android:layout_width="0dp"
@@ -41,7 +40,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/poppins_bold"
                 android:text="Providers"
-                android:textColor="?attr/colorOnSurface"
+                android:textColor="#FFFFFFFF"
                 android:textSize="18sp" />
 
             <ImageView
@@ -49,20 +48,22 @@
                 android:layout_height="24dp"
                 android:layout_marginEnd="12dp"
                 app:srcCompat="@drawable/ic_extension"
-                app:tint="?attr/colorOnSurface" />
+                app:tint="#FFFFFFFF" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <TextView
+        android:id="@+id/providersDisclaimer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:alpha="0.6"
+        android:background="#FF1A1A1A"
         android:fontFamily="@font/poppins"
-        android:gravity="center"
+        android:gravity="start"
         android:padding="16dp"
-        android:text="Enable the providers you want to use in the source selector"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="13sp" />
+        android:text="Third-Party Provider!\n\nThis provider is not affiliated with Sanin. By installing it, you acknowledge that Sanin does not own, host, distribute, or claim copyright over any content provided by third-party providers. You are responsible for complying with applicable copyright laws."
+        android:textColor="#FFAAAAAA"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/providersRecyclerView"
@@ -71,6 +72,6 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:padding="16dp"
-        android:paddingTop="0dp" />
+        android:paddingTop="8dp" />
 
 </LinearLayout>

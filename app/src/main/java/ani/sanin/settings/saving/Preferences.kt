@@ -157,6 +157,7 @@ enum class PrefName(val data: Pref) {
     AnimatedVectorDrawables(Pref(Location.UI, Boolean::class, true)),
     SideRailPersist(Pref(Location.UI, Boolean::class, false)),
     SideRailAutoOrientation(Pref(Location.UI, Boolean::class, true)),
+    FirstTimeProviderShown(Pref(Location.General, Boolean::class, false)),
     NavPillHeight(Pref(Location.UI, Int::class, 58)),
     NavPillWidth(Pref(Location.UI, Int::class, 59)),
     NavPillSpacing(Pref(Location.UI, Int::class, 26)),

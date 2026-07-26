@@ -1,7 +1,7 @@
 package ani.sanin.settings
 
 import android.os.Bundle
-import android.widget.Toast
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import ani.sanin.databinding.ActivityProvidersBinding
@@ -21,11 +21,11 @@ class ProvidersActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         FocusEffectUtil.applyFocusListener(binding.providersBack)
-
         binding.providersBack.setOnClickListener { finish() }
 
-        val enabled = PrefManager.getNullableVal<Set<String>>(PrefName.EnabledProviders, null)
-            ?: allProviders.map { it.saveName }.toSet()
+        binding.providersDisclaimer.visibility = View.VISIBLE
+
+        val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
 
         val items = allProviders.map { parser ->
             ProviderItem(
@@ -33,17 +33,14 @@ class ProvidersActivity : AppCompatActivity() {
                 saveName = parser.saveName,
                 isEnabled = parser.saveName in enabled
             )
-        }
+        }.toMutableList()
 
         binding.providersRecyclerView.layoutManager = LinearLayoutManager(this)
-        binding.providersRecyclerView.adapter = ProviderAdapter(items) { item, checked ->
-            val current = PrefManager.getNullableVal<Set<String>>(PrefName.EnabledProviders, null)
-                ?: allProviders.map { it.saveName }.toSet()
-            val updated = if (checked) current + item.saveName else current - item.saveName
-            PrefManager.setVal(PrefName.EnabledProviders, updated)
-            Toast.makeText(this, "${item.name} ${if (checked) "enabled" else "disabled"}", Toast.LENGTH_SHORT).show()
+        binding.providersRecyclerView.adapter = ProviderAdapter(items) {
+            val enabledNow = items.filter { it.isEnabled }.map { it.saveName }.toSet()
+            PrefManager.setVal(PrefName.EnabledProviders, enabledNow)
         }
     }
 }
 
-data class ProviderItem(val name: String, val saveName: String, val isEnabled: Boolean)
+data class ProviderItem(val name: String, val saveName: String, var isEnabled: Boolean)

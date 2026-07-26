@@ -22,8 +22,7 @@ object AnimeSources : WatchSources() {
     }
 
     val nativeParsers: List<NativeAnimeParser> get() {
-        val enabled = PrefManager.getNullableVal<Set<String>>(PrefName.EnabledProviders, null)
-            ?: allNativeParsers.map { it.saveName }.toSet()
+        val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
         return allNativeParsers.filter { it.saveName in enabled }
     }
 

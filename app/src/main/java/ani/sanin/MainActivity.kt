@@ -68,6 +68,7 @@ import ani.sanin.profile.activity.FeedActivity
 import ani.sanin.profile.notification.NotificationActivity
 import ani.sanin.settings.AddRepositoryBottomSheet
 import ani.sanin.settings.ExtensionsActivity
+import ani.sanin.settings.FirstTimeProviderDialog
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefManager.asLiveBool
 import ani.sanin.settings.saving.PrefName
@@ -387,6 +388,14 @@ class MainActivity : AppCompatActivity() {
             // Setup avatar and right rail drawer
             loadAvatar()
             setupRightRail()
+        }
+
+        if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
+            val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
+            if (enabled.isEmpty()) {
+                FirstTimeProviderDialog().show(supportFragmentManager, "FirstTimeProvider")
+            }
+            PrefManager.setVal(PrefName.FirstTimeProviderShown, true)
         }
 
         var launched = false

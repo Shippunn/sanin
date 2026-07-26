@@ -4,27 +4,49 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:padding="12dp">
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="8dp">
 
-    <TextView
-        android:id="@+id/providerName"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:fontFamily="@font/poppins_bold"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="16sp"
-        tools:text="Senshi" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/providerSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:focusable="true"
-        android:focusableInTouchMode="false"
-        app:useMaterialThemeColors="true" />
+        <TextView
+            android:id="@+id/providerName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppins_bold"
+            android:textColor="#FFFFFFFF"
+            android:textSize="16sp"
+            tools:text="Senshi" />
+
+        <ImageView
+            android:id="@+id/providerActionIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:padding="8dp"
+            android:src="@drawable/ic_extension"
+            app:tint="#FFBB86FC" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/providerProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="4dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="#FFBB86FC"
+        android:visibility="gone" />
 
 </LinearLayout>
