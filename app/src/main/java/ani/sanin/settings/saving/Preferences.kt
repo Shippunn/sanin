@@ -188,7 +188,7 @@ enum class PrefName(val data: Pref) {
     CardGradientIntensity(Pref(Location.UI, Float::class, 0.7f)),
 
     // Glass Effect
-    GlassEffectEnabled(Pref(Location.UI, Boolean::class, false)),
+    GlassEffectEnabled(Pref(Location.UI, Boolean::class, true)),
     GlassEffectNavPills(Pref(Location.UI, Boolean::class, true)),
     GlassEffectSideRail(Pref(Location.UI, Boolean::class, true)),
     GlassEffectServerSheet(Pref(Location.UI, Boolean::class, true)),

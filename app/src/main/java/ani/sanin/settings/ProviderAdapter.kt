@@ -42,7 +42,8 @@ class ProviderAdapter(
     }
 
     private fun showIdle(b: ItemProviderBinding, pos: Int) {
-        b.providerActionIcon.setImageResource(R.drawable.ic_extension)
+        b.providerActionIcon.setImageResource(R.drawable.ic_round_arrow_back_ios_new_24)
+        b.providerActionIcon.rotation = -90f
         b.providerActionIcon.clearColorFilter()
         b.providerActionIcon.setColorFilter(Color.parseColor("#FFBB86FC"))
         b.providerActionIcon.visibility = View.VISIBLE

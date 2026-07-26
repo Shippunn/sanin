@@ -26,7 +26,7 @@
         android:padding="16dp"
         android:text="Third-Party Provider!\n\nThis provider is not affiliated with Sanin. By installing it, you acknowledge that Sanin does not own, host, distribute, or claim copyright over any content provided by third-party providers. You are responsible for complying with applicable copyright laws."
         android:textColor="#FFAAAAAA"
-        android:textSize="12sp" />
+        android:textSize="14sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/firstTimeRecyclerView"
