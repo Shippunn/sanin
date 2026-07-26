@@ -20,7 +20,7 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
             if (!ref.isNullOrBlank()) headers = mapOf("Referer" to ref)
         }
 
-        var videos = listOf(
+        val videos = mutableListOf(
             Video(
                 quality = null,
                 format = VideoType.M3U8,
@@ -31,15 +31,11 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
 
         if (url.contains(".m3u8", ignoreCase = true)) {
             val parsed = parseHlsMaster(url, headers)
-            if (parsed.isNotEmpty()) videos = parsed
+            videos.addAll(parsed)
         } else if (url.contains(".mpd", ignoreCase = true)) {
-            videos = listOf(
-                Video(quality = null, format = VideoType.DASH, file = FileUrl(url, headers), size = null)
-            )
+            // DASH — single entry is fine
         } else {
-            videos = listOf(
-                Video(quality = null, format = VideoType.CONTAINER, file = FileUrl(url, headers), size = null)
-            )
+            // Container format — single entry is fine
         }
 
         val subtitles = parseSubtitles(server.extraData?.get("subtitles"))
@@ -94,7 +90,6 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
                     }
                 }
 
-                if (videos.isEmpty()) return@withContext emptyList()
                 videos.sortedByDescending { it.quality ?: 0 }
             } catch (_: Exception) {
                 emptyList()
