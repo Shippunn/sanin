@@ -2,7 +2,9 @@ package ani.sanin.settings
 
 import android.animation.Animator
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,8 +46,9 @@ class ProviderAdapter(
     private fun showIdle(b: ItemProviderBinding, pos: Int) {
         b.providerActionIcon.setImageResource(R.drawable.ic_round_arrow_back_ios_new_24)
         b.providerActionIcon.rotation = -90f
-        b.providerActionIcon.clearColorFilter()
-        b.providerActionIcon.setColorFilter(Color.parseColor("#FFBB86FC"))
+        val typedValue = TypedValue()
+        b.providerActionIcon.context.theme.resolveAttribute(android.R.attr.colorPrimary, typedValue, true)
+        b.providerActionIcon.imageTintList = ColorStateList.valueOf(typedValue.data)
         b.providerActionIcon.visibility = View.VISIBLE
         b.providerProgress.visibility = View.GONE
         b.providerProgress.progress = 0
@@ -59,8 +62,8 @@ class ProviderAdapter(
 
     private fun showEnabled(b: ItemProviderBinding, pos: Int) {
         b.providerActionIcon.setImageResource(R.drawable.ic_round_delete_24)
-        b.providerActionIcon.clearColorFilter()
-        b.providerActionIcon.setColorFilter(Color.parseColor("#FFCF6679"))
+        b.providerActionIcon.rotation = 0f
+        b.providerActionIcon.imageTintList = ColorStateList.valueOf(Color.parseColor("#FFCF6679"))
         b.providerActionIcon.visibility = View.VISIBLE
         b.providerProgress.visibility = View.GONE
         b.providerProgress.progress = 0

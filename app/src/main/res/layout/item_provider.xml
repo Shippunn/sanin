@@ -35,7 +35,7 @@
             android:padding="8dp"
             android:src="@drawable/ic_round_arrow_back_ios_new_24"
             android:rotation="-90"
-            app:tint="#FFBB86FC" />
+            app:tint="?attr/colorPrimary" />
 
     </LinearLayout>
 
@@ -47,7 +47,7 @@
         android:layout_marginTop="4dp"
         android:max="100"
         android:progress="0"
-        android:progressTint="#FFBB86FC"
+            android:progressTint="?attr/colorPrimary"
         android:visibility="gone" />
 
 </LinearLayout>
