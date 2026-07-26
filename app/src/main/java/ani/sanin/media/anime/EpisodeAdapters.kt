@@ -122,7 +122,7 @@ class EpisodeAdapter(
         } ?: ""
 
         if (position == 0) {
-            holder.itemView.nextFocusUpId = R.id.mediaSourceNameContainer
+            holder.itemView.nextFocusUpId = R.id.mediaSourcePillScroll
         }
         if (position == arr.size - 1) {
             holder.itemView.nextFocusDownId = R.id.ScrollTop

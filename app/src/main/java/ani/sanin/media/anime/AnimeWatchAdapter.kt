@@ -29,7 +29,7 @@ import ani.sanin.loadImage
 import ani.sanin.media.Media
 import ani.sanin.media.MediaDetailsActivity
 import ani.sanin.media.MediaNameAdapter
-import ani.sanin.media.SheetSourceSelector
+
 import ani.sanin.media.SourceSearchDialogFragment
 import ani.sanin.openSettings
 import ani.sanin.others.LanguageMapper
@@ -105,78 +105,81 @@ class AnimeWatchAdapter(
         }
         val offline = !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
 
-        binding.mediaSourceNameContainer.isGone = offline
+        binding.mediaSourcePillScroll.isGone = offline
         binding.mediaSourceSettings.isGone = offline
         binding.mediaSourceSearch.isGone = offline
         binding.mediaSourceTitle.isGone = offline
 
-        // Source Selection
+        // Source Selection — Pills
         val displayNames = watchSources.displayNames.filter { it != "Local" }
         var source =
             media.selected!!.sourceIndex.let { if (it >= watchSources.names.size) 0 else it }
-        val currentName = if (source in 0 until watchSources.names.size) watchSources.names[source] else ""
         setLanguageList(media.selected!!.langIndex, source)
         if (watchSources.names.isNotEmpty() && source in 0 until watchSources.names.size) {
-            binding.mediaSource.setText(currentName)
             watchSources[source].apply {
                 this.selectDub = media.selected!!.preferDub
                 binding.mediaSourceTitle.text = showUserText
-                showUserTextListener = { MainScope().launch { binding.mediaSourceTitle.text = it } }
+                showUserTextListener = {
+                    MainScope().launch {
+                        binding.mediaSourceTitle.text = it
+                        binding.mediaSourceSpinner.isVisible = it.startsWith("Searching")
+                    }
+                }
+                binding.mediaSourceSpinner.isVisible = showUserText.startsWith("Searching")
                 binding.animeSourceDubbedCont.isVisible = true
             }
         }
 
-        binding.mediaSource.setAdapter(
-            FocusableDropdownAdapter(
-                fragment.requireContext(),
-                R.layout.item_dropdown,
-                displayNames
-            )
-        )
         binding.mediaSourceTitle.isSelected = true
-        binding.mediaSourceNameContainer.post {
-            if (binding.root.rootView.findFocus() == null) {
-                binding.mediaSourceNameContainer.requestFocus()
-            }
-        }
-        binding.mediaSourceNameContainer.nextFocusUpId = R.id.mediaSourceNameContainer
-        binding.mediaSourceNameContainer.nextFocusLeftId = R.id.mediaSourceNameContainer
-        binding.mediaSourceNameContainer.setOnClickListener {
-            val recycler = fragment.requireView().findViewById<ViewGroup>(R.id.mediaSourceRecycler)
-            val sources = displayNames.toTypedArray()
-            recycler.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-            recycler.isFocusable = false
-            SheetSourceSelector.newInstance(
-                sources = ArrayList(sources.toList()),
-                onSelect = { i ->
-                    if (i in displayNames.indices && !displayNames[i].startsWith("───")) {
-                        binding.mediaSource.onItemClickListener?.onItemClick(null, null, i, 0)
+        binding.mediaSourcePillScroll.removeAllViews()
+        val chipGroup = binding.mediaSourceChipGroupPill
+        chipGroup.removeAllViews()
+        val screenWidth = fragment.screenWidth.px
+        displayNames.forEachIndexed { i, name ->
+            val isSeparator = name.startsWith("───")
+            val chip = layoutInflater.inflate(R.layout.item_chip, chipGroup, false) as Chip
+            chip.text = if (isSeparator) name else name
+            chip.isCheckable = !isSeparator
+            chip.isClickable = !isSeparator
+            chip.isFocusable = !isSeparator
+            if (isSeparator) {
+                chip.alpha = 0.5f
+                chip.isEnabled = false
+            } else {
+                val actualIndex = watchSources.names.indexOf(name)
+                if (actualIndex >= 0) {
+                    chip.tag = actualIndex
+                    if (actualIndex == source) chip.isChecked = true
+                    chip.setOnClickListener {
+                        autoSelect = false
+                        val idx = chip.tag as Int
+                        if (idx == source) return@setOnClickListener
+                        fragment.onSourceChange(idx).apply {
+                            binding.mediaSourceTitle.text = showUserText
+                            showUserTextListener = {
+                                MainScope().launch {
+                                    binding.mediaSourceTitle.text = it
+                                    binding.mediaSourceSpinner.isVisible = it.startsWith("Searching")
+                                }
+                            }
+                            binding.mediaSourceSpinner.isVisible = showUserText.startsWith("Searching")
+                            changing = true
+                            binding.animeSourceDubbed.isChecked = selectDub
+                            changing = false
+                            binding.animeSourceDubbedCont.isVisible = true
+                            source = idx
+                            setLanguageList(0, idx)
+                        }
+                        subscribeButton(false)
+                        fragment.loadEpisodes(idx, true)
+                        binding.mediaSourcePillScroll.smoothScrollTo(
+                            (chip.left - screenWidth / 2) + (chip.width / 2),
+                            0
+                        )
                     }
-                },
-                onDismiss = {
-                    recycler.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                    recycler.isFocusable = true
-                    binding.mediaSourceNameContainer.requestFocus()
                 }
-            ).show(fragment.childFragmentManager, "sourceSelector")
-        }
-        binding.mediaSource.setOnItemClickListener { _, _, i, _ ->
-            val name = displayNames.getOrNull(i) ?: return@setOnItemClickListener
-            if (name.startsWith("───")) return@setOnItemClickListener
-            val actualIndex = watchSources.names.indexOf(name)
-            if (actualIndex < 0) return@setOnItemClickListener
-            fragment.onSourceChange(actualIndex).apply {
-                binding.mediaSourceTitle.text = showUserText
-                showUserTextListener = { MainScope().launch { binding.mediaSourceTitle.text = it } }
-                changing = true
-                binding.animeSourceDubbed.isChecked = selectDub
-                changing = false
-                binding.animeSourceDubbedCont.isVisible = true
-                source = actualIndex
-                setLanguageList(0, actualIndex)
             }
-            subscribeButton(false)
-            fragment.loadEpisodes(actualIndex, true)
+            chipGroup.addView(chip)
         }
 
         binding.mediaSourceLanguage.setOnItemClickListener { _, _, i, _ ->
@@ -186,8 +189,13 @@ class AnimeWatchAdapter(
                 fragment.onLangChange(i)
                 fragment.onSourceChange(media.selected!!.sourceIndex).apply {
                     binding.mediaSourceTitle.text = showUserText
-                    showUserTextListener =
-                        { MainScope().launch { binding.mediaSourceTitle.text = it } }
+                    showUserTextListener = {
+                        MainScope().launch {
+                            binding.mediaSourceTitle.text = it
+                            binding.mediaSourceSpinner.isVisible = it.startsWith("Searching")
+                        }
+                    }
+                    binding.mediaSourceSpinner.isVisible = showUserText.startsWith("Searching")
                     changing = true
                     binding.animeSourceDubbed.isChecked = selectDub
                     changing = false
@@ -209,32 +217,13 @@ class AnimeWatchAdapter(
             }
         }
 
-        FocusEffectUtil.applyFocusListener(binding.mediaSourceNameContainer)
-        binding.mediaSourceNameContainer.post {
-            try {
-                val endIconField = com.google.android.material.textfield.TextInputLayout::class.java.getDeclaredField("endIconView")
-                endIconField.isAccessible = true
-                val endIcon = endIconField.get(binding.mediaSourceNameContainer) as? android.widget.ImageButton
-                 endIcon?.let {
-                    it.isFocusable = true
-                    it.isClickable = true
-                    FocusEffectUtil.applyFocusListener(it)
-                    val iconId = View.generateViewId()
-                    it.id = iconId
-                    it.setOnClickListener { binding.mediaSourceNameContainer.performClick() }
-                    binding.mediaSourceNameContainer.nextFocusRightId = iconId
-                    it.nextFocusLeftId = R.id.mediaSourceNameContainer
-                    it.nextFocusRightId = R.id.mediaSourceSettings
-                    binding.mediaSourceSettings.nextFocusLeftId = iconId
-                }
-            } catch (e: java.lang.Exception) {}
-        }
+        FocusEffectUtil.applyFocusListener(binding.mediaSourcePillScroll, binding.mediaSourcePillScroll)
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSearch, binding.mediaSourceSearch)
         binding.mediaSourceSearch.nextFocusRightId = R.id.mediaSourceSearch
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSettings, binding.mediaSourceSettings, true)
         FocusEffectUtil.applyFocusListener(binding.animeSourceDubbed, binding.animeSourceDubbed, true)
         binding.animeSourceDubbed.nextFocusUpId = R.id.mediaSourceSettings
-        binding.animeSourceDubbed.nextFocusLeftId = R.id.mediaSourceNameContainer
+        binding.animeSourceDubbed.nextFocusLeftId = R.id.mediaSourcePillScroll
         binding.animeSourceDubbed.nextFocusRightId = R.id.mediaSourceSearch
         binding.mediaSourceSettings.nextFocusDownId = R.id.animeSourceDubbed
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSubscribe, binding.mediaSourceSubscribe, true)
@@ -259,7 +248,7 @@ class AnimeWatchAdapter(
             fragment.subscribed,
             true
         ) { enabled ->
-            fragment.onNotificationPressed(enabled, binding.mediaSource.text.toString())
+            fragment.onNotificationPressed(enabled, watchSources.names.getOrElse(source) { "" })
         }
 
         subscribeButton(false)
@@ -607,25 +596,29 @@ class AnimeWatchAdapter(
                 binding.faqbutton.isGone = sourceFound
 
                 if (!sourceFound && PrefManager.getVal(PrefName.SearchSources) && autoSelect) {
-                    if (binding.mediaSource.adapter.count > media.selected!!.sourceIndex + 1) {
-                        val nextIndex = media.selected!!.sourceIndex + 1
-                        binding.mediaSource.setText(
-                            binding.mediaSource.adapter
-                                .getItem(nextIndex).toString(), false
-                        )
+                    val nextIndex = media.selected!!.sourceIndex + 1
+                    if (nextIndex < watchSources.names.size) {
                         fragment.onSourceChange(nextIndex).apply {
                             binding.mediaSourceTitle.text = showUserText
-                            showUserTextListener =
-                                { MainScope().launch { binding.mediaSourceTitle.text = it } }
+                            showUserTextListener = {
+                                MainScope().launch {
+                                    binding.mediaSourceTitle.text = it
+                                    binding.mediaSourceSpinner.isVisible = it.startsWith("Searching")
+                                }
+                            }
+                            binding.mediaSourceSpinner.isVisible = showUserText.startsWith("Searching")
                             binding.animeSourceDubbed.isChecked = selectDub
                             binding.animeSourceDubbedCont.isVisible = isDubAvailableSeparately()
                             setLanguageList(0, nextIndex)
                         }
                         subscribeButton(false)
                         fragment.loadEpisodes(nextIndex, false)
+                        for (i in 0 until chipGroup.childCount) {
+                            val c = chipGroup.getChildAt(i) as? Chip ?: continue
+                            c.isChecked = c.tag == nextIndex
+                        }
                     }
                 }
-                binding.mediaSource.setOnClickListener { autoSelect = false }
             } else {
                 binding.sourceContinue.visibility = View.GONE
                 binding.sourceNotFound.visibility = View.GONE

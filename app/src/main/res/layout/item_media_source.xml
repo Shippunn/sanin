@@ -38,18 +38,34 @@
             tools:ignore="TextContrastCheck"
             tools:visibility="visible" />
 
-        <TextView
-            android:id="@+id/mediaSourceTitle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:ellipsize="marquee"
-            android:fontFamily="@font/poppins_bold"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:singleLine="true"
-            tools:text="@string/get_recommendations" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:id="@+id/mediaSourceSpinner"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="8dp"
+                android:indeterminate="true"
+                android:indeterminateTint="?attr/colorSecondary"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/mediaSourceTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:fontFamily="@font/poppins_bold"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                tools:text="@string/get_recommendations" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -57,41 +73,21 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/mediaSourceNameContainer"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <HorizontalScrollView
+                android:id="@+id/mediaSourcePillScroll"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:focusable="true"
-                android:focusableInTouchMode="false"
-                android:hint="@string/source"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxCornerRadiusTopStart="8dp"
-                app:boxStrokeColor="@color/text_input_layout_stroke_color"
-                app:hintAnimationEnabled="true"
-                app:startIconDrawable="@drawable/ic_round_source_24">
+                android:clipToPadding="false"
+                android:scrollbars="none">
 
-                <AutoCompleteTextView
-                    android:id="@+id/mediaSource"
-                    android:layout_width="match_parent"
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/mediaSourceChipGroupPill"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:fontFamily="@font/poppins_bold"
-                    android:freezesText="false"
-                    android:inputType="none"
-                    android:maxLines="1"
-                    android:padding="8dp"
-                    android:text="@string/watch"
-                    android:textAllCaps="true"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="14sp"
-                    tools:ignore="LabelFor,TextContrastCheck,DuplicateSpeakableTextCheck" />
-            </com.google.android.material.textfield.TextInputLayout>
-
+                    app:singleLine="true"
+                    app:singleSelection="true" />
+            </HorizontalScrollView>
 
             <ImageView
                 android:id="@+id/mediaSourceSettings"
