@@ -92,8 +92,8 @@
                 android:layout_weight="0.35"
                 android:layout_marginTop="8dp"
                 android:scaleType="centerCrop"
-                app:shapeAppearanceOverlay="@style/RoundedCornerImage"
-                app:srcCompat="@drawable/ic_round_movie_24"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Corner8"
+                android:src="@drawable/ic_round_movie_filter_24"
                 tools:ignore="ContentDescription" />
 
             <!-- Anime Title -->
