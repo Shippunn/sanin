@@ -137,7 +137,7 @@ class AnimeWatchAdapter(
         val screenWidth = fragment.screenWidth.px
         displayNames.forEachIndexed { i, name ->
             val isSeparator = name.startsWith("───")
-            val chip = layoutInflater.inflate(R.layout.item_chip, chipGroup, false) as Chip
+            val chip = LayoutInflater.from(chipGroup.context).inflate(R.layout.item_chip, chipGroup, false) as Chip
             chip.text = if (isSeparator) name else name
             chip.isCheckable = !isSeparator
             chip.isClickable = !isSeparator
@@ -613,9 +613,11 @@ class AnimeWatchAdapter(
                         }
                         subscribeButton(false)
                         fragment.loadEpisodes(nextIndex, false)
-                        for (i in 0 until chipGroup.childCount) {
-                            val c = chipGroup.getChildAt(i) as? Chip ?: continue
-                            c.isChecked = c.tag == nextIndex
+                        _binding?.mediaSourceChipGroupPill?.let { cg ->
+                            for (i in 0 until cg.childCount) {
+                                val c = cg.getChildAt(i) as? Chip ?: continue
+                                c.isChecked = c.tag == nextIndex
+                            }
                         }
                     }
                 }
