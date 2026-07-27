@@ -78,7 +78,7 @@
         android:background="#FF000000"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,25 +86,24 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <!-- Anime Poster -->
+            <!-- Logoart Image -->
             <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/commentsPoster"
+                android:id="@+id/commentsLogoart"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.75"
-                android:layout_marginTop="8dp"
-                android:scaleType="centerCrop"
+                android:layout_weight="0.4"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:visibility="gone"
                 android:nextFocusLeft="@id/commentsList"
-                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.Corner8"
-                android:src="@drawable/ic_round_movie_filter_24"
                 tools:ignore="ContentDescription" />
 
-            <!-- Anime Title -->
+            <!-- Anime Title (fallback when no logoart) -->
             <TextView
                 android:id="@+id/commentsTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="@font/poppins_bold"
                 android:gravity="center"
                 android:maxLines="2"
@@ -133,12 +132,33 @@
                 android:visibility="visible"
                 tools:ignore="HardcodedText" />
 
+            <!-- List Editor Button -->
+            <Button
+                android:id="@+id/commentsListEditor"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/poppins_bold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:nextFocusLeft="@id/commentsList"
+                android:padding="4dp"
+                android:text="@string/add_list"
+                android:textAllCaps="true"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="visible"
+                app:cornerRadius="16dp"
+                app:strokeColor="@android:color/white" />
+
             <!-- Source Switch (Sanin / Trakt) -->
             <LinearLayout
                 android:id="@+id/commentSourceBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:visibility="visible"
@@ -147,7 +167,7 @@
                 <TextView
                     android:id="@+id/commentSourceSanin"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="36dp"
                     android:layout_weight="1"
                     android:background="@drawable/btn_transparent_round"
                     android:clickable="true"
@@ -157,12 +177,12 @@
                     android:nextFocusLeft="@id/commentsList"
                     android:text="Sanin"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
 
                 <TextView
                     android:id="@+id/commentSourceTrakt"
                     android:layout_width="0dp"
-                    android:layout_height="40dp"
+                    android:layout_height="36dp"
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:background="@drawable/btn_transparent_round"
@@ -173,7 +193,7 @@
                     android:nextFocusLeft="@id/commentsList"
                     android:text="Trakt"
                     android:textColor="#FF888888"
-                    android:textSize="14sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <View
@@ -181,7 +201,7 @@
                 android:layout_height="0dp"
                 android:layout_weight="1" />
 
-            <!-- Add Comment Box -->
+            <!-- Add Comment Box - Pill Shaped -->
             <LinearLayout
                 android:id="@+id/commentMessageContainer"
                 android:layout_width="match_parent"
@@ -224,15 +244,16 @@
                     android:id="@+id/commentInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#FF1A1A1A"
+                    android:background="@drawable/bg_pill_input"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="8dp">
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp">
 
                     <com.google.android.material.imageview.ShapeableImageView
                         android:id="@+id/commentUserAvatar"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:scaleType="centerCrop"
                         app:shapeAppearanceOverlay="@style/CircularImageView"
                         app:srcCompat="@drawable/ic_round_add_circle_24"
@@ -257,8 +278,8 @@
 
                     <ImageButton
                         android:id="@+id/commentSend"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:focusable="true"
                         android:nextFocusLeft="@id/commentsList"
@@ -276,22 +297,22 @@
 
                     <ImageButton
                         android:id="@+id/commentGif"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:focusable="true"
-                        android:padding="4dp"
+                        android:padding="3dp"
                         android:src="@drawable/ic_round_gif_24"
                         app:tint="#FF888888"
                         tools:ignore="ContentDescription" />
 
                     <ImageButton
                         android:id="@+id/commentSpoiler"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:focusable="true"
-                        android:padding="4dp"
+                        android:padding="3dp"
                         android:src="@drawable/ic_round_remove_red_eye_24"
                         app:tint="#FF888888"
                         tools:ignore="ContentDescription" />
@@ -299,5 +320,13 @@
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>
+
+    <!-- Hidden views from portrait - kept for binding compatibility -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/commentsPoster"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        tools:ignore="ContentDescription" />
 
 </LinearLayout>

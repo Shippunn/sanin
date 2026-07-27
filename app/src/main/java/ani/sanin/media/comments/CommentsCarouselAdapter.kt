@@ -17,7 +17,8 @@ import java.util.Locale
 import java.util.TimeZone
 
 class CommentsCarouselAdapter(
-    private val fragment: CommentsFragment
+    private val fragment: CommentsFragment,
+    private val markwon: io.noties.markwon.Markwon
 ) : ListAdapter<Comment, CommentsCarouselAdapter.ViewHolder>(DiffCallback()) {
 
     private var focusedPosition = 0
@@ -45,8 +46,7 @@ class CommentsCarouselAdapter(
 
         b.carouselUserName.text = comment.username
         b.carouselTimestamp.text = formatTimestamp(comment.timestamp)
-        b.carouselCommentText.text = comment.content
-        b.carouselCommentText.maxLines = 3
+        markwon.setMarkdown(b.carouselCommentText, comment.content)
         b.carouselVoteCount.text = (comment.upvotes - comment.downvotes).toString()
 
         val primaryColor = resolvePrimaryColor(b.root.context)

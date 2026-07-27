@@ -21,8 +21,10 @@ import ani.sanin.buildMarkwon
 import ani.sanin.connections.LogoApi
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
+import ani.sanin.connections.myanimelist.MAL
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
+import ani.sanin.media.MediaListDialogFragment
 import ani.sanin.connections.trakt.TraktAuth
 import ani.sanin.connections.trakt.TraktComment
 import ani.sanin.connections.trakt.TraktSearchResult
@@ -67,6 +69,7 @@ class CommentsFragment : Fragment() {
     private var traktResult: TraktSearchResult? = null
     private var displayedComments = mutableListOf<Comment>()
     private lateinit var carouselAdapter: CommentsCarouselAdapter
+    private lateinit var markwon: io.noties.markwon.Markwon
 
     enum class CommentSource { DANOTSU, TRAKT }
     enum class InteractionState { NONE, EDIT, REPLY }
@@ -96,7 +99,7 @@ class CommentsFragment : Fragment() {
         setupCarousel()
 
         binding.commentUserAvatar.loadImage(Anilist.avatar)
-        val markwon = buildMarkwon(activity, fragment = this)
+        markwon = buildMarkwon(activity, fragment = this)
         val markwonEditor = io.noties.markwon.editor.MarkwonEditor.create(markwon)
         binding.commentInput.addTextChangedListener(
             io.noties.markwon.editor.MarkwonEditorTextWatcher.withProcess(markwonEditor)
@@ -107,10 +110,15 @@ class CommentsFragment : Fragment() {
         val model: MediaDetailsViewModel by activityViewModels()
         model.getMedia().observe(viewLifecycleOwner) { newMedia ->
             if (newMedia != null && newMedia.id != 0) {
-                binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
-
-                if (newMedia.cover != null) {
-                    binding.commentsPoster.loadImage(newMedia.cover)
+                val bannerUrl = newMedia.banner
+                if (bannerUrl != null) {
+                    binding.commentsLogoart.visibility = View.VISIBLE
+                    binding.commentsTitle.visibility = View.GONE
+                    binding.commentsLogoart.loadImage(bannerUrl)
+                } else {
+                    binding.commentsLogoart.visibility = View.GONE
+                    binding.commentsTitle.visibility = View.VISIBLE
+                    binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
                 }
 
                 val fm = requireActivity().supportFragmentManager
@@ -153,16 +161,15 @@ class CommentsFragment : Fragment() {
             }
         }
 
-        binding.commentsPoster.nextFocusRightId = binding.commentInput.id
-
         setupSourceButtons()
         setupInputListeners()
+        setupListEditor()
         updateSourceBarVisibility()
         updateCurrentProgressButton()
     }
 
     private fun setupCarousel() {
-        carouselAdapter = CommentsCarouselAdapter(this)
+        carouselAdapter = CommentsCarouselAdapter(this, markwon)
         val lm = CommentsCarouselLayoutManager(activity)
         binding.commentsList.layoutManager = lm
         binding.commentsList.adapter = carouselAdapter
@@ -286,6 +293,24 @@ class CommentsFragment : Fragment() {
                 TvKeyboardUtil.showKeyboardDelayed(binding.commentInput)
             }
         }
+    }
+
+    private fun setupListEditor() {
+        binding.commentsListEditor.setOnClickListener {
+            val rescueMode: Boolean = PrefManager.getVal(PrefName.RescueMode)
+            val fm = requireActivity().supportFragmentManager
+            if (fm.findFragmentByTag("dialog") == null) {
+                if (rescueMode) {
+                    if (MAL.token != null) {
+                        MediaListDialogFragment().show(fm, "dialog")
+                    } else snackString("Please login to MAL")
+                } else if (Anilist.userid != null) {
+                    MediaListDialogFragment().show(fm, "dialog")
+                } else snackString("Please login to AniList")
+            }
+        }
+        binding.commentsLogoart.nextFocusRightId = binding.commentInput.id
+        binding.commentsListEditor.nextFocusLeftId = R.id.commentsList
     }
 
     private fun highlightSource() {
