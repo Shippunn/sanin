@@ -11,39 +11,49 @@
     android:orientation="vertical"
     android:padding="0dp">
 
-    <!-- Logoart Banner - full width at top -->
+    <!-- Logo / Title (fills black space above banner) -->
     <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/commentsLogoart"
+        android:id="@+id/commentsLogo"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter"
         android:visibility="gone"
         tools:ignore="ContentDescription" />
 
-    <!-- Title (fallback when no logoart) -->
     <TextView
         android:id="@+id/commentsTitle"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:fontFamily="@font/poppins_bold"
-        android:gravity="start"
-        android:maxLines="1"
+        android:gravity="center"
+        android:maxLines="2"
         android:text="Anime Title"
         android:textColor="#FFFFFFFF"
-        android:textSize="16sp"
+        android:textSize="22sp"
+        android:visibility="gone"
         tools:ignore="HardcodedText" />
 
-    <!-- List Editor Button (info tab style) -->
+    <!-- Banner Image (media.banner) -->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/commentsLogoart"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="fitCenter"
+        android:visibility="visible"
+        tools:ignore="ContentDescription" />
+
+    <!-- List Editor Button -->
     <Button
         android:id="@+id/commentsListEditor"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="44dp"
         android:layout_marginHorizontal="12dp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="10dp"
         android:fontFamily="@font/poppins_bold"
         android:insetTop="0dp"
         android:insetBottom="0dp"
@@ -51,12 +61,12 @@
         android:text="@string/add_list"
         android:textAllCaps="true"
         android:textColor="@android:color/white"
-        android:textSize="12sp"
+        android:textSize="13sp"
         android:textStyle="bold"
         app:cornerRadius="16dp"
         app:strokeColor="@android:color/white" />
 
-    <!-- Carousel area - takes remaining space -->
+    <!-- Carousel -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -113,7 +123,7 @@
             android:background="#FF2A2A2A" />
     </FrameLayout>
 
-    <!-- Comment Input - Pill Shaped -->
+    <!-- Input -->
     <LinearLayout
         android:id="@+id/commentMessageContainer"
         android:layout_width="match_parent"
@@ -232,7 +242,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Hidden views from landscape - kept for binding compatibility -->
+    <!-- Hidden views from landscape -->
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/commentsPoster"
         android:layout_width="0dp"

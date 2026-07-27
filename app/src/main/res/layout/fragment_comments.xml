@@ -70,7 +70,7 @@
             android:background="#FF2A2A2A" />
     </FrameLayout>
 
-    <!-- Right 30% - Anime Info Panel -->
+    <!-- Right 30% - Info Panel -->
     <FrameLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -86,23 +86,33 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <!-- Cover Poster (Anilist cover) - takes remaining space -->
+            <!-- Cover Poster (media.cover) -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/commentsPoster"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:scaleType="fitCenter"
-                android:adjustViewBounds="true"
                 android:nextFocusLeft="@id/commentsList"
                 tools:ignore="ContentDescription" />
 
-            <!-- Title / Logoart -->
+            <!-- Banner (media.banner) -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/commentsLogoart"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:nextFocusLeft="@id/commentsList"
+                tools:ignore="ContentDescription" />
+
+            <!-- Logo / Title -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/commentsLogo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
                 android:visibility="gone"
@@ -113,22 +123,23 @@
                 android:id="@+id/commentsTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:fontFamily="@font/poppins_bold"
                 android:gravity="center"
                 android:maxLines="2"
                 android:text="Anime Title"
                 android:textColor="#FFFFFFFF"
                 android:textSize="14sp"
+                android:visibility="gone"
                 tools:ignore="HardcodedText" />
 
-            <!-- List Editor Button (info tab style) -->
+            <!-- List Editor Button -->
             <Button
                 android:id="@+id/commentsListEditor"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="@font/poppins_bold"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
@@ -142,12 +153,12 @@
                 app:cornerRadius="16dp"
                 app:strokeColor="@android:color/white" />
 
-            <!-- Episode Progress (hidden by default) -->
+            <!-- Episode Progress Badge -->
             <TextView
                 android:id="@+id/commentCurrentProgress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:alpha="0.6"
                 android:background="@drawable/btn_transparent_round"
                 android:fontFamily="@font/poppins_bold"
@@ -160,16 +171,12 @@
                 android:visibility="gone"
                 tools:ignore="HardcodedText" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <!-- Add Comment Box - Pill Shaped -->
+            <!-- Input -->
             <LinearLayout
                 android:id="@+id/commentMessageContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:orientation="vertical"
                 android:visibility="visible"
                 tools:visibility="visible">

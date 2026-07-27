@@ -18,6 +18,7 @@ import ani.sanin.buildMarkwon
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.mal.MAL
+import ani.sanin.connections.LogoApi
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment
@@ -104,26 +105,28 @@ class CommentsFragment : Fragment() {
         val model: MediaDetailsViewModel by activityViewModels()
         model.getMedia().observe(viewLifecycleOwner) { newMedia ->
             if (newMedia != null && newMedia.id != 0) {
-                val logoUrl = newMedia.banner
-                if (logoUrl != null) {
-                    binding.commentsLogoart.visibility = View.VISIBLE
-                    binding.commentsTitle.visibility = View.GONE
-                    binding.commentsLogoart.loadImage(logoUrl)
-                } else {
-                    binding.commentsLogoart.visibility = View.GONE
-                    binding.commentsTitle.visibility = View.VISIBLE
-                    binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
+                binding.commentsLogoart.loadImage(newMedia.banner)
+                binding.commentsPoster.loadImage(newMedia.cover)
+                binding.commentsLogo.setImageDrawable(null)
+                binding.commentsTitle.visibility = View.GONE
+
+                lifecycleScope.launch {
+                    val logoUrl = LogoApi.getLogoUrl(newMedia.id)
+                    if (logoUrl != null) {
+                        binding.commentsLogo.visibility = View.VISIBLE
+                        binding.commentsTitle.visibility = View.GONE
+                        binding.commentsLogo.loadImage(logoUrl)
+                    } else {
+                        binding.commentsLogo.visibility = View.GONE
+                        binding.commentsTitle.visibility = View.VISIBLE
+                        binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
+                    }
                 }
 
                 isAnime = newMedia.anime != null
                 userProgress = newMedia.userProgress
                 totalEpisodesOrChapters = newMedia.anime?.totalEpisodes
                 updateCurrentProgressButton()
-
-                val coverUrl = newMedia.cover
-                if (coverUrl != null) {
-                    binding.commentsPoster.loadImage(coverUrl)
-                }
 
                 updateListEditorText(newMedia.userStatus)
                 setupListEditor()
