@@ -131,9 +131,7 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val splashRes = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-            R.drawable.splash_logo_portrait else R.drawable.splash_logo
-        window.setBackgroundDrawableResource(splashRes)
+        window.setBackgroundDrawableResource(R.drawable.splash_logo)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
