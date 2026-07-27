@@ -15,7 +15,6 @@ import ani.sanin.snackString
 import ani.sanin.startMainActivity
 import ani.sanin.themes.ThemeManager
 import ani.sanin.tryWithSuspend
-import ani.sanin.util.FocusEffectUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

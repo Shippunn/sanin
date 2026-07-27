@@ -18,7 +18,6 @@ import org.json.JSONObject
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.abs
-import androidx.core.net.toUri
 
 object Anilist {
     val query: AnilistQueries = AnilistQueries()

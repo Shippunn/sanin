@@ -2,7 +2,6 @@ package ani.sanin.connections.anilist
 
 import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import ani.sanin.loadMedia

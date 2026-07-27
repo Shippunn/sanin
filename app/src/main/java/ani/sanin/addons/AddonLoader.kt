@@ -8,7 +8,6 @@ import androidx.core.content.pm.PackageInfoCompat
 import ani.sanin.util.Logger
 import dalvik.system.PathClassLoader
 import eu.kanade.tachiyomi.extension.util.ExtensionLoader
-import eu.kanade.tachiyomi.util.system.getApplicationIcon
 
 class AddonLoader {
     companion object {

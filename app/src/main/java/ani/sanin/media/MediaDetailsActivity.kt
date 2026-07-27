@@ -64,7 +64,6 @@ class MediaDetailsActivity : AppCompatActivity() {
     private val model: MediaDetailsViewModel by viewModels()
     var selected = 0
     var anime = true
-    private var adult = false
     private var hasComments = false
     private lateinit var watchFragment: AnimeWatchFragment
     private lateinit var commentsFragment: CommentsFragment
@@ -340,8 +339,6 @@ class MediaDetailsActivity : AppCompatActivity() {
         binding.mediaBannerNoKen?.setOnTouchListener { _, motionEvent ->
             gestureDetector.onTouchEvent(motionEvent); true
         }
-
-        adult = media.isAdult
 
         model.getMedia().observe(this) { updatedMedia ->
             if (updatedMedia != null) {

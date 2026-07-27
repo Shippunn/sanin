@@ -10,7 +10,6 @@ import ani.sanin.connections.anilist.api.FeedResponse
 import ani.sanin.connections.anilist.api.FuzzyDate
 import ani.sanin.connections.anilist.api.MediaEdge
 import ani.sanin.connections.anilist.api.MediaList
-import ani.sanin.connections.anilist.api.MediaListStatus
 import ani.sanin.connections.anilist.api.NotificationResponse
 import ani.sanin.connections.anilist.api.Page
 import ani.sanin.connections.anilist.api.Query

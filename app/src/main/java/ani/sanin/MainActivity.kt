@@ -5,33 +5,27 @@ import android.view.animation.DecelerateInterpolator
 import android.annotation.SuppressLint
 import kotlin.math.cos
 import kotlin.math.exp
-import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.view.inputmethod.InputMethodManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AnticipateInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.viewModels
-import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnAttach
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
-import androidx.core.view.updateLayoutParams
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
@@ -39,7 +33,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
-import ani.sanin.blurImage
 import ani.sanin.connections.LogoApi
 import ani.sanin.media.anime.ExoplayerView
 import ani.sanin.connections.anilist.Anilist
@@ -57,11 +50,9 @@ import ani.sanin.home.AnimeFragment
 import ani.sanin.home.DiscoveryFragment
 import ani.sanin.home.HomeFragment
 import ani.sanin.home.LibraryFragment
-import ani.sanin.home.LoginFragment
 import ani.sanin.home.NoInternet
 import ani.sanin.media.MediaDetailsActivity
 import ani.sanin.notifications.TaskScheduler
-import ani.sanin.others.CustomBottomDialog
 import ani.sanin.others.calc.CalcActivity
 import ani.sanin.profile.ProfileActivity
 import ani.sanin.profile.activity.FeedActivity
@@ -86,11 +77,8 @@ import kotlinx.coroutines.launch
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import eu.kanade.domain.source.service.SourcePreferences
-import io.noties.markwon.Markwon
-import io.noties.markwon.SoftBreakAddsNewLinePlugin
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.withContext
-import tachiyomi.core.util.lang.launchIO
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.Serializable
@@ -486,7 +474,6 @@ class MainActivity : AppCompatActivity() {
                     load = true
                 }
 
-                PrefManager.setVal(PrefName.AllowOpeningLinks, true)
             }
         }
         if (PrefManager.getVal(PrefName.OC)) {
@@ -750,8 +737,6 @@ class MainActivity : AppCompatActivity() {
             binding.mainNotificationCount.isVisible = false
         }
     }
-
-    private fun isNavPillTop() = false
 
     private fun setupHomeNavRail() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

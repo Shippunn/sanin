@@ -2,8 +2,6 @@ package ani.sanin.media.comments
 
 import android.annotation.SuppressLint
 import android.content.Context.INPUT_METHOD_SERVICE
-import android.content.ClipboardManager
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -52,12 +50,9 @@ class CommentsFragment : Fragment() {
     private var filterTag: Int? = null
     private var mediaId: Int = -1
     var mediaName: String = ""
-    private var backgroundColor: Int = 0
     var pagesLoaded = 1
     var totalPages = 1
     private var userProgress: Int? = null
-    private var totalEpisodesOrChapters: Int? = null
-    private var isAnime: Boolean = true
     private var commentsLoaded = false
     private var isAutoFilterOn = false
     private var isSpoilerMode = false
@@ -89,8 +84,6 @@ class CommentsFragment : Fragment() {
             return
         }
         this.mediaId = mediaId
-        backgroundColor = (binding.root.background as? ColorDrawable)?.color ?: 0
-
         markwon = buildMarkwon(activity, fragment = this)
         setupCarousel()
 
@@ -123,9 +116,7 @@ class CommentsFragment : Fragment() {
                     }
                 }
 
-                isAnime = newMedia.anime != null
                 userProgress = newMedia.userProgress
-                totalEpisodesOrChapters = newMedia.anime?.totalEpisodes
                 updateCurrentProgressButton()
 
                 updateListEditorText(newMedia.userStatus)

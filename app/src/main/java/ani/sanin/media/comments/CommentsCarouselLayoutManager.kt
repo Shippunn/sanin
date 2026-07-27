@@ -2,7 +2,6 @@ package ani.sanin.media.comments
 
 import android.content.Context
 import android.graphics.PointF
-import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.abs
