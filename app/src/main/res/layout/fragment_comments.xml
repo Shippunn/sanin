@@ -91,7 +91,7 @@
                 android:id="@+id/commentsPoster"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.35"
+                android:layout_weight="0.75"
                 android:layout_marginTop="8dp"
                 android:scaleType="centerCrop"
                 android:nextFocusLeft="@id/commentsList"

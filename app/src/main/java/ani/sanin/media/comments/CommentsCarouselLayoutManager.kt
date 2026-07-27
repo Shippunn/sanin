@@ -5,20 +5,20 @@ import android.graphics.PointF
 import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 class CommentsCarouselLayoutManager(
     context: Context
 ) : LinearLayoutManager(context, VERTICAL, false) {
 
-    private var itemHeight = 0
+    private var itemHeight = 200
     private var itemWidth = 0
 
     private val cylinderRadius = 1200f
     private val angleStep = 30f
-    private val focusedScale = 1.0f
-    private val unfocusedScale = 1.0f
-    private val focusedAlpha = 1f
-    private val unfocusedAlpha = 0.55f
     private val focusGap = 140f
 
     override fun generateDefaultLayoutParams(): RecyclerView.LayoutParams =
@@ -38,7 +38,7 @@ class CommentsCarouselLayoutManager(
 
         val view = recycler.getViewForPosition(0)
         measureChildWithMargins(view, 0, 0)
-        itemHeight = view.measuredHeight
+        itemHeight = (parentHeight * 0.30f).toInt().coerceAtLeast(view.measuredHeight)
         itemWidth = (parentWidth * 0.85f).toInt()
         recycler.recycleView(view)
 
@@ -49,7 +49,14 @@ class CommentsCarouselLayoutManager(
 
     override fun onLayoutCompleted(state: RecyclerView.State) {
         super.onLayoutCompleted(state)
-        applyTransformToChildren()
+        applyTransform()
+    }
+
+    private var pixelOffset = 0f
+    var focusedPosition: Int get() {
+        if (itemCount == 0) return 0
+        val raw = pixelOffset / itemHeight.toFloat()
+        return raw.toInt().coerceIn(0, itemCount - 1)
     }
 
     private fun fill(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
@@ -59,8 +66,8 @@ class CommentsCarouselLayoutManager(
 
         val parentWidth = width
         val centerY = height / 2f
-        val visibleRange = 8
-        val focusIndex = (scrollToPosition).coerceAtLeast(0)
+        val visibleRange = 6
+        val focusIndex = focusedPosition
 
         val startPos = (focusIndex - visibleRange).coerceAtLeast(0)
         val endPos = (focusIndex + visibleRange).coerceAtMost(itemCount - 1)
@@ -69,28 +76,35 @@ class CommentsCarouselLayoutManager(
             val child = recycler.getViewForPosition(pos)
             val offset = pos - focusIndex
             val gap = if (offset == 0) focusGap else focusGap * 0.25f
-            val yCenter = centerY + offset * (itemHeight.coerceAtLeast(1).toFloat() + gap)
-            val top = (yCenter - itemHeight / 2f).toInt()
-
-            val w = itemWidth
-            val h = child.measuredHeight
+            val yCenter = centerY + offset * (itemHeight.toFloat() + gap)
 
             addView(child)
             measureChildWithMargins(child, 0, 0)
+            val top = (yCenter - itemHeight / 2f).toInt()
             layoutDecoratedWithMargins(
                 child,
-                (parentWidth - w) / 2,
+                (parentWidth - itemWidth) / 2,
                 top,
-                (parentWidth + w) / 2,
-                top + h
+                (parentWidth + itemWidth) / 2,
+                top + child.measuredHeight.coerceAtMost((itemHeight * 1.5f).toInt())
             )
         }
-
-        applyTransformToChildren()
     }
 
-    private var scrollToPosition = 0
-    val focusedPosition: Int get() = scrollToPosition
+    fun scrollToNext() {
+        val maxPos = itemCount - 1
+        if (focusedPosition < maxPos) {
+            pixelOffset = ((focusedPosition + 1) * itemHeight).toFloat()
+            requestLayout()
+        }
+    }
+
+    fun scrollToPrevious() {
+        if (focusedPosition > 0) {
+            pixelOffset = ((focusedPosition - 1) * itemHeight).toFloat()
+            requestLayout()
+        }
+    }
 
     override fun scrollVerticallyBy(
         dy: Int,
@@ -98,18 +112,18 @@ class CommentsCarouselLayoutManager(
         state: RecyclerView.State
     ): Int {
         if (itemCount == 0) return 0
-        val maxScroll = ((itemCount - 1) * itemHeight.coerceAtLeast(1)).coerceAtLeast(0)
-        val target = (scrollToPosition * itemHeight.coerceAtLeast(1) + dy).coerceIn(0, maxScroll)
-        val oldPos = scrollToPosition
-        scrollToPosition = (target.toFloat() / itemHeight.coerceAtLeast(1).toFloat()).toInt().coerceIn(0, itemCount - 1)
+        val maxOffset = ((itemCount - 1) * itemHeight).toFloat().coerceAtLeast(0f)
+        val oldOffset = pixelOffset
+        pixelOffset = (pixelOffset + dy).coerceIn(0f, maxOffset)
+        val consumed = (pixelOffset - oldOffset).roundToInt()
         fill(recycler, state)
-        return target - (oldPos * itemHeight.coerceAtLeast(1))
+        return consumed
     }
 
     override fun canScrollVertically() = true
 
     override fun computeScrollVectorForPosition(targetPosition: Int): PointF {
-        val direction = if (targetPosition < scrollToPosition) -1f else 1f
+        val direction = if (targetPosition < focusedPosition) -1f else 1f
         return PointF(0f, direction)
     }
 
@@ -121,7 +135,7 @@ class CommentsCarouselLayoutManager(
         super.smoothScrollToPosition(recyclerView, state, position)
     }
 
-    private fun applyTransformToChildren() {
+    private fun applyTransform() {
         val centerY = height / 2f
 
         for (i in 0 until childCount) {
@@ -131,39 +145,21 @@ class CommentsCarouselLayoutManager(
             val normalizedDist = distanceFromCenter / itemHeight.coerceAtLeast(1).toFloat()
 
             val angle = Math.toRadians((normalizedDist * angleStep).toDouble()).toFloat()
-            val cosVal = kotlin.math.cos(angle).coerceAtLeast(0.01f)
-            val sinVal = kotlin.math.sin(angle)
+            val cosVal = cos(angle).coerceAtLeast(0.01f)
+            val sinVal = sin(angle)
 
-            val scale = focusedScale - (1f - cosVal) * (focusedScale - unfocusedScale)
-            val alpha = focusedAlpha - (1f - cosVal) * (focusedAlpha - unfocusedAlpha)
+            val alpha = 1f - (1f - cosVal) * 0.45f
             val rotationX = -normalizedDist * 12f
             val translationZ = -sinVal * cylinderRadius * 0.3f
 
-            val isFocused = kotlin.math.abs(normalizedDist) < 0.5f
+            val isFocused = abs(normalizedDist) < 0.5f
 
-            child.scaleX = scale
-            child.scaleY = scale
+            child.scaleX = 1f
+            child.scaleY = 1f
             child.alpha = alpha.coerceIn(0f, 1f)
             child.rotationX = rotationX.coerceIn(-45f, 45f)
             child.translationZ = translationZ.coerceIn(-500f, 0f)
-
             child.elevation = if (isFocused) 24f else 4f
         }
     }
-
-    fun scrollToNext() {
-        if (scrollToPosition < itemCount - 1) {
-            scrollToPosition++
-            requestLayout()
-        }
-    }
-
-    fun scrollToPrevious() {
-        if (scrollToPosition > 0) {
-            scrollToPosition--
-            requestLayout()
-        }
-    }
-
-    override fun isAutoMeasureEnabled() = false
 }

@@ -46,6 +46,7 @@ class CommentsCarouselAdapter(
         b.carouselUserName.text = comment.username
         b.carouselTimestamp.text = formatTimestamp(comment.timestamp)
         b.carouselCommentText.text = comment.content
+        b.carouselCommentText.maxLines = 3
         b.carouselVoteCount.text = (comment.upvotes - comment.downvotes).toString()
 
         val primaryColor = resolvePrimaryColor(b.root.context)
@@ -93,14 +94,14 @@ class CommentsCarouselAdapter(
         }
 
         val showActions = isFocused
-        b.carouselActionRow.visibility = if (showActions) View.VISIBLE else View.GONE
+        b.carouselActionRow.visibility = if (showActions) View.VISIBLE else View.INVISIBLE
         b.carouselAvatar.layoutParams.width = if (isFocused) 48 else 32
         b.carouselAvatar.layoutParams.height = if (isFocused) 48 else 32
         b.carouselUserName.textSize = if (isFocused) 16f else 13f
         b.carouselCommentText.textSize = if (isFocused) 15f else 13f
         b.carouselUserName.alpha = if (isFocused) 1f else 0.7f
         b.carouselCommentText.alpha = if (isFocused) 1f else 0.6f
-        b.carouselTimestamp.visibility = if (isFocused) View.VISIBLE else View.GONE
+        b.carouselTimestamp.visibility = if (isFocused) View.VISIBLE else View.INVISIBLE
     }
 
     private fun formatTimestamp(timestamp: String): String {
