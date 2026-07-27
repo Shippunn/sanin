@@ -298,6 +298,11 @@ enum class PrefName(val data: Pref) {
     CommentAuthResponse(Pref(Location.Irrelevant, AuthResponse::class, "")),
     CommentTokenExpiry(Pref(Location.Irrelevant, Long::class, 0L)),
     LoggingEnabled(Pref(Location.UI, Boolean::class, false)),
+
+    SmartTrim(Pref(Location.UI, Boolean::class, false)),
+    CacheCapMb(Pref(Location.UI, Int::class, 100)),
+    TrimIntervalMin(Pref(Location.UI, Int::class, 10)),
+    TrimIntensity(Pref(Location.UI, Int::class, 80)),
     LogToFile(Pref(Location.Irrelevant, Boolean::class, false)),
     RecentGlobalNotification(Pref(Location.Irrelevant, Int::class, 0)),
     CommentNotificationStore(Pref(Location.Irrelevant, List::class, listOf<CommentStore>())),

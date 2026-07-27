@@ -382,6 +382,12 @@ class MainActivity : AppCompatActivity() {
             binding.homeNavRail.post { updateSideRail() }
 
             initComplete.complete(Unit)
+
+            if (PrefManager.getVal<Boolean>(PrefName.SmartTrim)) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    trimCachePeriodically()
+                }
+            }
         }
 
         if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
@@ -982,6 +988,59 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.rightRailUserName).text = Anilist.username ?: MAL.username ?: "User"
         findViewById<TextView>(R.id.rightRailUserEmail).text = "AniList ID: ${Anilist.userid ?: "—"}"
         findViewById<TextView>(R.id.rightRailEpisodesWatched).text = (Anilist.episodesWatched ?: 0).toString()
+    }
+
+    private suspend fun trimCachePeriodically() {
+        while (true) {
+            val interval = PrefManager.getVal<Int>(PrefName.TrimIntervalMin).coerceIn(5, 30)
+            delay(interval * 60 * 1000L)
+            if (!PrefManager.getVal<Boolean>(PrefName.SmartTrim)) continue
+            trimCache()
+        }
+    }
+
+    private suspend fun trimCache() {
+        try {
+            val cap = PrefManager.getVal<Int>(PrefName.CacheCapMb).coerceIn(70, 200)
+            val intensity = PrefManager.getVal<Int>(PrefName.TrimIntensity).coerceIn(40, 90)
+            val capBytes = cap * 1024L * 1024L
+
+            val dirs = listOfNotNull(cacheDir, externalCacheDir)
+            val allFiles = dirs.flatMap { dir ->
+                if (!dir.exists()) return@flatMap emptyList()
+                dir.walkTopDown().filter { it.isFile }.toList()
+            }
+            val totalSize = allFiles.sumOf { it.length() }
+            if (totalSize <= capBytes) return
+
+            val targetSize = capBytes * (100 - intensity) / 100
+            val recentCutoff = System.currentTimeMillis() - 30 * 60 * 1000L
+            val deletable = allFiles
+                .filter { it.lastModified() < recentCutoff }
+                .sortedBy { it.lastModified() }
+
+            var removed = 0L
+            for (file in deletable) {
+                if (totalSize - removed <= targetSize) break
+                removed += file.length()
+                file.delete()
+            }
+
+            dirs.forEach { dir ->
+                if (dir.exists()) {
+                    dir.walkTopDown().filter { it.isDirectory }
+                        .sortedByDescending { it.path.length }
+                        .forEach { it.delete() }
+                }
+            }
+
+            if (removed > 0) {
+                val mb = removed / (1024L * 1024L)
+                withContext(Dispatchers.Main) {
+                    snackString("$mb MB cache cleared")
+                }
+            }
+        } catch (_: Exception) { }
     }
 
 }

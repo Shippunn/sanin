@@ -131,6 +131,9 @@
             android:name=".settings.SettingsLogActivity"
             android:parentActivityName=".MainActivity" />
         <activity
+            android:name=".settings.SettingsCacheActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
             android:name=".settings.LiveLogcatActivity"
             android:parentActivityName=".MainActivity" />
         <activity

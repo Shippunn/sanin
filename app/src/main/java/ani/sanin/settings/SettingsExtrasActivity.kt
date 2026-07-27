@@ -48,6 +48,7 @@ class SettingsExtrasActivity : AppCompatActivity() {
                 extrasNotifications,
                 extrasAddons,
                 extrasLogCapture,
+                extrasCache,
                 extrasImmersive,
                 extrasHomeLayout,
                 extrasSmallView,
@@ -72,6 +73,11 @@ class SettingsExtrasActivity : AppCompatActivity() {
             extrasLogCapture.isFocusable = true
             extrasLogCapture.setOnClickListener {
                 startActivity(Intent(this@SettingsExtrasActivity, SettingsLogActivity::class.java))
+            }
+
+            extrasCache.isFocusable = true
+            extrasCache.setOnClickListener {
+                startActivity(Intent(this@SettingsExtrasActivity, SettingsCacheActivity::class.java))
             }
 
             extrasImmersive.isChecked = PrefManager.getVal(PrefName.ImmersiveMode)

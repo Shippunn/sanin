@@ -153,6 +153,26 @@
                 app:iconSize="24dp"
                 app:iconTint="?attr/colorPrimary" />
 
+            <Button
+                android:id="@+id/extrasCache"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@drawable/ui_bg"
+                android:fontFamily="@font/poppins_bold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="32dp"
+                android:paddingEnd="32dp"
+                android:text="Cache"
+                android:textAlignment="viewStart"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnBackground"
+                app:cornerRadius="0dp"
+                app:icon="@drawable/ic_round_dns_24"
+                app:iconPadding="16dp"
+                app:iconSize="24dp"
+                app:iconTint="?attr/colorPrimary" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
