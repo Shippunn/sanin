@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Debug or Release'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
 
 permissions:
   contents: write
@@ -29,22 +38,42 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build google release
-        run: ./gradlew assembleGoogleRelease --build-cache --parallel
+      - name: Determine build type
+        id: config
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "variant=GoogleDebug" >> $GITHUB_OUTPUT
+            echo "build_type=debug" >> $GITHUB_OUTPUT
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          else
+            BT="${{ github.event.inputs.build_type }}"
+            CAP="${BT^}"
+            echo "variant=Google$CAP" >> $GITHUB_OUTPUT
+            echo "build_type=$BT" >> $GITHUB_OUTPUT
+            if [ "$BT" = "release" ]; then
+              echo "is_release=true" >> $GITHUB_OUTPUT
+            else
+              echo "is_release=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Build
+        run: ./gradlew assemble${{ steps.config.outputs.variant }} --build-cache --parallel
 
       - name: Collect APKs
         run: |
-          mkdir -p /tmp/apks/release
-          find app/build/outputs/apk -name "*.apk" -exec cp {} /tmp/apks/release/ \;
+          mkdir -p /tmp/apks
+          find app/build/outputs/apk -name "*.apk" -exec cp {} /tmp/apks/ \;
           find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: apk-google-release
-          path: /tmp/apks/release/*.apk
+          name: apk-${{ steps.config.outputs.build_type }}
+          path: /tmp/apks/*.apk
 
       - name: Generate tag and release notes
+        if: steps.config.outputs.is_release == 'true'
         id: release
         run: |
           LATEST_TAG=$(git tag --list '0.*' --sort=-v:refname | head -n1)
@@ -82,11 +111,12 @@ jobs:
           echo "$NOTES" > /tmp/release_notes.md
 
       - name: Create Release
+        if: steps.config.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release.outputs.new_tag }}
           name: "v${{ steps.release.outputs.new_tag }}"
           body_path: /tmp/release_notes.md
-          files: /tmp/apks/release/*.apk
+          files: /tmp/apks/*.apk
           generate_release_notes: false
           make_latest: true
