@@ -486,36 +486,7 @@ class MainActivity : AppCompatActivity() {
                     load = true
                 }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    if (!(PrefManager.getVal(PrefName.AllowOpeningLinks) as Boolean)) {
-                        CustomBottomDialog.newInstance().apply {
-                            title = "Allow Sanin to automatically open Anilist & MAL Links?"
-                            val md = "Open settings & click +Add Links & select Anilist & Mal urls"
-                            addView(TextView(this@MainActivity).apply {
-                                val markWon =
-                                    Markwon.builder(this@MainActivity)
-                                        .usePlugin(SoftBreakAddsNewLinePlugin.create()).build()
-                                markWon.setMarkdown(this, md)
-                            })
-
-                            setNegativeButton(this@MainActivity.getString(R.string.no)) {
-                                PrefManager.setVal(PrefName.AllowOpeningLinks, true)
-                                dismiss()
-                            }
-
-                            setPositiveButton(this@MainActivity.getString(R.string.yes)) {
-                                PrefManager.setVal(PrefName.AllowOpeningLinks, true)
-                                tryWith(true) {
-                                    startActivity(
-                                        Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS)
-                                            .setData(Uri.parse("package:$packageName"))
-                                    )
-                                }
-                                dismiss()
-                            }
-                        }.show(supportFragmentManager, "dialog")
-                    }
-                }
+                PrefManager.setVal(PrefName.AllowOpeningLinks, true)
             }
         }
         if (PrefManager.getVal(PrefName.OC)) {

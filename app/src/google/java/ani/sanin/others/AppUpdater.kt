@@ -117,63 +117,6 @@ object AppUpdater {
     }
 
     suspend fun check(activity: FragmentActivity, post: Boolean = false) {
-        if (post) snackString(currContext()?.getString(R.string.checking_for_update))
-        val repo = activity.getString(R.string.repo)
-        tryWithSuspend {
-            val (md, version) = fetchUpdateInfo(repo, BuildConfig.DEBUG) ?: return@tryWithSuspend
-
-            Logger.log("Git Version : $version")
-            val dontShow = PrefManager.getCustomVal("dont_ask_for_update_$version", false)
-            if (compareVersion(version) && !dontShow && !activity.isDestroyed) activity.runOnUiThread {
-                CustomBottomDialog.newInstance().apply {
-                    setTitleText(
-                        "${if (BuildConfig.DEBUG) "Beta " else ""}Update " + currContext()!!.getString(
-                            R.string.available
-                        )
-                    )
-                    addView(
-                        TextView(activity).apply {
-                            val markWon = try {
-                                buildMarkwon(activity, false)
-                            } catch (e: IllegalArgumentException) {
-                                return@runOnUiThread
-                            }
-                            markWon.setMarkdown(this, md)
-                        }
-                    )
-
-                    setCheck(
-                        currContext()!!.getString(R.string.dont_show_again, version),
-                        false
-                    ) { isChecked ->
-                        if (isChecked) {
-                            PrefManager.setCustomVal("dont_ask_for_update_$version", true)
-                        }
-                    }
-                    setPositiveButton(currContext()!!.getString(R.string.lets_go)) {
-                        MainScope().launch(Dispatchers.IO) {
-                            try {
-                                val apkUrl = fetchApkUrl(repo, version, BuildConfig.DEBUG)
-                                if (apkUrl != null) {
-                                    activity.downloadUpdate(version, apkUrl)
-                                } else {
-                                    openLinkInBrowser("https://github.com/repos/$repo/releases/tag/v$version")
-                                }
-                            } catch (e: Exception) {
-                                logError(e)
-                            }
-                        }
-                        dismiss()
-                    }
-                    setNegativeButton(currContext()!!.getString(R.string.cope)) {
-                        dismiss()
-                    }
-                    show(activity.supportFragmentManager, "dialog")
-                }
-            } else {
-                if (post) snackString(currContext()?.getString(R.string.no_update_found))
-            }
-        }
     }
 
     private fun compareVersion(version: String): Boolean {
