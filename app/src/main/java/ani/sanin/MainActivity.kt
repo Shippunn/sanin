@@ -131,6 +131,10 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
+        val splashRes = if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            R.drawable.splash_logo_portrait else R.drawable.splash_logo
+        window.setBackgroundDrawableResource(splashRes)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -300,15 +304,16 @@ class MainActivity : AppCompatActivity() {
             initComplete.await()
             val elapsed = System.currentTimeMillis() - splashStart
             if (elapsed < 2700L) delay(2700L - elapsed)
-            if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
-                ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
-                    duration = 400L
-                    doOnEnd { binding.root.removeView(splash.root) }
-                    start()
+                window.setBackgroundDrawableResource(R.color.bg_black)
+                if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
+                    ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
+                        duration = 400L
+                        doOnEnd { binding.root.removeView(splash.root) }
+                        start()
+                    }
+                } else {
+                    binding.root.removeView(splash.root)
                 }
-            } else {
-                binding.root.removeView(splash.root)
-            }
         }
 
         binding.root.doOnAttach {
