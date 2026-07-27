@@ -96,10 +96,10 @@ class CommentsFragment : Fragment() {
         this.mediaId = mediaId
         backgroundColor = (binding.root.background as? ColorDrawable)?.color ?: 0
 
+        markwon = buildMarkwon(activity, fragment = this)
         setupCarousel()
 
         binding.commentUserAvatar.loadImage(Anilist.avatar)
-        markwon = buildMarkwon(activity, fragment = this)
         val markwonEditor = io.noties.markwon.editor.MarkwonEditor.create(markwon)
         binding.commentInput.addTextChangedListener(
             io.noties.markwon.editor.MarkwonEditorTextWatcher.withProcess(markwonEditor)
