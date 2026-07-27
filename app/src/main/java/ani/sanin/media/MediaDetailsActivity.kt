@@ -10,6 +10,7 @@ import android.view.GestureDetector
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -215,6 +216,8 @@ class MediaDetailsActivity : AppCompatActivity() {
         }
 
         fun showCommentsTab(container: FrameLayout, animate: Boolean) {
+            val parent = container.parent as? View
+            parent?.layoutParams = (parent?.layoutParams as? ViewGroup.MarginLayoutParams)?.apply { topMargin = 0 }
             if (!commentsAdded) {
                 commentsAdded = true
                 val ft = supportFragmentManager.beginTransaction()
@@ -261,6 +264,13 @@ class MediaDetailsActivity : AppCompatActivity() {
         fun selectTab(idx: Int, animate: Boolean = true) {
             selected = idx
             updateMediaNavIconTints(selected)
+            if (idx != 2) {
+                val container = binding.mediaTabContent
+                val parent = container?.parent as? View
+                parent?.layoutParams = (parent?.layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                    topMargin = (300 * resources.displayMetrics.density).toInt()
+                }
+            }
             when (idx) {
                 0 -> {
                     binding.mediaInfoFragmentContainer!!.visibility = View.VISIBLE
