@@ -292,31 +292,23 @@ class MainActivity : AppCompatActivity() {
 
         binding.root.isMotionEventSplittingEnabled = false
 
-        val splash: SplashScreenBinding?
-        val splashStart: Long
+        val splash = SplashScreenBinding.inflate(layoutInflater)
+        binding.root.addView(splash.root)
+        val splashStart = System.currentTimeMillis()
         val initComplete = CompletableDeferred<Unit>()
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            splash = SplashScreenBinding.inflate(layoutInflater)
-            binding.root.addView(splash.root)
-            splashStart = System.currentTimeMillis()
-            lifecycleScope.launch {
-                initComplete.await()
-                val elapsed = System.currentTimeMillis() - splashStart
-                if (elapsed < 2700L) delay(2700L - elapsed)
-                if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
-                    ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
-                        duration = 400L
-                        doOnEnd { binding.root.removeView(splash.root) }
-                        start()
-                    }
-                } else {
-                    binding.root.removeView(splash.root)
+        lifecycleScope.launch {
+            initComplete.await()
+            val elapsed = System.currentTimeMillis() - splashStart
+            if (elapsed < 2700L) delay(2700L - elapsed)
+            if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
+                ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
+                    duration = 400L
+                    doOnEnd { binding.root.removeView(splash.root) }
+                    start()
                 }
+            } else {
+                binding.root.removeView(splash.root)
             }
-        } else {
-            splash = null
-            splashStart = 0L
-            initComplete.complete(Unit)
         }
 
         binding.root.doOnAttach {
