@@ -183,15 +183,38 @@ class CommentsFragment : Fragment() {
 
         binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
-                view.nextFocusRightId = R.id.commentSourceBar
+                if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                    view.nextFocusRightId = R.id.commentSourceBar
+                } else {
+                    view.nextFocusDownId = R.id.commentSourceBar
+                }
                 view.setOnKeyListener { v, keyCode, event ->
                     if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+                    val isLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                     when (keyCode) {
-                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { lm.scrollToNext(); true }
-                        android.view.KeyEvent.KEYCODE_DPAD_UP -> { lm.scrollToPrevious(); true }
+                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                            if (lm.focusedPosition < carouselAdapter.itemCount - 1) {
+                                lm.scrollToNext(); true
+                            } else if (!isLandscape) {
+                                false // at bottom edge in portrait → fall through to source bar
+                            } else {
+                                true
+                            }
+                        }
+                        android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                            if (lm.focusedPosition > 0) {
+                                lm.scrollToPrevious(); true
+                            } else if (!isLandscape) {
+                                false // at top edge in portrait → fall through
+                            } else {
+                                true
+                            }
+                        }
                         android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                            (activity as MediaDetailsActivity).showNavPills()
-                            (activity as MediaDetailsActivity).focusNavPillForSelectedTab()
+                            if (isLandscape) {
+                                (activity as MediaDetailsActivity).showNavPills()
+                                (activity as MediaDetailsActivity).focusNavPillForSelectedTab()
+                            }
                             true
                         }
                         else -> false
