@@ -86,19 +86,29 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <!-- Logoart Image -->
+            <!-- Cover Poster (Anilist cover) - takes remaining space -->
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/commentsPoster"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                android:nextFocusLeft="@id/commentsList"
+                tools:ignore="ContentDescription" />
+
+            <!-- Title / Logoart -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/commentsLogoart"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="0.4"
-                android:scaleType="fitCenter"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
                 android:visibility="gone"
                 android:nextFocusLeft="@id/commentsList"
                 tools:ignore="ContentDescription" />
 
-            <!-- Anime Title (fallback when no logoart) -->
             <TextView
                 android:id="@+id/commentsTitle"
                 android:layout_width="match_parent"
@@ -109,36 +119,16 @@
                 android:maxLines="2"
                 android:text="Anime Title"
                 android:textColor="#FFFFFFFF"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 tools:ignore="HardcodedText" />
 
-            <!-- Episode Progress / List Status -->
-            <TextView
-                android:id="@+id/commentCurrentProgress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:alpha="0.6"
-                android:background="@drawable/btn_transparent_round"
-                android:focusable="true"
-                android:fontFamily="@font/poppins_bold"
-                android:gravity="center"
-                android:nextFocusLeft="@id/commentsList"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="6dp"
-                android:text="Ep 1"
-                android:textColor="#FFAAAAAA"
-                android:textSize="13sp"
-                android:visibility="visible"
-                tools:ignore="HardcodedText" />
-
-            <!-- List Editor Button -->
+            <!-- List Editor Button (info tab style) -->
             <Button
                 android:id="@+id/commentsListEditor"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:fontFamily="@font/poppins_bold"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
@@ -147,54 +137,28 @@
                 android:text="@string/add_list"
                 android:textAllCaps="true"
                 android:textColor="@android:color/white"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:visibility="visible"
                 app:cornerRadius="16dp"
                 app:strokeColor="@android:color/white" />
 
-            <!-- Source Switch (Sanin / Trakt) -->
-            <LinearLayout
-                android:id="@+id/commentSourceBar"
-                android:layout_width="match_parent"
+            <!-- Episode Progress (hidden by default) -->
+            <TextView
+                android:id="@+id/commentCurrentProgress"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
+                android:alpha="0.6"
+                android:background="@drawable/btn_transparent_round"
+                android:fontFamily="@font/poppins_bold"
                 android:gravity="center"
-                android:orientation="horizontal"
-                android:visibility="visible"
-                tools:visibility="visible">
-
-                <TextView
-                    android:id="@+id/commentSourceSanin"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_transparent_round"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:fontFamily="@font/poppins_bold"
-                    android:gravity="center"
-                    android:nextFocusLeft="@id/commentsList"
-                    android:text="Sanin"
-                    android:textColor="#FFFFFFFF"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/commentSourceTrakt"
-                    android:layout_width="0dp"
-                    android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:background="@drawable/btn_transparent_round"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:fontFamily="@font/poppins_bold"
-                    android:gravity="center"
-                    android:nextFocusLeft="@id/commentsList"
-                    android:text="Trakt"
-                    android:textColor="#FF888888"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="3dp"
+                android:text="Ep 1"
+                android:textColor="#FFAAAAAA"
+                android:textSize="11sp"
+                android:visibility="gone"
+                tools:ignore="HardcodedText" />
 
             <View
                 android:layout_width="match_parent"
@@ -320,13 +284,5 @@
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>
-
-    <!-- Hidden views from portrait - kept for binding compatibility -->
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/commentsPoster"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone"
-        tools:ignore="ContentDescription" />
 
 </LinearLayout>

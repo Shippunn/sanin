@@ -93,6 +93,16 @@ class CommentsCarouselAdapter(
             fragment.openCommentDetail(comment)
         }
 
+        if (comment.isTrakt) {
+            b.carouselSourceBadge.visibility = View.VISIBLE
+            b.carouselSourceBadge.text = "trakt"
+            b.carouselSourceBadge.setTextColor(0xFFFF4444.toInt())
+        } else {
+            b.carouselSourceBadge.visibility = View.VISIBLE
+            b.carouselSourceBadge.text = "dantotsu"
+            b.carouselSourceBadge.setTextColor(0xFFBB86FC.toInt())
+        }
+
         val showActions = isFocused
         b.carouselActionRow.visibility = if (showActions) View.VISIBLE else View.INVISIBLE
         b.carouselAvatar.layoutParams.width = if (isFocused) 48 else 32
@@ -102,6 +112,7 @@ class CommentsCarouselAdapter(
         b.carouselUserName.alpha = if (isFocused) 1f else 0.7f
         b.carouselCommentText.alpha = if (isFocused) 1f else 0.6f
         b.carouselTimestamp.visibility = if (isFocused) View.VISIBLE else View.INVISIBLE
+        b.carouselSourceBadge.alpha = if (isFocused) 1f else 0.7f
     }
 
     private fun formatTimestamp(timestamp: String): String {

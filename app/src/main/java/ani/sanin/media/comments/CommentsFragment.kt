@@ -2,12 +2,9 @@ package ani.sanin.media.comments
 
 import android.annotation.SuppressLint
 import android.content.Context.INPUT_METHOD_SERVICE
-import android.content.ClipData
 import android.content.ClipboardManager
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.R
 import ani.sanin.buildMarkwon
-import ani.sanin.connections.LogoApi
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.mal.MAL
@@ -65,13 +61,11 @@ class CommentsFragment : Fragment() {
     private var isAutoFilterOn = false
     private var isSpoilerMode = false
 
-    private var currentSource = CommentSource.DANOTSU
     private var traktResult: TraktSearchResult? = null
     private var displayedComments = mutableListOf<Comment>()
     private lateinit var carouselAdapter: CommentsCarouselAdapter
     private lateinit var markwon: io.noties.markwon.Markwon
 
-    enum class CommentSource { DANOTSU, TRAKT }
     enum class InteractionState { NONE, EDIT, REPLY }
 
     override fun onCreateView(
@@ -110,42 +104,46 @@ class CommentsFragment : Fragment() {
         val model: MediaDetailsViewModel by activityViewModels()
         model.getMedia().observe(viewLifecycleOwner) { newMedia ->
             if (newMedia != null && newMedia.id != 0) {
-                val bannerUrl = newMedia.banner
-                if (bannerUrl != null) {
+                val logoUrl = newMedia.banner
+                if (logoUrl != null) {
                     binding.commentsLogoart.visibility = View.VISIBLE
                     binding.commentsTitle.visibility = View.GONE
-                    binding.commentsLogoart.loadImage(bannerUrl)
+                    binding.commentsLogoart.loadImage(logoUrl)
                 } else {
                     binding.commentsLogoart.visibility = View.GONE
                     binding.commentsTitle.visibility = View.VISIBLE
                     binding.commentsTitle.text = newMedia.userPreferredName ?: newMedia.name
                 }
 
-                val fm = requireActivity().supportFragmentManager
                 isAnime = newMedia.anime != null
                 userProgress = newMedia.userProgress
                 totalEpisodesOrChapters = newMedia.anime?.totalEpisodes
                 updateCurrentProgressButton()
 
+                val coverUrl = newMedia.cover
+                if (coverUrl != null) {
+                    binding.commentsPoster.loadImage(coverUrl)
+                }
+
+                updateListEditorText(newMedia.userStatus)
+                setupListEditor()
+
                 if (!commentsLoaded || newMedia.id != this.mediaId) {
                     this.mediaId = newMedia.id
                     commentsLoaded = true
                     traktResult = null
-                    currentSource = CommentSource.DANOTSU
 
                     lifecycleScope.launch {
                         traktResult = lookupTraktIds()
-                        updateSourceBarVisibility()
                     }
 
                     if (isOfflineOrLocal) {
                         binding.commentsOfflineText.visibility = View.VISIBLE
                         binding.commentsList.visibility = View.GONE
-                        binding.commentSourceBar.visibility = View.GONE
                         binding.commentCurrentProgress.visibility = View.GONE
                         binding.commentMessageContainer.visibility = View.GONE
                         binding.commentsProgressBar.visibility = View.GONE
-                    } else if (CommentsAPI.authToken != null) {
+                    } else if (CommentsAPI.authToken != null || TraktAuth.isLoggedIn()) {
                         lifecycleScope.launch {
                             val commentId = arguments?.getInt("commentId")
                             if (commentId != null && commentId > 0) {
@@ -161,11 +159,41 @@ class CommentsFragment : Fragment() {
             }
         }
 
-        setupSourceButtons()
         setupInputListeners()
-        setupListEditor()
-        updateSourceBarVisibility()
         updateCurrentProgressButton()
+    }
+
+    private fun updateListEditorText(userStatus: String?) {
+        val statuses: Array<String> = resources.getStringArray(R.array.status)
+        val statusStrings = resources.getStringArray(R.array.status_anime)
+        val userStatusText =
+            if (userStatus != null) statusStrings[statuses.indexOf(userStatus).coerceAtLeast(0)] else null
+        if (userStatusText != null) {
+            binding.commentsListEditor.text = userStatusText
+        } else {
+            binding.commentsListEditor.setText(R.string.add_list)
+        }
+    }
+
+    private fun setupListEditor() {
+        binding.commentsListEditor.setOnClickListener {
+            val rescueMode: Boolean = PrefManager.getVal(PrefName.RescueMode)
+            val fm = requireActivity().supportFragmentManager
+            if (fm.findFragmentByTag("dialog") == null) {
+                if (rescueMode) {
+                    if (MAL.token != null) {
+                        MediaListDialogFragment().show(fm, "dialog")
+                    } else snackString("Please login to MAL")
+                } else if (Anilist.userid != null) {
+                    MediaListDialogFragment().show(fm, "dialog")
+                } else snackString("Please login to AniList")
+            }
+        }
+        binding.commentsListEditor.setOnLongClickListener {
+            PrefManager.setCustomVal("${mediaId}_progressDialog", true)
+            snackString(getString(R.string.auto_update_reset))
+            true
+        }
     }
 
     private fun setupCarousel() {
@@ -191,9 +219,7 @@ class CommentsFragment : Fragment() {
         binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-                    view.nextFocusRightId = R.id.commentSourceBar
-                } else {
-                    view.nextFocusDownId = R.id.commentSourceBar
+                    view.nextFocusRightId = R.id.commentsPoster
                 }
                 view.setOnKeyListener { v, keyCode, event ->
                     if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
@@ -203,7 +229,7 @@ class CommentsFragment : Fragment() {
                             if (lm.focusedPosition < carouselAdapter.itemCount - 1) {
                                 lm.scrollToNext(); true
                             } else if (!isLandscape) {
-                                false // at bottom edge in portrait → fall through to source bar
+                                false
                             } else {
                                 true
                             }
@@ -212,7 +238,7 @@ class CommentsFragment : Fragment() {
                             if (lm.focusedPosition > 0) {
                                 lm.scrollToPrevious(); true
                             } else if (!isLandscape) {
-                                false // at top edge in portrait → fall through
+                                false
                             } else {
                                 true
                             }
@@ -232,23 +258,6 @@ class CommentsFragment : Fragment() {
                 view.setOnKeyListener(null)
             }
         })
-    }
-
-    private fun setupSourceButtons() {
-        binding.commentSourceSanin.setOnClickListener {
-            if (currentSource != CommentSource.DANOTSU) {
-                currentSource = CommentSource.DANOTSU
-                highlightSource()
-                lifecycleScope.launch { loadAndDisplayComments() }
-            }
-        }
-        binding.commentSourceTrakt.setOnClickListener {
-            if (currentSource != CommentSource.TRAKT) {
-                currentSource = CommentSource.TRAKT
-                highlightSource()
-                lifecycleScope.launch { loadAndDisplayComments() }
-            }
-        }
     }
 
     private fun setupInputListeners() {
@@ -295,66 +304,6 @@ class CommentsFragment : Fragment() {
         }
     }
 
-    private fun setupListEditor() {
-        binding.commentsListEditor.setOnClickListener {
-            val rescueMode: Boolean = PrefManager.getVal(PrefName.RescueMode)
-            val fm = requireActivity().supportFragmentManager
-            if (fm.findFragmentByTag("dialog") == null) {
-                if (rescueMode) {
-                    if (MAL.token != null) {
-                        MediaListDialogFragment().show(fm, "dialog")
-                    } else snackString("Please login to MAL")
-                } else if (Anilist.userid != null) {
-                    MediaListDialogFragment().show(fm, "dialog")
-                } else snackString("Please login to AniList")
-            }
-        }
-        binding.commentsLogoart.nextFocusRightId = binding.commentInput.id
-        binding.commentsListEditor.nextFocusLeftId = R.id.commentsList
-    }
-
-    private fun highlightSource() {
-        val primary = resolveColorAttr(com.google.android.material.R.attr.colorPrimary)
-        val onPrimary = resolveColorAttr(com.google.android.material.R.attr.colorOnPrimary)
-        val onBg = 0xFF888888.toInt()
-
-        when (currentSource) {
-            CommentSource.DANOTSU -> {
-                binding.commentSourceSanin.setTextColor(onPrimary)
-                binding.commentSourceSanin.setBackgroundColor(primary)
-                binding.commentSourceTrakt.setTextColor(onBg)
-                binding.commentSourceTrakt.background = null
-            }
-            CommentSource.TRAKT -> {
-                binding.commentSourceTrakt.setTextColor(onPrimary)
-                binding.commentSourceTrakt.setBackgroundColor(primary)
-                binding.commentSourceSanin.setTextColor(onBg)
-                binding.commentSourceSanin.background = null
-            }
-        }
-        updateUiForSource()
-    }
-
-    private fun updateUiForSource() {
-        val isSanin = currentSource == CommentSource.DANOTSU
-        binding.commentMessageContainer.visibility =
-            if (isSanin && CommentsAPI.authToken != null) View.VISIBLE
-            else if (!isSanin && TraktAuth.isLoggedIn()) View.VISIBLE
-            else View.GONE
-        binding.commentCurrentProgress.visibility = if (isSanin && (userProgress ?: 0) > 0) View.VISIBLE else View.GONE
-    }
-
-    private suspend fun lookupTraktIds(): TraktSearchResult? {
-        val imdbId = IdMappers.getImdbId(mediaId) ?: return null
-        return TraktAPI.searchByImdb(imdbId)
-    }
-
-    private fun updateSourceBarVisibility() {
-        val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        binding.commentSourceBar.visibility = if (hasTrakt) View.VISIBLE else View.GONE
-        if (hasTrakt) highlightSource()
-    }
-
     private fun updateCurrentProgressButton() {
         val progress = userProgress ?: 0
         if (progress <= 0) {
@@ -367,6 +316,11 @@ class CommentsFragment : Fragment() {
         binding.commentCurrentProgress.visibility = View.VISIBLE
     }
 
+    private suspend fun lookupTraktIds(): TraktSearchResult? {
+        val imdbId = IdMappers.getImdbId(mediaId) ?: return null
+        return TraktAPI.searchByImdb(imdbId)
+    }
+
     suspend fun loadAndDisplayComments() {
         binding.commentsProgressBar.visibility = View.VISIBLE
         binding.commentsList.visibility = View.GONE
@@ -374,10 +328,13 @@ class CommentsFragment : Fragment() {
         displayedComments.clear()
         pagesLoaded = 1
 
-        when (currentSource) {
-            CommentSource.DANOTSU -> loadSaninComments()
-            CommentSource.TRAKT -> loadTraktComments()
-        }
+        val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
+        if (hasTrakt && traktResult != null) loadTraktComments()
+        loadSaninComments()
+
+        val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
+        displayedComments.clear()
+        displayedComments.addAll(merged)
 
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
@@ -389,21 +346,13 @@ class CommentsFragment : Fragment() {
         val comments = withContext(Dispatchers.IO) {
             CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
         }
-        displayedComments.addAll(sortComments(comments?.comments))
+        displayedComments.addAll(comments?.comments ?: emptyList())
         totalPages = comments?.totalPages ?: 1
     }
 
     private suspend fun loadTraktComments() {
-        val type = traktResult?.mediaType ?: run {
-            withContext(Dispatchers.Main) { snackString("Trakt: media not found") }
-            totalPages = 1
-            return
-        }
-        val id = traktResult?.traktId ?: run {
-            withContext(Dispatchers.Main) { snackString("Trakt: media not found") }
-            totalPages = 1
-            return
-        }
+        val type = traktResult?.mediaType ?: return
+        val id = traktResult?.traktId ?: return
         val sort = when (PrefManager.getVal(PrefName.CommentSortOrder, "newest")) {
             "newest" -> "newest"
             "oldest" -> "oldest"
@@ -412,8 +361,7 @@ class CommentsFragment : Fragment() {
         val traktComments = withContext(Dispatchers.IO) {
             TraktAPI.getComments(type, id, page = 1, sort = sort)
         }
-        displayedComments.addAll(sortComments(traktComments.map { traktToComment(it) }))
-        totalPages = if (traktComments.size < 25) 1 else 2
+        displayedComments.addAll(traktComments.map { traktToComment(it) })
     }
 
     private fun traktToComment(tc: TraktComment): Comment {
@@ -452,17 +400,6 @@ class CommentsFragment : Fragment() {
         binding.commentsList.visibility = View.VISIBLE
     }
 
-    private fun sortComments(comments: List<Comment>?): List<Comment> {
-        if (comments == null) return emptyList()
-        return when (PrefManager.getVal(PrefName.CommentSortOrder, "newest")) {
-            "newest" -> comments.sortedByDescending { timestampToMillis(it.timestamp) }
-            "oldest" -> comments.sortedBy { timestampToMillis(it.timestamp) }
-            "highest_rated" -> comments.sortedByDescending { it.upvotes - it.downvotes }
-            "lowest_rated" -> comments.sortedBy { it.upvotes - it.downvotes }
-            else -> comments
-        }
-    }
-
     private fun timestampToMillis(timestamp: String): Long {
         return try {
             val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
@@ -472,7 +409,7 @@ class CommentsFragment : Fragment() {
     }
 
     fun voteComment(comment: Comment, voteType: Int, position: Int) {
-        if (currentSource == CommentSource.TRAKT) {
+        if (comment.isTrakt) {
             snackString("Voting on Trakt comments coming soon")
             return
         }
@@ -559,13 +496,6 @@ class CommentsFragment : Fragment() {
         else -> null
     }
 
-    private fun resolveColorAttr(attr: Int): Int {
-        val typedArray = activity.obtainStyledAttributes(intArrayOf(attr))
-        val color = typedArray.getColor(0, 0)
-        typedArray.recycle()
-        return color
-    }
-
     private fun resetOldState(): InteractionState {
         val oldState = interactionState
         interactionState = InteractionState.NONE
@@ -605,7 +535,6 @@ class CommentsFragment : Fragment() {
         lifecycleScope.launch {
             when (interactionState) {
                 InteractionState.EDIT -> handleEditComment(finalText)
-                InteractionState.REPLY -> handleNewComment(finalText)
                 else -> handleNewComment(finalText)
             }
             resetOldState()
@@ -617,7 +546,7 @@ class CommentsFragment : Fragment() {
             commentWithInteraction?.commentId
         } else null
 
-        if (currentSource == CommentSource.TRAKT) {
+        if (traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1) {
             handleTraktNewComment(text, parentId)
             return
         }

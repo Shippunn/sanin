@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import ani.sanin.R
+import ani.sanin.buildMarkwon
 import ani.sanin.databinding.DialogCommentZoomBinding
 import ani.sanin.loadImage
 import ani.sanin.util.FocusEffectUtil
@@ -27,6 +28,7 @@ class CommentZoomDialog : DialogFragment() {
     private var upvotes: Int = 0
     private var downvotes: Int = 0
     private var isTrakt: Boolean = false
+    private lateinit var markwon: io.noties.markwon.Markwon
 
     interface ZoomActionListener {
         fun onReply(commentId: Int, username: String)
@@ -51,6 +53,8 @@ class CommentZoomDialog : DialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         val args = arguments ?: return
 
+        markwon = buildMarkwon(requireActivity())
+
         commentId = args.getInt("commentId")
         userVoteType = args.getInt("userVoteType", 0)
         upvotes = args.getInt("upvotes", 0)
@@ -61,7 +65,7 @@ class CommentZoomDialog : DialogFragment() {
 
         binding.zoomUserName.text = username
         binding.zoomUserTime.text = formatTimestamp(timestamp)
-        binding.zoomCommentText.text = args.getString("content")
+        markwon.setMarkdown(binding.zoomCommentText, args.getString("content") ?: "")
         binding.zoomVotes.text = "${upvotes - downvotes} votes"
         updateVoteCount()
         updateVoteIcons()
