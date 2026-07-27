@@ -74,6 +74,8 @@ import ani.sanin.util.AudioHelper
 import ani.sanin.util.Logger
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
@@ -290,17 +292,19 @@ class MainActivity : AppCompatActivity() {
 
         binding.root.isMotionEventSplittingEnabled = false
 
+        val splash: SplashScreenBinding?
+        val splashStart: Long
+        val initComplete = CompletableDeferred<Unit>()
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            val splash = SplashScreenBinding.inflate(layoutInflater)
+            splash = SplashScreenBinding.inflate(layoutInflater)
             binding.root.addView(splash.root)
-            splash.root.postDelayed({
+            splashStart = System.currentTimeMillis()
+            lifecycleScope.launch {
+                initComplete.await()
+                val elapsed = System.currentTimeMillis() - splashStart
+                if (elapsed < 2700L) delay(2700L - elapsed)
                 if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
-                    ObjectAnimator.ofFloat(
-                        splash.root,
-                        View.ALPHA,
-                        1f,
-                        0f
-                    ).apply {
+                    ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
                         duration = 400L
                         doOnEnd { binding.root.removeView(splash.root) }
                         start()
@@ -308,9 +312,12 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     binding.root.removeView(splash.root)
                 }
-            }, 1200L)
+            }
+        } else {
+            splash = null
+            splashStart = 0L
+            initComplete.complete(Unit)
         }
-
 
         binding.root.doOnAttach {
             initActivity(this)
@@ -378,6 +385,8 @@ class MainActivity : AppCompatActivity() {
             loadAvatar()
             setupRightRail()
             binding.homeNavRail.post { updateSideRail() }
+
+            initComplete.complete(Unit)
         }
 
         if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
