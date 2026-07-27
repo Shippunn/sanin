@@ -53,11 +53,12 @@ class CommentsCarouselLayoutManager(
     }
 
     private var pixelOffset = 0f
-    var focusedPosition: Int get() {
-        if (itemCount == 0) return 0
-        val raw = pixelOffset / itemHeight.toFloat()
-        return raw.toInt().coerceIn(0, itemCount - 1)
-    }
+    val focusedPosition: Int
+        get() {
+            if (itemCount == 0) return 0
+            val raw = pixelOffset / itemHeight.toFloat()
+            return raw.toInt().coerceIn(0, itemCount - 1)
+        }
 
     private fun fill(recycler: RecyclerView.Recycler, state: RecyclerView.State) {
         if (itemCount == 0) return
