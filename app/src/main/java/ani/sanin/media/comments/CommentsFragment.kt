@@ -136,10 +136,6 @@ class CommentsFragment : Fragment() {
                     commentsLoaded = true
                     traktResult = null
 
-                    lifecycleScope.launch {
-                        traktResult = lookupTraktIds()
-                    }
-
                     if (isOfflineOrLocal) {
                         binding.commentsOfflineText.visibility = View.VISIBLE
                         binding.commentsList.visibility = View.GONE
@@ -148,6 +144,7 @@ class CommentsFragment : Fragment() {
                         binding.commentsProgressBar.visibility = View.GONE
                     } else if (CommentsAPI.authToken != null || TraktAuth.isLoggedIn()) {
                         lifecycleScope.launch {
+                            traktResult = lookupTraktIds()
                             val commentId = arguments?.getInt("commentId")
                             if (commentId != null && commentId > 0) {
                                 loadSingleComment(commentId)
