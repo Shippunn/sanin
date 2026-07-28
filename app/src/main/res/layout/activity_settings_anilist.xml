@@ -6,12 +6,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     tools:context=".settings.SettingsAccountActivity">
 
     <LinearLayout
         android:id="@+id/settingsAnilistLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <androidx.cardview.widget.CardView
@@ -38,6 +40,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:orientation="horizontal"
             tools:ignore="UseCompoundDrawables">
 
@@ -194,6 +197,7 @@
                 android:id="@+id/settingsRecyclerView1"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                 android:layout_marginBottom="14dp"
                 android:layout_marginHorizontal="32dp"
                 android:nestedScrollingEnabled="false"
@@ -408,6 +412,7 @@
             android:id="@+id/settingsRecyclerView2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:layout_marginHorizontal="32dp"
             android:nestedScrollingEnabled="false"
             android:requiresFadingEdge="vertical"

@@ -6,12 +6,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     tools:context=".settings.SettingsAccountActivity">
 
     <LinearLayout
         android:id="@+id/settingsAccountsLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
         android:orientation="vertical"
         android:paddingStart="32dp"
         android:paddingEnd="32dp">
@@ -40,6 +42,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:orientation="horizontal"
             tools:ignore="UseCompoundDrawables">
 
@@ -77,6 +80,7 @@
                 android:id="@+id/settingsAnilistBanner"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                 android:scaleType="centerCrop"
                 android:visibility="gone" />
 
@@ -84,6 +88,7 @@
                 android:id="@+id/settingsAnilistScrim"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                 android:background="?attr/colorSurface"
                 android:alpha="0.75"
                 android:visibility="gone" />
@@ -98,6 +103,7 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="20dp"
                     android:contentDescription="@string/anilist"
@@ -178,6 +184,7 @@
             <ImageView
                 android:layout_width="31dp"
                 android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                 android:layout_marginEnd="16dp"
                 android:contentDescription="@string/myanimelist"
                 app:srcCompat="@drawable/ic_myanimelist"
@@ -274,6 +281,7 @@
                 <ImageView
                     android:layout_width="24dp"
                     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
                     android:layout_marginStart="4dp"
                     android:layout_marginEnd="20dp"
                     android:contentDescription="@string/discord"
@@ -299,6 +307,7 @@
             android:id="@+id/settingsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:nestedScrollingEnabled="false"
             android:requiresFadingEdge="vertical"
             tools:itemCount="1"

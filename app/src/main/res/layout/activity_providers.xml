@@ -31,7 +31,7 @@
                 android:focusableInTouchMode="false"
                 android:padding="8dp"
                 android:src="@drawable/ic_round_arrow_back_ios_new_24"
-                app:tint="#FFFFFFFF" />
+                app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:layout_width="0dp"
@@ -40,7 +40,7 @@
                 android:layout_weight="1"
                 android:fontFamily="@font/poppins_bold"
                 android:text="Providers"
-                android:textColor="#FFFFFFFF"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="18sp" />
 
             <ImageView
@@ -48,7 +48,7 @@
                 android:layout_height="24dp"
                 android:layout_marginEnd="12dp"
                 app:srcCompat="@drawable/ic_extension"
-                app:tint="#FFFFFFFF" />
+                app:tint="?attr/colorOnSurface" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -61,7 +61,7 @@
         android:gravity="start"
         android:padding="16dp"
         android:text="Third-Party Provider!\n\nThis provider is not affiliated with Sanin. By installing it, you acknowledge that Sanin does not own, host, distribute, or claim copyright over any content provided by third-party providers. You are responsible for complying with applicable copyright laws."
-        android:textColor="#FFAAAAAA"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="16sp"
         android:visibility="gone" />
 

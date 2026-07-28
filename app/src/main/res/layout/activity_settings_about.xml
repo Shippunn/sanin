@@ -6,12 +6,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
     tools:context=".settings.SettingsAboutActivity">
 
     <LinearLayout
         android:id="@+id/settingsAboutLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <androidx.cardview.widget.CardView
@@ -38,6 +40,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:orientation="horizontal"
             tools:ignore="UseCompoundDrawables">
 
@@ -66,6 +69,7 @@
             android:id="@+id/settingsRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
             android:layout_marginHorizontal="24dp"
             android:nestedScrollingEnabled="false"
             android:requiresFadingEdge="vertical"
