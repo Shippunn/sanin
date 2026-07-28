@@ -4,13 +4,34 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.math.MathUtils.clamp
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import ani.sanin.BottomSheetDialogFragment
+import ani.sanin.R
 import ani.sanin.databinding.BottomSheetSourceSearchBinding
 import ani.sanin.media.anime.AnimeSourceAdapter
 import ani.sanin.navBarHeight
@@ -32,6 +53,8 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
     val model: MediaDetailsViewModel by activityViewModels()
     private var searched = false
+    private var searchText by mutableStateOf("")
+    private val searchFocusRequester = FocusRequester()
     var i: Int? = null
     var id: Int? = null
     var media: Media? = null
@@ -67,16 +90,12 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 } else null
 
                 fun search(keepFocus: Boolean = false) {
-                    if (!keepFocus) {
-                        binding.searchBarText.clearFocus()
-                        binding.mediaListContainer.requestFocus()
-                    }
                     scope.launch {
                         val src = source as? AnimeParser
                         model.responses.postValue(
                             withContext(Dispatchers.IO) {
                                 tryWithSuspend {
-                                    src?.search(binding.searchBarText.text.toString())
+                                    src?.search(searchText)
                                 }
                             }
                         )
@@ -84,11 +103,53 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 }
                 val srcName = (source as? AnimeParser)?.name ?: "Search"
                 binding.searchSourceTitle.text = srcName
-                binding.searchBarText.setText(media!!.mainName())
-                binding.searchBar.setEndIconOnClickListener { search() }
-                binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
-                    if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { search(); true } else false
+                searchText = media!!.mainName()
+
+                binding.searchBarCompose.setContent {
+                    val focusManager = LocalFocusManager.current
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        singleLine = true,
+                        placeholder = { Text(srcName, fontSize = 14.sp) },
+                        trailingIcon = {
+                            IconButton(onClick = { search() }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_round_search_24),
+                                    contentDescription = "Search",
+                                    tint = ComposeColor.White
+                                )
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = { search() }
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(searchFocusRequester)
+                            .onPreviewKeyEvent { ev ->
+                                if (ev.type == KeyEventType.KeyDown) {
+                                    when (ev.key) {
+                                        Key.DirectionDown -> {
+                                            focusManager.moveFocus(FocusDirection.Down)
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                } else false
+                            },
+                        shape = RoundedCornerShape(28.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ComposeColor.White,
+                            unfocusedTextColor = ComposeColor.White,
+                            cursorColor = ComposeColor.White,
+                            focusedBorderColor = ComposeColor.White.copy(alpha = 0.5f),
+                            unfocusedBorderColor = ComposeColor.White.copy(alpha = 0.3f)
+                        )
+                    )
                 }
+
                 if (!searched) search(keepFocus = true)
                 searched = true
                 model.responses.observe(viewLifecycleOwner) { j ->

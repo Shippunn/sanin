@@ -1,18 +1,38 @@
 package ani.sanin.media
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.math.MathUtils.clamp
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.BottomSheetDialogFragment
+import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.databinding.BottomSheetSourceSearchBinding
 import ani.sanin.databinding.ItemMediaCompactBinding
@@ -33,6 +53,8 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
     private var _binding: BottomSheetSourceSearchBinding? = null
     private val binding get() = _binding!!
     private var searched = false
+    private var searchText by mutableStateOf("")
+    private val searchFocusRequester = FocusRequester()
 
     var folderName: String? = null
     var searchType: String = "ANIME"
@@ -53,8 +75,6 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
         binding.mediaListContainer.updateLayoutParams<ViewGroup.MarginLayoutParams> { bottomMargin += navBarHeight }
 
         val scope = viewLifecycleOwner.lifecycleScope
-        val imm =
-            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
         binding.mediaListProgressBar.visibility = View.GONE
         binding.mediaListLayout.visibility = View.VISIBLE
@@ -62,11 +82,9 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
         binding.searchProgress.visibility = View.VISIBLE
 
         binding.searchSourceTitle.text = "Map to AniList"
-        binding.searchBarText.setText(folderName ?: "")
+        searchText = folderName ?: ""
 
         fun search() {
-            binding.searchBarText.clearFocus()
-            imm.hideSoftInputFromWindow(binding.searchBarText.windowToken, 0)
             binding.searchRecyclerView.visibility = View.GONE
             binding.searchProgress.visibility = View.VISIBLE
             scope.launch {
@@ -74,7 +92,7 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
                     tryWithSuspend {
                         Anilist.query.searchAniManga(
                             type = searchType,
-                            search = binding.searchBarText.text.toString(),
+                            search = searchText,
                             format = searchFormat
                         )
                     }
@@ -84,7 +102,6 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
                     binding.searchProgress.visibility = View.GONE
                     binding.searchRecyclerView.adapter =
                         LocalMappingResultAdapter(results.results) { selectedMedia ->
-                            // Save the mapping
                             val mapKey = folderName ?: return@LocalMappingResultAdapter
                             PrefManager.setCustomVal("local_mapping_$mapKey", selectedMedia.id)
                             snackString("Mapped to: ${selectedMedia.userPreferredName}")
@@ -106,18 +123,52 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
             }
         }
 
-        binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
-            return@setOnEditorActionListener when (actionId) {
-                EditorInfo.IME_ACTION_SEARCH -> {
-                    search()
-                    true
-                }
-                else -> false
-            }
+        binding.searchBarCompose.setContent {
+            val focusManager = LocalFocusManager.current
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                singleLine = true,
+                placeholder = { Text("Search", fontSize = 14.sp) },
+                trailingIcon = {
+                    IconButton(onClick = { search() }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_round_search_24),
+                            contentDescription = "Search",
+                            tint = ComposeColor.White
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = { search() }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(searchFocusRequester)
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.DirectionDown -> {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                    true
+                                }
+                                else -> false
+                            }
+                        } else false
+                    },
+                shape = RoundedCornerShape(28.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White,
+                    focusedBorderColor = ComposeColor.White.copy(alpha = 0.5f),
+                    unfocusedBorderColor = ComposeColor.White.copy(alpha = 0.3f)
+                )
+            )
         }
-        binding.searchBar.setEndIconOnClickListener { search() }
-        if (!searched) search()
-        searched = true
+
+        search()
     }
 
     override fun onDestroyView() {
