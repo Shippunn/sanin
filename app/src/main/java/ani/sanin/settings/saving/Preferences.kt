@@ -121,7 +121,7 @@ enum class PrefName(val data: Pref) {
     FollowerLayout(Pref(Location.UI, Int::class, 0)),
     ShowNotificationRedDot(Pref(Location.UI, Boolean::class, true)),
 
-    OledMode(Pref(Location.UI, Int::class, 0)),
+    OledMode(Pref(Location.UI, Int::class, 1)),
     GradientDirection(Pref(Location.UI, Int::class, 0)),
     Emoji(Pref(Location.UI, Boolean::class, true)),
     AnimationsEnabled(Pref(Location.UI, Boolean::class, true)),

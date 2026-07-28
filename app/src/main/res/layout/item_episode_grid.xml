@@ -48,7 +48,7 @@
         android:fontFamily="@font/poppins_bold"
         android:singleLine="true"
         android:textAlignment="textEnd"
-        android:textColor="@color/bg_white"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="48sp" />
 
     <LinearLayout
@@ -67,7 +67,7 @@
             android:fontFamily="@font/poppins_bold"
             android:text="@string/filler"
             android:textAlignment="center"
-            android:textColor="@color/bg_white"
+            android:textColor="?attr/colorOnSurface"
             android:textStyle="italic"
             android:visibility="gone"
             app:lineHeight="15sp" />
@@ -81,7 +81,7 @@
             android:fontFamily="@font/poppins_bold"
             android:maxLines="3"
             android:text="@string/slogan"
-            android:textColor="@android:color/white"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="14sp"
             app:lineHeight="14sp" />
 
@@ -101,7 +101,7 @@
             android:alpha="0.5"
             android:fontFamily="@font/poppins_bold"
             android:maxLines="1"
-            android:textColor="@color/bg_white"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="10sp"
             android:visibility="gone"
             tools:text="2026-01-09"

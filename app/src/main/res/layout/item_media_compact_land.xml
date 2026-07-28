@@ -134,7 +134,7 @@
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="12sp"
         android:visibility="gone"
         tools:ignore="SpUsage"

@@ -97,7 +97,7 @@
         android:fontFamily="@font/poppins_semi_bold"
         android:maxLines="2"
         android:textAlignment="center"
-        android:textColor="@android:color/white"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="13sp"
         android:transitionName="mediaTitle"
         tools:ignore="SpUsage"

@@ -179,7 +179,7 @@
                     android:layout_marginStart="4dp"
                     android:maxLines="5"
                     android:text="@string/empty"
-                    android:textColor="@android:color/white"
+                    android:textColor="?attr/colorOnSurface"
                     app:lineHeight="15sp" />
 
                 <View
