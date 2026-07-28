@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
+import ani.sanin.R
 import ani.sanin.BottomSheetDialogFragment
 import ani.sanin.databinding.BottomSheetProxyBinding
 import ani.sanin.restartApp
