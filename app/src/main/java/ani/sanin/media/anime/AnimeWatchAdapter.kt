@@ -594,6 +594,7 @@ class AnimeWatchAdapter(
 
                 binding.sourceNotFound.isGone = sourceFound
                 binding.faqbutton.isGone = sourceFound
+                binding.faqbutton.nextFocusDownId = if (sourceFound) R.id.ScrollTop else R.id.mediaSourceSettings
 
                 if (!sourceFound && PrefManager.getVal(PrefName.SearchSources) && autoSelect) {
                     val nextIndex = media.selected!!.sourceIndex + 1
