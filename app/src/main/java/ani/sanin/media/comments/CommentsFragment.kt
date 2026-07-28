@@ -24,6 +24,7 @@ import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
+import ani.sanin.connections.comments.CommentResponse
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment

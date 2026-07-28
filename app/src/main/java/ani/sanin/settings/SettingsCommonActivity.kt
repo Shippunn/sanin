@@ -1,6 +1,6 @@
 package ani.sanin.settings
 
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
-import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.documentfile.provider.DocumentFile
@@ -378,9 +377,6 @@ class SettingsCommonActivity : AppCompatActivity() {
                 getString(R.string.enter_password_to_decrypt_file)
         }
 
-        dialog.window?.decorView?.let { decorView ->
-            ViewTreeLifecycleOwner.set(decorView, this)
-        }
         dialogView.userAgentTextBox.setContent {
             val focusManager = LocalFocusManager.current
             OutlinedTextField(
