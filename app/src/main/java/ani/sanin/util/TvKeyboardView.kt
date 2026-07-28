@@ -24,6 +24,8 @@ class TvKeyboardView(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     private val primaryColor = FocusEffectUtil.getPrimaryColor(context)
+    private val surfaceVariant: Int
+    private val surfaceVariantDim: Int
 
     var target: EditText? = null
         set(value) {
@@ -56,6 +58,10 @@ class TvKeyboardView(
 
     init {
         inflate(context, if (compact) R.layout.tv_keyboard_compact else R.layout.tv_keyboard_view, this)
+        val ta = context.theme.obtainStyledAttributes(intArrayOf(com.google.android.material.R.attr.colorSurfaceVariant))
+        surfaceVariant = ta.getColor(0, 0x1AFFFFFF.toInt())
+        ta.recycle()
+        surfaceVariantDim = (surfaceVariant and 0x00FFFFFF) or (0x4D shl 24)
         setupKeys()
     }
 
@@ -113,7 +119,7 @@ class TvKeyboardView(
         val corner = (if (compact) 3f else 6f) * v.resources.displayMetrics.density
         v.background = GradientDrawable().apply {
             setShape(GradientDrawable.RECTANGLE)
-            setColor(0x4DFFFFFF.toInt())
+            setColor(surfaceVariantDim)
             setStroke(borderPx.toInt(), primaryColor)
             cornerRadius = corner
         }
@@ -126,7 +132,7 @@ class TvKeyboardView(
             v.scaleX = 1f
             v.scaleY = 1f
         }
-        v.setBackgroundColor(0x1AFFFFFF.toInt())
+        v.setBackgroundColor(surfaceVariant)
     }
 
     private fun onKeyClick(view: TextView) {
