@@ -348,27 +348,6 @@ class SettingsCommonActivity : AppCompatActivity() {
         val password = CharArray(16).apply { fill('0') }
 
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-        dialogView.userAgentTextBox.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = passwordText,
-                onValueChange = { passwordText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
-                            true
-                        } else false
-                    },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
-        }
 
         val dialog =
             AlertDialog
@@ -403,6 +382,27 @@ class SettingsCommonActivity : AppCompatActivity() {
             attributes.windowAnimations = android.R.style.Animation_Dialog
         }
         dialog.setOnShowListener {
+            dialogView.userAgentTextBox.setContent {
+                val focusManager = LocalFocusManager.current
+                OutlinedTextField(
+                    value = passwordText,
+                    onValueChange = { passwordText = it },
+                    singleLine = true,
+                    placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onPreviewKeyEvent { ev ->
+                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
+                                true
+                            } else false
+                        },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = ComposeColor.White,
+                        unfocusedTextColor = ComposeColor.White,
+                        cursorColor = ComposeColor.White
+                    )
+                )
+            }
             dialogView.userAgentTextBox.requestFocus()
         }
         dialog.show()

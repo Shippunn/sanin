@@ -111,20 +111,6 @@ class SettingsExtensionsActivity : AppCompatActivity() {
                                 PrefManager.getVal<String>(PrefName.DefaultUserAgent)
                             )
                             val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-                            dialogView.userAgentTextBox.setContent {
-                                OutlinedTextField(
-                                    value = userAgentText,
-                                    onValueChange = { userAgentText = it },
-                                    singleLine = true,
-                                    placeholder = { Text("User-Agent") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = ComposeColor.White,
-                                        unfocusedTextColor = ComposeColor.White,
-                                        cursorColor = ComposeColor.White
-                                    )
-                                )
-                            }
                             context.customAlertDialog().apply {
                                 setTitle(R.string.user_agent)
                                 setCustomView(dialogView.root)
@@ -139,6 +125,22 @@ class SettingsExtensionsActivity : AppCompatActivity() {
                                     userAgentText = ""
                                 }
                                 setNegButton(R.string.cancel)
+                                setOnShowListener {
+                                    dialogView.userAgentTextBox.setContent {
+                                        OutlinedTextField(
+                                            value = userAgentText,
+                                            onValueChange = { userAgentText = it },
+                                            singleLine = true,
+                                            placeholder = { Text("User-Agent") },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = ComposeColor.White,
+                                                unfocusedTextColor = ComposeColor.White,
+                                                cursorColor = ComposeColor.White
+                                            )
+                                        )
+                                    }
+                                }
                             }.show()
                         }
                     ),

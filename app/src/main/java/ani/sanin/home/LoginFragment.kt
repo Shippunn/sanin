@@ -155,23 +155,10 @@ class LoginFragment : Fragment() {
     private fun passwordAlertDialog(callback: (CharArray?) -> Unit) {
         val password = CharArray(16).apply { fill('0') }
 
-        val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-        dialogView.userAgentTextBox.setContent {
-            OutlinedTextField(
-                value = dialogPasswordText,
-                onValueChange = { dialogPasswordText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
+        val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
+            subtitle.visibility = View.VISIBLE
+            subtitle.text = getString(R.string.enter_password_to_decrypt_file)
         }
-        dialogView.subtitle.visibility = View.VISIBLE
-        dialogView.subtitle.text = getString(R.string.enter_password_to_decrypt_file)
 
         requireActivity().customAlertDialog().apply {
             setTitle("Enter Password")
@@ -187,6 +174,22 @@ class LoginFragment : Fragment() {
             setNegButton(R.string.cancel) {
                 password.fill('0')
                 callback(null)
+            }
+            setOnShowListener {
+                dialogView.userAgentTextBox.setContent {
+                    OutlinedTextField(
+                        value = dialogPasswordText,
+                        onValueChange = { dialogPasswordText = it },
+                        singleLine = true,
+                        placeholder = { androidx.compose.material3.Text("Password") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ComposeColor.White,
+                            unfocusedTextColor = ComposeColor.White,
+                            cursorColor = ComposeColor.White
+                        )
+                    )
+                }
             }
         }.show()
     }

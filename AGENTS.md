@@ -32,6 +32,7 @@
   - Removed dead `searchKeyboardToggle` button from `item_search_header.xml`
 - Deleted unused `dialog_repositories.xml` layout
 - Removed dead `InputMethodManager` imports from `LibraryFragment.kt`, `ExtensionsActivity.kt`, `ListActivity.kt`
+- Fixed `ViewTreeLifecycleOwner` crash: all `ComposeView.setContent` calls on dialog views are now deferred to `setOnShowListener` (MainActivity, SettingsExtensionsActivity, LoginFragment, SettingsCommonActivity)
 - Text colors: all `?attr/colorPrimary` → `?attr/colorOnSurface` across 21 layout files + `style.xml` `HeadingText` style
 - Background fixes: added `?attr/colorSurface` roots to `activity_list.xml`, `activity_notification.xml`, `activity_profile.xml` + land, `fragment_profile.xml`, `fragment_extensions.xml`, `activity_extensions.xml`, `fragment_notifs.xml`
 - Side rail buttons: `?attr/colorOnSurface` → `@android:color/white` (all text + tints except Clear Cache/Log Out)

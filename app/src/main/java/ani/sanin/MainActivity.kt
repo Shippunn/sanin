@@ -717,20 +717,6 @@ class MainActivity : AppCompatActivity() {
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
             subtitle.visibility = View.VISIBLE
             subtitle.text = getString(R.string.enter_password_to_decrypt_file)
-            userAgentTextBox.setContent {
-                OutlinedTextField(
-                    value = passwordText,
-                    onValueChange = { passwordText = it },
-                    singleLine = true,
-                    placeholder = { Text("Password") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = ComposeColor.White,
-                        unfocusedTextColor = ComposeColor.White,
-                        cursorColor = ComposeColor.White
-                    )
-                )
-            }
         }
         customAlertDialog().apply {
             setTitle("Enter Password")
@@ -748,6 +734,20 @@ class MainActivity : AppCompatActivity() {
                 callback(null)
             }
             setOnShowListener {
+                dialogView.userAgentTextBox.setContent {
+                    OutlinedTextField(
+                        value = passwordText,
+                        onValueChange = { passwordText = it },
+                        singleLine = true,
+                        placeholder = { Text("Password") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = ComposeColor.White,
+                            unfocusedTextColor = ComposeColor.White,
+                            cursorColor = ComposeColor.White
+                        )
+                    )
+                }
                 dialogView.userAgentTextBox.requestFocus()
             }
             show()
