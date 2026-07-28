@@ -103,11 +103,6 @@ class AnimeWatchAdapter(
                 null
             )
         }
-        binding.mediaSourceRefresh.setOnClickListener {
-            binding.mediaSourceSpinner.isVisible = true
-            fragment.onSourceChange(source)
-            fragment.loadEpisodes(source, true)
-        }
         val offline = !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
 
         binding.mediaSourcePillScroll.isGone = offline
@@ -134,6 +129,12 @@ class AnimeWatchAdapter(
                 binding.mediaSourceSpinner.isVisible = showUserText.startsWith("Searching")
                 binding.animeSourceDubbedCont.isVisible = true
             }
+        }
+
+        binding.mediaSourceRefresh.setOnClickListener {
+            binding.mediaSourceSpinner.isVisible = true
+            fragment.onSourceChange(source)
+            fragment.loadEpisodes(source, true)
         }
 
         binding.mediaSourceTitle.isSelected = true
