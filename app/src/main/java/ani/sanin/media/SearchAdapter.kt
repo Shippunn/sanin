@@ -2,20 +2,35 @@ package ani.sanin.media
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.drawable.Drawable
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
-import androidx.appcompat.content.res.AppCompatResources
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.HORIZONTAL
-import ani.sanin.App.Companion.context
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.anilist.AnilistSearch.SearchType
@@ -31,13 +46,12 @@ import ani.sanin.util.FocusEffectUtil
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_CHECKED
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_INDETERMINATE
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_UNCHECKED
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class SearchAdapter(private val activity: SearchActivity, private val type: SearchType) :
     HeaderInterface() {
+
+    private var searchText by mutableStateOf("")
+    private val searchFocusRequester = FocusRequester()
 
     private fun updateFilterTextViewDrawable() {
         val filterDrawable = when (activity.aniMangaResult.sort) {
@@ -53,13 +67,35 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
         binding.searchFilter.setIconResource(filterDrawable)
     }
 
+    private fun triggerSearch() {
+        activity.aniMangaResult.apply {
+            search = searchText.ifBlank { null }
+        }
+        if (searchText.equals("hentai", true)) {
+            openLinkInBrowser("https://www.youtube.com/watch?v=GgJrEOo0QoA")
+        }
+        activity.search()
+    }
+
+    private fun onTextChanged(s: String) {
+        searchTextValue = s
+        searchText = s
+        if (s.isBlank()) {
+            activity.emptyMediaAdapter()
+            binding.searchHistoryList.postDelayed({ setHistoryVisibility(true) }, 200)
+        } else {
+            setHistoryVisibility(false)
+            triggerSearch()
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: SearchHeaderViewHolder, position: Int) {
         binding = holder.binding
 
         searchHistoryAdapter = SearchHistoryAdapter(type) {
-            binding.searchBarText.setText(it)
-            binding.searchBarText.setSelection(it.length)
+            searchText = it
+            searchTextValue = it
         }
         binding.searchHistoryList.layoutManager = LinearLayoutManager(binding.root.context)
         binding.searchHistoryList.adapter = searchHistoryAdapter
@@ -80,19 +116,11 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             }
         }
 
-        binding.searchBar.hint = activity.aniMangaResult.type
-        if (PrefManager.getVal(PrefName.Incognito)) {
-            val startIconDrawableRes = R.drawable.ic_incognito_24
-            val startIconDrawable: Drawable? =
-                context?.let { AppCompatResources.getDrawable(it, startIconDrawableRes) }
-            binding.searchBar.startIconDrawable = startIconDrawable
-        }
+        searchText = activity.aniMangaResult.search ?: ""
+        searchTextValue = searchText
 
         var adult = activity.aniMangaResult.isAdult
         var listOnly = activity.aniMangaResult.onList
-
-        binding.searchBarText.removeTextChangedListener(textWatcher)
-        binding.searchBarText.setText(activity.aniMangaResult.search)
 
         binding.searchAdultCheck.isChecked = adult
         binding.searchList.isChecked = listOnly == true
@@ -191,53 +219,71 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             searchHistoryAdapter.clearHistory()
         }
         updateClearHistoryVisibility()
-        fun searchTitle() {
-            activity.aniMangaResult.apply {
-                search =
-                    if (binding.searchBarText.text.toString() != "") binding.searchBarText.text.toString() else null
-                onList = listOnly
-                isAdult = adult
-            }
-            if (binding.searchBarText.text.toString().equals("hentai", true)) {
-                openLinkInBrowser("https://www.youtube.com/watch?v=GgJrEOo0QoA")
-            }
-            activity.search()
-        }
 
-        textWatcher = object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {}
-
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
-                if (s.toString().isBlank()) {
-                    activity.emptyMediaAdapter()
-                    CoroutineScope(Dispatchers.IO).launch {
-                        delay(200)
-                        activity.runOnUiThread {
-                            setHistoryVisibility(true)
-                        }
+        binding.searchBarCompose.setContent {
+            val focusManager = LocalFocusManager.current
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { onTextChanged(it) },
+                singleLine = true,
+                placeholder = {
+                    Text(
+                        activity.aniMangaResult.type,
+                        fontSize = 14.sp
+                    )
+                },
+                leadingIcon = if (PrefManager.getVal(PrefName.Incognito)) {
+                    {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_incognito_24),
+                            contentDescription = null,
+                            tint = ComposeColor.White
+                        )
                     }
-                } else {
-                    setHistoryVisibility(false)
-                    searchTitle()
-                }
-            }
+                } else null,
+                trailingIcon = {
+                    IconButton(onClick = { triggerSearch() }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_round_search_24),
+                            contentDescription = "Search",
+                            tint = ComposeColor.White
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        triggerSearch()
+                        focusManager.clearFocus()
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(searchFocusRequester)
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.DirectionDown -> {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                    true
+                                }
+                                else -> false
+                            }
+                        } else false
+                    },
+                shape = RoundedCornerShape(28.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White,
+                    focusedBorderColor = ComposeColor.White.copy(alpha = 0.5f),
+                    unfocusedBorderColor = ComposeColor.White.copy(alpha = 0.3f)
+                )
+            )
         }
-        binding.searchBarText.addTextChangedListener(textWatcher)
 
-        binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
-            return@setOnEditorActionListener when (actionId) {
-                EditorInfo.IME_ACTION_SEARCH -> {
-                    searchTitle()
-                    binding.searchBarText.clearFocus()
-                    true
-                }
-
-                else -> false
-            }
-        }
-        binding.searchBar.setEndIconOnClickListener { searchTitle() }
+        search = Runnable { triggerSearch() }
+        requestFocus = Runnable { searchFocusRequester.requestFocus() }
 
         binding.searchResultGrid.setOnClickListener {
             it.alpha = 1f
@@ -259,7 +305,7 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             binding.searchAdultCheck.isChecked = adult
             binding.searchAdultCheck.setOnCheckedChangeListener { _, b ->
                 adult = b
-                searchTitle()
+                triggerSearch()
             }
         } else binding.searchAdultCheck.visibility = View.GONE
         binding.searchList.apply {
@@ -283,14 +329,11 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
                 setOnTouchListener { _, event ->
                     (event.actionMasked == MotionEvent.ACTION_DOWN).also {
                         if (it) checkedState = (checkedState + 1) % 3
-                        searchTitle()
+                        triggerSearch()
                     }
                 }
             } else visibility = View.GONE
         }
-
-        search = Runnable { searchTitle() }
-        requestFocus = Runnable { binding.searchBarText.requestFocus() }
     }
 
     class SearchChipAdapter(

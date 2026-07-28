@@ -77,7 +77,7 @@ class SearchActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val focused = currentFocus
-                if (focused?.id == R.id.searchBarText && !backHandled) {
+                if (focused?.id == R.id.searchBarCompose && !backHandled) {
                     focused.clearFocus()
                     backHandled = true
                     return
