@@ -82,11 +82,13 @@
             android:layout_marginTop="2dp">
 
             <TextView android:id="@+id/keyModeToggle" android:text="123" style="@style/TvKeyboardKeyCompact"
-                android:layout_width="40dp" />
+                android:layout_width="36dp" />
+            <TextView android:id="@+id/keyCapsLock" android:text="CAPS" style="@style/TvKeyboardKeyCompact"
+                android:layout_width="36dp" />
             <TextView android:id="@+id/keySpace" android:text="Space" style="@style/TvKeyboardKeyCompact"
-                android:layout_width="80dp" />
+                android:layout_width="72dp" />
             <TextView android:id="@+id/keyHide" android:text="Hide" style="@style/TvKeyboardKeyDangerCompact"
-                android:layout_width="40dp" />
+                android:layout_width="36dp" />
         </LinearLayout>
 
     </LinearLayout>
