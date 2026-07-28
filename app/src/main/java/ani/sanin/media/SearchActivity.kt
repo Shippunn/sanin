@@ -485,6 +485,10 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
+    fun focusResults() {
+        binding.searchRecyclerView.requestFocus()
+    }
+
     var state: Parcelable? = null
     override fun onPause() {
         if (this::headerAdaptor.isInitialized) {

@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -111,7 +110,6 @@ class AddRepositoryBottomSheet : DialogFragment() {
         adapter.addAll(repositories.map { RepoItem(it, mediaType, ::onRepositoryRemoved) })
 
         binding.repositoryInput.setContent {
-            val focusManager = LocalFocusManager.current
             OutlinedTextField(
                 value = repositoryInputValue,
                 onValueChange = { repositoryInputValue = it; repositoryInputError = null },
@@ -124,19 +122,28 @@ class AddRepositoryBottomSheet : DialogFragment() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .onPreviewKeyEvent { ev ->
-                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
-                                val url = repositoryInputValue
-                                if (url.isNotBlank()) {
-                                    val error = isValidUrl(url)
-                                    if (error == null) {
-                                        acceptUrl(url)
-                                    } else {
-                                        repositoryInputError = error
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.Enter -> {
+                                    val url = repositoryInputValue
+                                    if (url.isNotBlank()) {
+                                        val error = isValidUrl(url)
+                                        if (error == null) {
+                                            acceptUrl(url)
+                                        } else {
+                                            repositoryInputError = error
+                                        }
                                     }
+                                    true
                                 }
-                                true
-                            } else false
-                        },
+                                Key.DirectionDown -> {
+                                    binding.cancelButton.requestFocus()
+                                    true
+                                }
+                                else -> false
+                            }
+                        } else false
+                    },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,

@@ -16,12 +16,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.text.KeyboardActions
@@ -254,7 +252,7 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
                 keyboardActions = KeyboardActions(
                     onSearch = {
                         triggerSearch()
-                        focusManager.clearFocus()
+                        activity.focusResults()
                     }
                 ),
                 modifier = Modifier
@@ -264,7 +262,7 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
                         if (ev.type == KeyEventType.KeyDown) {
                             when (ev.key) {
                                 Key.DirectionDown -> {
-                                    focusManager.moveFocus(FocusDirection.Down)
+                                    activity.focusResults()
                                     true
                                 }
                                 else -> false
