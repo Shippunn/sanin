@@ -217,6 +217,11 @@ class TvKeyboardView(
             letterKeys[i].text = chars.getOrElse(i) { "" }
         }
         modeToggle.text = if (isSymbolsMode) "ABC" else "\u003F123"
+        if (!isSymbolsMode && isCapsLock) {
+            for (i in letterKeys.indices) {
+                letterKeys[i].text = letterKeys[i].text.toString().uppercase()
+            }
+        }
     }
 
     private fun toggleCapsLock() {
