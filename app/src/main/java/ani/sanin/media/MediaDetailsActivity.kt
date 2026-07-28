@@ -263,12 +263,10 @@ class MediaDetailsActivity : AppCompatActivity() {
         fun selectTab(idx: Int, animate: Boolean = true) {
             selected = idx
             updateMediaNavIconTints(selected)
-            if (idx != 2) {
-                val container = binding.mediaTabContent
-                val parent = container?.parent as? View
-                parent?.layoutParams = (parent?.layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
-                    topMargin = (300 * resources.displayMetrics.density).toInt()
-                }
+            val container = binding.mediaTabContent
+            val parent = container?.parent as? View
+            parent?.layoutParams = (parent?.layoutParams as? ViewGroup.MarginLayoutParams)?.apply {
+                topMargin = if (idx == 0) (300 * resources.displayMetrics.density).toInt() else 0
             }
             when (idx) {
                 0 -> {
