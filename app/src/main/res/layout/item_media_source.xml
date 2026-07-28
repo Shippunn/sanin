@@ -65,6 +65,16 @@
                 android:marqueeRepeatLimit="marquee_forever"
                 android:singleLine="true"
                 tools:text="@string/get_recommendations" />
+
+            <ImageView
+                android:id="@+id/mediaSourceRefresh"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:focusable="true"
+                android:padding="4dp"
+                app:srcCompat="@drawable/ic_round_refresh_24"
+                app:tint="?attr/colorOnBackground"
+                tools:ignore="ContentDescription" />
         </LinearLayout>
 
         <LinearLayout

@@ -103,12 +103,18 @@ class AnimeWatchAdapter(
                 null
             )
         }
+        binding.mediaSourceRefresh.setOnClickListener {
+            binding.mediaSourceSpinner.isVisible = true
+            fragment.onSourceChange(source)
+            fragment.loadEpisodes(source, true)
+        }
         val offline = !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
 
         binding.mediaSourcePillScroll.isGone = offline
         binding.mediaSourceSettings.isGone = offline
         binding.mediaSourceSearch.isGone = offline
         binding.mediaSourceTitle.isGone = offline
+        binding.mediaSourceRefresh.isGone = offline
 
         // Source Selection — Pills
         val displayNames = watchSources.displayNames.filter { it != "Local" }

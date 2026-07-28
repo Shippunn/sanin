@@ -98,7 +98,6 @@ class CommentsFragment : Fragment() {
         val model: MediaDetailsViewModel by activityViewModels()
         model.getMedia().observe(viewLifecycleOwner) { newMedia ->
             if (newMedia != null && newMedia.id != 0) {
-                binding.commentsLogoart.loadImage(newMedia.banner)
                 binding.commentsPoster.loadImage(newMedia.cover)
                 binding.commentsLogo.setImageDrawable(null)
                 binding.commentsTitle.visibility = View.GONE
@@ -207,47 +206,39 @@ class CommentsFragment : Fragment() {
             }
         })
 
+        binding.commentsList.setOnKeyListener { v, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    if (lm.focusedPosition < carouselAdapter.itemCount - 1) {
+                        lm.scrollToNext()
+                    }
+                    true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                    if (lm.focusedPosition > 0) {
+                        lm.scrollToPrevious()
+                    }
+                    true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                        (activity as MediaDetailsActivity).showNavPills()
+                        (activity as MediaDetailsActivity).focusNavPillForSelectedTab()
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+
         binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
             override fun onChildViewAttachedToWindow(view: View) {
                 if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
                     view.nextFocusRightId = R.id.commentsPoster
                 }
-                view.setOnKeyListener { v, keyCode, event ->
-                    if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
-                    val isLandscape = resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
-                    when (keyCode) {
-                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                            if (lm.focusedPosition < carouselAdapter.itemCount - 1) {
-                                lm.scrollToNext(); true
-                            } else if (!isLandscape) {
-                                false
-                            } else {
-                                true
-                            }
-                        }
-                        android.view.KeyEvent.KEYCODE_DPAD_UP -> {
-                            if (lm.focusedPosition > 0) {
-                                lm.scrollToPrevious(); true
-                            } else if (!isLandscape) {
-                                false
-                            } else {
-                                true
-                            }
-                        }
-                        android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                            if (isLandscape) {
-                                (activity as MediaDetailsActivity).showNavPills()
-                                (activity as MediaDetailsActivity).focusNavPillForSelectedTab()
-                            }
-                            true
-                        }
-                        else -> false
-                    }
-                }
             }
-            override fun onChildViewDetachedFromWindow(view: View) {
-                view.setOnKeyListener(null)
-            }
+            override fun onChildViewDetachedFromWindow(view: View) {}
         })
     }
 
