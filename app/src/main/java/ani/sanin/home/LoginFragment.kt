@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
@@ -15,6 +17,7 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
@@ -90,10 +93,13 @@ class LoginFragment : Fragment() {
                         if (ev.type == KeyEventType.KeyDown) {
                             when (ev.key) {
                                 Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false
                     },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
                     unfocusedTextColor = ComposeColor.White,
@@ -176,12 +182,21 @@ class LoginFragment : Fragment() {
                 callback(null)
             }
             dialogView.userAgentTextBox.setContent {
+                val focusManager = LocalFocusManager.current
                 OutlinedTextField(
                     value = dialogPasswordText,
                     onValueChange = { dialogPasswordText = it },
                     singleLine = true,
                     placeholder = { androidx.compose.material3.Text("Password") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onPreviewKeyEvent { ev ->
+                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Escape) {
+                                focusManager.clearFocus(); true
+                            } else false
+                        },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = ComposeColor.White,
                         unfocusedTextColor = ComposeColor.White,

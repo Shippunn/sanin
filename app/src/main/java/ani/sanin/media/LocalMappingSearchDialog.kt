@@ -153,6 +153,7 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
                                     focusManager.moveFocus(FocusDirection.Down)
                                     true
                                 }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false

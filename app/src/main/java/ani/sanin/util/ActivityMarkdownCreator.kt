@@ -7,6 +7,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
@@ -15,6 +17,7 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.view.isVisible
@@ -140,10 +143,13 @@ class ActivityMarkdownCreator : AppCompatActivity() {
                                     focusManager.moveFocus(FocusDirection.Down)
                                     true
                                 }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false
                     },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 placeholder = { androidx.compose.material3.Text(getString(R.string.reply_hint)) },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,

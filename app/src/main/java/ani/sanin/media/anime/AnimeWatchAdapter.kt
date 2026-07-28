@@ -9,13 +9,18 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getString
@@ -278,6 +283,7 @@ class AnimeWatchAdapter(
                     media.selected!!.recyclerStyle ?: PrefManager.getVal(PrefName.AnimeDefaultView)
 
                 downloadNo.setContent {
+                    val focusManager = LocalFocusManager.current
                     OutlinedTextField(
                         value = downloadNoValue,
                         onValueChange = { downloadNoValue = it },
@@ -285,7 +291,15 @@ class AnimeWatchAdapter(
                         textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium.copy(
                             textAlign = TextAlign.Start
                         ),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onPreviewKeyEvent { ev ->
+                                if (ev.type == KeyEventType.KeyDown && ev.key == Key.Escape) {
+                                    focusManager.clearFocus(); true
+                                } else false
+                            },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         colors = OutlinedTextFieldDefaults.colors()
                     )
                 }

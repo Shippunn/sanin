@@ -14,11 +14,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.documentfile.provider.DocumentFile
@@ -387,10 +390,16 @@ class SettingsCommonActivity : AppCompatActivity() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
-                            true
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.Enter -> true
+                                Key.Escape -> { focusManager.clearFocus(); true }
+                                else -> false
+                            }
                         } else false
                     },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
                     unfocusedTextColor = ComposeColor.White,

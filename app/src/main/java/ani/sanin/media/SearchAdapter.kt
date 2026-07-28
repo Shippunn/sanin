@@ -265,6 +265,7 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
                                     activity.focusResults()
                                     true
                                 }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false

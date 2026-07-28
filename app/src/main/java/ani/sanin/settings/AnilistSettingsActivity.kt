@@ -7,12 +7,17 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
@@ -274,11 +279,20 @@ class AnilistSettingsActivity : AppCompatActivity() {
         val textState = mutableStateOf(listName)
         composeView.setTag(textState)
         composeView.setContent {
+            val focusManager = LocalFocusManager.current
             OutlinedTextField(
                 value = textState.value,
                 onValueChange = { textState.value = it },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown && ev.key == Key.Escape) {
+                            focusManager.clearFocus(); true
+                        } else false
+                    },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
                     unfocusedTextColor = ComposeColor.White,

@@ -6,6 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
@@ -14,6 +16,7 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -45,7 +48,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -114,10 +116,13 @@ class CommentsFragment : Fragment() {
                         if (ev.type == KeyEventType.KeyDown) {
                             when (ev.key) {
                                 Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false
                     },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
                     unfocusedTextColor = ComposeColor.White,
@@ -341,12 +346,14 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        coroutineScope {
-            val traktDef = if (hasTrakt && traktResult != null) async { loadTraktComments() } else null
-            val saninDef = async { loadSaninComments() }
-            traktDef?.await()
-            saninDef.await()
-        }
+        try {
+            coroutineScope {
+                val traktDef = if (hasTrakt && traktResult != null) async { loadTraktComments() } else null
+                val saninDef = async { loadSaninComments() }
+                traktDef?.await()
+                saninDef.await()
+            }
+        } catch (_: Exception) { }
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
@@ -362,10 +369,8 @@ class CommentsFragment : Fragment() {
         val effectiveFilter = getEffectiveFilter()
         var comments: CommentResponse? = null
         repeat(3) { attempt ->
-            comments = withTimeoutOrNull(10000) {
-                withContext(Dispatchers.IO) {
-                    CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
-                }
+            comments = withContext(Dispatchers.IO) {
+                CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
             }
             if (comments != null) return@repeat
             if (attempt < 2) kotlinx.coroutines.delay(1000L shl attempt)

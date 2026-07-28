@@ -152,6 +152,7 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
                                     activity.focusResults()
                                     true
                                 }
+                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false
