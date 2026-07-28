@@ -733,24 +733,22 @@ class MainActivity : AppCompatActivity() {
                 password.fill('0')
                 callback(null)
             }
-            setOnShowListener {
-                dialogView.userAgentTextBox.setContent {
-                    OutlinedTextField(
-                        value = passwordText,
-                        onValueChange = { passwordText = it },
-                        singleLine = true,
-                        placeholder = { Text("Password") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = ComposeColor.White,
-                            unfocusedTextColor = ComposeColor.White,
-                            cursorColor = ComposeColor.White
-                        )
+            dialogView.userAgentTextBox.setContent {
+                OutlinedTextField(
+                    value = passwordText,
+                    onValueChange = { passwordText = it },
+                    singleLine = true,
+                    placeholder = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = ComposeColor.White,
+                        unfocusedTextColor = ComposeColor.White,
+                        cursorColor = ComposeColor.White
                     )
-                }
-                dialogView.userAgentTextBox.requestFocus()
+                )
             }
             show()
+            dialogView.userAgentTextBox.requestFocus()
         }
     }
 

@@ -175,21 +175,19 @@ class LoginFragment : Fragment() {
                 password.fill('0')
                 callback(null)
             }
-            setOnShowListener {
-                dialogView.userAgentTextBox.setContent {
-                    OutlinedTextField(
-                        value = dialogPasswordText,
-                        onValueChange = { dialogPasswordText = it },
-                        singleLine = true,
-                        placeholder = { androidx.compose.material3.Text("Password") },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = ComposeColor.White,
-                            unfocusedTextColor = ComposeColor.White,
-                            cursorColor = ComposeColor.White
-                        )
+            dialogView.userAgentTextBox.setContent {
+                OutlinedTextField(
+                    value = dialogPasswordText,
+                    onValueChange = { dialogPasswordText = it },
+                    singleLine = true,
+                    placeholder = { androidx.compose.material3.Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = ComposeColor.White,
+                        unfocusedTextColor = ComposeColor.White,
+                        cursorColor = ComposeColor.White
                     )
-                }
+                )
             }
         }.show()
     }

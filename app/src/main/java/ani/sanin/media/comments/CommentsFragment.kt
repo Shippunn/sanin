@@ -40,8 +40,11 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -337,8 +340,12 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        if (hasTrakt && traktResult != null) loadTraktComments()
-        loadSaninComments()
+        coroutineScope {
+            val traktDef = if (hasTrakt && traktResult != null) async { loadTraktComments() } else null
+            val saninDef = async { loadSaninComments() }
+            traktDef?.await()
+            saninDef.await()
+        }
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
@@ -347,12 +354,20 @@ class CommentsFragment : Fragment() {
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
         binding.commentsList.visibility = View.VISIBLE
+        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
     }
 
     private suspend fun loadSaninComments() {
         val effectiveFilter = getEffectiveFilter()
-        val comments = withContext(Dispatchers.IO) {
-            CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
+        var comments: CommentResponse? = null
+        repeat(3) { attempt ->
+            comments = withTimeoutOrNull(10000) {
+                withContext(Dispatchers.IO) {
+                    CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
+                }
+            }
+            if (comments != null) return@repeat
+            if (attempt < 2) kotlinx.coroutines.delay(1000L shl attempt)
         }
         displayedComments.addAll(comments?.comments ?: emptyList())
         totalPages = comments?.totalPages ?: 1
@@ -370,6 +385,11 @@ class CommentsFragment : Fragment() {
             TraktAPI.getComments(type, id, page = 1, sort = sort)
         }
         displayedComments.addAll(traktComments.map { traktToComment(it) })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
     }
 
     private fun traktToComment(tc: TraktComment): Comment {
