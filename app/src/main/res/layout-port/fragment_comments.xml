@@ -5,7 +5,7 @@
     android:id="@+id/commentsLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF000000"
+    android:background="?attr/colorSurface"
     android:baselineAligned="false"
     android:descendantFocusability="afterDescendants"
     android:orientation="vertical"

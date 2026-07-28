@@ -5,7 +5,7 @@
     android:id="@+id/commentsLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF000000"
+    android:background="?attr/colorSurface"
     android:baselineAligned="false"
     android:descendantFocusability="afterDescendants"
     android:orientation="horizontal"
@@ -78,7 +78,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="0.3"
-        android:background="#FF000000"
+        android:background="?attr/colorSurface"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:padding="12dp">

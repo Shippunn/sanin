@@ -14,9 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="-16dp"
-        android:layout_marginBottom="-24dp"
-        android:background="@color/bg_black"
-        android:clipToPadding="false"
+            android:layout_marginBottom="-24dp"
+            android:background="?attr/colorSurface"
+            android:clipToPadding="false"
         android:orientation="vertical"
         android:padding="32dp">
 
