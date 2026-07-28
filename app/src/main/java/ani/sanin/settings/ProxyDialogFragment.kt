@@ -46,12 +46,13 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
 
         binding.proxyAuthentication.isChecked = authEnabled
 
+        val hostLabel = getString(R.string.host)
         binding.proxyHost.setContent {
             OutlinedTextField(
                 value = proxyHostValue,
                 onValueChange = { proxyHostValue = it },
                 singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.host)) },
+                placeholder = { androidx.compose.material3.Text(hostLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
@@ -60,12 +61,13 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
                 )
             )
         }
+        val portLabel = getString(R.string.port)
         binding.proxyPort.setContent {
             OutlinedTextField(
                 value = proxyPortValue,
                 onValueChange = { proxyPortValue = it },
                 singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.port)) },
+                placeholder = { androidx.compose.material3.Text(portLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
@@ -74,13 +76,14 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
                 )
             )
         }
+        val usernameLabel = getString(R.string.username)
         binding.proxyUsername.setContent {
             OutlinedTextField(
                 value = proxyUsernameValue,
                 onValueChange = { proxyUsernameValue = it },
                 singleLine = true,
                 enabled = authEnabled,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.username)) },
+                placeholder = { androidx.compose.material3.Text(usernameLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
@@ -89,13 +92,14 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
                 )
             )
         }
+        val passwordLabel = getString(R.string.password)
         binding.proxyPassword.setContent {
             OutlinedTextField(
                 value = proxyPasswordValue,
                 onValueChange = { proxyPasswordValue = it },
                 singleLine = true,
                 enabled = authEnabled,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
+                placeholder = { androidx.compose.material3.Text(passwordLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,

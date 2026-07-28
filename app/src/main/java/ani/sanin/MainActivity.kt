@@ -27,6 +27,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.doOnAttach
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
@@ -705,20 +712,32 @@ class MainActivity : AppCompatActivity() {
 
     private fun passwordAlertDialog(callback: (CharArray?) -> Unit) {
         val password = CharArray(16).apply { fill('0') }
+        var passwordText by mutableStateOf("")
 
-        // Inflate the dialog layout
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
-            userAgentTextBox.hint = "Password"
             subtitle.visibility = View.VISIBLE
             subtitle.text = getString(R.string.enter_password_to_decrypt_file)
+            userAgentTextBox.setContent {
+                OutlinedTextField(
+                    value = passwordText,
+                    onValueChange = { passwordText = it },
+                    singleLine = true,
+                    placeholder = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = ComposeColor.White,
+                        unfocusedTextColor = ComposeColor.White,
+                        cursorColor = ComposeColor.White
+                    )
+                )
+            }
         }
         customAlertDialog().apply {
             setTitle("Enter Password")
             setCustomView(dialogView.root)
             setPosButton(R.string.yes) {
-                val editText = dialogView.userAgentTextBox
-                if (editText.text?.isNotBlank() == true) {
-                    editText.text?.toString()?.trim()?.toCharArray(password)
+                if (passwordText.isNotBlank()) {
+                    passwordText.trim().toCharArray(password)
                     callback(password)
                 } else {
                     toast("Password cannot be empty")
