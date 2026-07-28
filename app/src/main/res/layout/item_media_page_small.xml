@@ -194,7 +194,7 @@
                     android:paddingTop="4dp"
                     android:singleLine="true"
                     android:text="@string/status"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="14dp"
                     tools:ignore="SpUsage,TextContrastCheck" />
 

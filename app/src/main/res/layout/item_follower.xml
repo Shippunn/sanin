@@ -91,7 +91,7 @@
             android:textSize="10dp"
             android:text="@string/mutual"
             android:fontFamily="@font/poppins_semi_bold"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorOnSurface"
             app:chipBackgroundColor="?attr/colorOnPrimary"
             app:chipCornerRadius="16dp"
             app:chipStrokeWidth="0dp"

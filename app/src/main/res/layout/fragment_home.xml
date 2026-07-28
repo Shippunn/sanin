@@ -274,7 +274,7 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="4dp"
                                         android:fontFamily="@font/poppins_bold"
-                                        android:textColor="?attr/colorPrimaryVariant"
+                                        android:textColor="?attr/colorOnSurface"
                                         android:textSize="12sp" />
                                 </LinearLayout>
 
@@ -300,7 +300,7 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="4dp"
                                         android:fontFamily="@font/poppins_bold"
-                                        android:textColor="?attr/colorPrimaryVariant"
+                                        android:textColor="?attr/colorOnSurface"
                                         android:textSize="12sp" />
                                 </LinearLayout>
 
@@ -1703,7 +1703,7 @@
                     android:fontFamily="@font/poppins_thin"
                     android:text="@string/app_name"
                     android:textAlignment="center"
-                    android:textColor="?attr/colorPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="64sp" />
             </LinearLayout>
 

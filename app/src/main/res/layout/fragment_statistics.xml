@@ -103,7 +103,7 @@
             android:insetBottom="0dp"
             android:paddingTop="4dp"
             android:text="@string/compare"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="12sp" />
 
     </LinearLayout>

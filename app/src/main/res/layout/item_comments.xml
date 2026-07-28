@@ -70,7 +70,7 @@
                 android:maxLines="1"
                 android:paddingTop="2dp"
                 android:text="1095"
-                android:textColor="?attr/colorPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="12sp"
                 tools:ignore="HardcodedText,SmallSp" />
 
@@ -97,7 +97,7 @@
             android:paddingBottom="0dp"
             android:singleLine="true"
             android:text="Username"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             tools:ignore="HardcodedText,RtlSymmetry" />
 

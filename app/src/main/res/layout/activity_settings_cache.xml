@@ -163,7 +163,7 @@
                         android:fontFamily="@font/poppins_bold"
                         android:gravity="end"
                         android:text="100"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
                     <TextView
@@ -209,7 +209,7 @@
                         android:fontFamily="@font/poppins_bold"
                         android:gravity="end"
                         android:text="10"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
                     <TextView
@@ -255,7 +255,7 @@
                         android:fontFamily="@font/poppins_bold"
                         android:gravity="end"
                         android:text="80"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="14sp" />
 
                     <TextView

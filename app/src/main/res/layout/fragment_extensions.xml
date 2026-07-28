@@ -20,7 +20,7 @@
         android:gravity="center"
         android:fontFamily="@font/poppins_bold"
         android:textSize="14sp"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:text="Press UP/DOWN to reorder, ENTER to confirm"
         android:visibility="gone" />
 

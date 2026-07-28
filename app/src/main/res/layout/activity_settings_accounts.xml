@@ -88,7 +88,6 @@
                 android:id="@+id/settingsAnilistScrim"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-    android:background="?attr/colorSurface"
                 android:background="?attr/colorSurface"
                 android:alpha="0.75"
                 android:visibility="gone" />
@@ -133,7 +132,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="-4dp"
                         android:fontFamily="@font/poppins_semi_bold"
-                        android:textColor="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="12sp"
                         android:visibility="gone"
                         tools:text="Reconnect in 30 days"

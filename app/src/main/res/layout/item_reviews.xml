@@ -60,7 +60,7 @@
             android:paddingBottom="0dp"
             android:singleLine="true"
             android:text="Username"
-            android:textColor="?attr/colorPrimary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="15sp"
             tools:ignore="HardcodedText,RtlSymmetry" />
 
