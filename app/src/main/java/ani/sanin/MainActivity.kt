@@ -867,18 +867,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRightRail() {
-        val drawerItems = mapOf(
+        val drawerItems: Map<Int, () -> Unit> = mapOf(
             R.id.rightRailNotifications to {
                 startActivity(Intent(this, NotificationActivity::class.java))
             },
             R.id.rightRailExtensions to {
                 startActivity(Intent(this, ExtensionsActivity::class.java))
-            },
-            R.id.rightRailAnimeList to {
-                ContextCompat.startActivity(this, Intent(this, ani.sanin.media.user.ListActivity::class.java)
-                    .putExtra("anime", true)
-                    .putExtra("userId", Anilist.userid ?: 0)
-                    .putExtra("username", Anilist.username), null)
             },
             R.id.rightRailSettings to {
                 startActivity(Intent(this, ani.sanin.settings.SettingsActivity::class.java))
