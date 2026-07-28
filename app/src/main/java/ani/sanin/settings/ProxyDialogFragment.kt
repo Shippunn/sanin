@@ -5,10 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.*
 import ani.sanin.BottomSheetDialogFragment
 import ani.sanin.databinding.BottomSheetProxyBinding
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.restartApp
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
@@ -18,13 +24,11 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
     private var _binding: BottomSheetProxyBinding? = null
     private val binding get() = _binding!!
 
-    private var proxyHost: String? = PrefManager.getVal<String>(PrefName.Socks5ProxyHost).orEmpty()
-    private var proxyPort: String? = PrefManager.getVal<String>(PrefName.Socks5ProxyPort).orEmpty()
-    private var proxyUsername: String? =
-        PrefManager.getVal<String>(PrefName.Socks5ProxyUsername).orEmpty()
-    private var proxyPassword: String? =
-        PrefManager.getVal<String>(PrefName.Socks5ProxyPassword).orEmpty()
-    private var authEnabled: Boolean = PrefManager.getVal<Boolean>(PrefName.ProxyAuthEnabled)
+    private var proxyHostValue by mutableStateOf(PrefManager.getVal<String>(PrefName.Socks5ProxyHost).orEmpty())
+    private var proxyPortValue by mutableStateOf(PrefManager.getVal<String>(PrefName.Socks5ProxyPort).orEmpty())
+    private var proxyUsernameValue by mutableStateOf(PrefManager.getVal<String>(PrefName.Socks5ProxyUsername).orEmpty())
+    private var proxyPasswordValue by mutableStateOf(PrefManager.getVal<String>(PrefName.Socks5ProxyPassword).orEmpty())
+    private var authEnabled by mutableStateOf(PrefManager.getVal<Boolean>(PrefName.ProxyAuthEnabled))
     private val proxyEnabled: Boolean = PrefManager.getVal<Boolean>(PrefName.EnableSocks5Proxy)
 
     override fun onCreateView(
@@ -40,29 +44,74 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.proxyHost.setText(proxyHost)
-        binding.proxyPort.setText(proxyPort)
-        binding.proxyUsername.setText(proxyUsername)
-        binding.proxyPassword.setText(proxyPassword)
         binding.proxyAuthentication.isChecked = authEnabled
 
-        listOf(binding.proxyHost, binding.proxyPort, binding.proxyUsername, binding.proxyPassword).forEach { input ->
-            TvKeyboardUtil.setupTvInput(input)
+        binding.proxyHost.setContent {
+            OutlinedTextField(
+                value = proxyHostValue,
+                onValueChange = { proxyHostValue = it },
+                singleLine = true,
+                placeholder = { androidx.compose.material3.Text(getString(R.string.host)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
         }
-        dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
+        binding.proxyPort.setContent {
+            OutlinedTextField(
+                value = proxyPortValue,
+                onValueChange = { proxyPortValue = it },
+                singleLine = true,
+                placeholder = { androidx.compose.material3.Text(getString(R.string.port)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
+        binding.proxyUsername.setContent {
+            OutlinedTextField(
+                value = proxyUsernameValue,
+                onValueChange = { proxyUsernameValue = it },
+                singleLine = true,
+                enabled = authEnabled,
+                placeholder = { androidx.compose.material3.Text(getString(R.string.username)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
+        binding.proxyPassword.setContent {
+            OutlinedTextField(
+                value = proxyPasswordValue,
+                onValueChange = { proxyPasswordValue = it },
+                singleLine = true,
+                enabled = authEnabled,
+                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
 
         toggleAuthentication(authEnabled)
 
         binding.proxySave.setOnClickListener {
-            proxyHost = binding.proxyHost.text?.toString().orEmpty()
-            proxyPort = binding.proxyPort.text?.toString().orEmpty()
-            proxyUsername = binding.proxyUsername.text?.toString().orEmpty()
-            proxyPassword = binding.proxyPassword.text?.toString().orEmpty()
-
-            PrefManager.setVal(PrefName.Socks5ProxyHost, proxyHost)
-            PrefManager.setVal(PrefName.Socks5ProxyPort, proxyPort)
-            PrefManager.setVal(PrefName.Socks5ProxyUsername, proxyUsername)
-            PrefManager.setVal(PrefName.Socks5ProxyPassword, proxyPassword)
+            PrefManager.setVal(PrefName.Socks5ProxyHost, proxyHostValue)
+            PrefManager.setVal(PrefName.Socks5ProxyPort, proxyPortValue)
+            PrefManager.setVal(PrefName.Socks5ProxyUsername, proxyUsernameValue)
+            PrefManager.setVal(PrefName.Socks5ProxyPassword, proxyPasswordValue)
 
             dismiss()
             if (proxyEnabled) activity?.restartApp()
@@ -75,18 +124,7 @@ class ProxyDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun toggleAuthentication(isChecked: Boolean) {
-        arrayOf(
-            binding.proxyUsername,
-            binding.proxyPassword,
-            binding.proxyUsernameLayout,
-            binding.proxyPasswordLayout
-        ).forEach {
-            it.isEnabled = isChecked
-            it.alpha = when (isChecked) {
-                true -> 1f
-                false -> 0.5f
-            }
-        }
+        authEnabled = isChecked
     }
 
     override fun onDestroyView() {

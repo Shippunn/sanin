@@ -50,19 +50,6 @@
                 tools:ignore="LabelFor,TextContrastCheck" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <ImageButton
-            android:id="@+id/searchKeyboardToggle"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="4dp"
-            android:src="@drawable/ic_round_keyboard_24"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:focusable="true"
-            android:clickable="true"
-            android:visibility="gone"
-            android:tint="?attr/colorOnSurface"
-            android:contentDescription="@null"
-            tools:ignore="ContentDescription" />
     </LinearLayout>
 
     <LinearLayout

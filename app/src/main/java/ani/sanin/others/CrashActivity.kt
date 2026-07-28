@@ -2,10 +2,20 @@ package ani.sanin.others
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.FileProvider
 import androidx.core.view.updateLayoutParams
 import ani.sanin.R
@@ -23,6 +33,7 @@ class CrashActivity : AppCompatActivity() {
 
     private lateinit var stackTrace: String
     private lateinit var logcat: String
+    private var crashReportText by mutableStateOf("")
 
     /** Which content is currently shown — false = stack trace, true = logcat */
     private var showingLogcat = false
@@ -49,9 +60,24 @@ class CrashActivity : AppCompatActivity() {
         // Show stack trace by default
         showReport(stackTrace)
 
-        binding.crashReportView.setOnKeyListener(View.OnKeyListener { _, _, _ ->
-            true // Blocks input from hardware keyboards.
-        })
+        binding.crashReportView.setContent {
+            val scrollState = rememberScrollState()
+            OutlinedTextField(
+                value = crashReportText,
+                onValueChange = { },
+                readOnly = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState),
+                textStyle = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onBackground
+                ),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                )
+            )
+        }
 
         binding.copyButton.setOnClickListener {
             val label = if (showingLogcat) "Logcat" else "Crash log"
@@ -77,15 +103,7 @@ class CrashActivity : AppCompatActivity() {
     private fun currentContent() = if (showingLogcat) logcat else stackTrace
 
     private fun showReport(content: String) {
-        binding.crashReportView.setText(content)
-        // Scroll to bottom for logcat (most recent lines last), top for stack trace
-        if (showingLogcat) {
-            binding.crashReportScrollView.post {
-                binding.crashReportScrollView.fullScroll(View.FOCUS_DOWN)
-            }
-        } else {
-            binding.crashReportScrollView.scrollTo(0, 0)
-        }
+        crashReportText = content
     }
 
     private fun shareAsTextFile(content: String, fileName: String) {

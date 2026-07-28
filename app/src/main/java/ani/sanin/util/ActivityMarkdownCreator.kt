@@ -6,9 +6,19 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
-import androidx.core.widget.addTextChangedListener
+import androidx.lifecycle.lifecycleScope
 import ani.sanin.R
 import ani.sanin.buildMarkwon
 import ani.sanin.connections.anilist.Anilist
@@ -18,21 +28,20 @@ import ani.sanin.navBarHeight
 import ani.sanin.openLinkInBrowser
 import ani.sanin.others.AndroidBug5497Workaround
 import ani.sanin.statusBarHeight
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.themes.ThemeManager
 import ani.sanin.toast
 import ani.sanin.util.FocusEffectUtil
-import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import io.noties.markwon.editor.MarkwonEditor
-import io.noties.markwon.editor.MarkwonEditorTextWatcher
 import kotlinx.coroutines.DelicateCoroutinesApi
-import tachiyomi.core.util.lang.launchIO
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ActivityMarkdownCreator : AppCompatActivity() {
     private lateinit var binding: ActivityMarkdownCreatorBinding
     private lateinit var type: String
     private var text: String = ""
+    private var markdownValue by mutableStateOf(TextFieldValue(""))
     private var ping: String? = null
     private var parentId: Int = 0
     private var isPreviewMode: Boolean = false
@@ -108,13 +117,39 @@ class ActivityMarkdownCreator : AppCompatActivity() {
 
         ping = intent.getStringExtra("other")
         text = ping ?: ""
-        binding.editText.setText(text)
-        binding.editText.addTextChangedListener {
-            if (!isPreviewMode) {
-                text = it.toString()
-            }
-        }
+        markdownValue = TextFieldValue(text)
         previewMarkdown(false)
+
+        binding.editText.setContent {
+            OutlinedTextField(
+                value = markdownValue,
+                onValueChange = { newVal ->
+                    markdownValue = newVal
+                    if (!isPreviewMode) {
+                        text = newVal.text
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.DirectionDown -> {
+                                    LocalFocusManager.current.moveFocus(FocusDirection.Down)
+                                    true
+                                }
+                                else -> false
+                            }
+                        } else false
+                    },
+                placeholder = { androidx.compose.material3.Text(getString(R.string.reply_hint)) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
 
         binding.markdownCreatorBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
@@ -129,7 +164,7 @@ class ActivityMarkdownCreator : AppCompatActivity() {
                 setTitle(R.string.warning)
                 setMessage(R.string.post_to_anilist_warning)
                 setPosButton(R.string.ok) {
-                    launchIO {
+                    lifecycleScope.launch(Dispatchers.IO) {
                         val isEdit = editId != -1
                         val success = when (type) {
                             "activity" -> if (isEdit) {
@@ -186,11 +221,12 @@ class ActivityMarkdownCreator : AppCompatActivity() {
     }
 
     private fun applyMarkdownFormat(format: MarkdownFormat) {
-        val start = binding.editText.selectionStart
-        val end = binding.editText.selectionEnd
+        val start = markdownValue.selection.start
+        val end = markdownValue.selection.end
+        val fullText = markdownValue.text
 
         if (start != end) {
-            val selectedText = binding.editText.text?.substring(start, end) ?: ""
+            val selectedText = fullText.substring(start, end)
             val lines = selectedText.split("\n")
 
             val newText = when (format) {
@@ -213,15 +249,19 @@ class ActivityMarkdownCreator : AppCompatActivity() {
                 }
             }
 
-            binding.editText.text?.replace(start, end, newText)
-            binding.editText.setSelection(start + newText.length)
+            markdownValue = TextFieldValue(
+                fullText.replaceRange(start, end, newText),
+                TextRange(start + newText.length)
+            )
         } else {
             if (format.syntax.contains("%s")) {
                 showInputDialog(format, start)
             } else {
                 val newText = format.syntax
-                binding.editText.text?.insert(start, newText)
-                binding.editText.setSelection(start + format.selectionOffset)
+                markdownValue = TextFieldValue(
+                    fullText.substring(0, start) + newText + fullText.substring(start),
+                    TextRange(start + format.selectionOffset)
+                )
             }
         }
     }
@@ -237,12 +277,11 @@ class ActivityMarkdownCreator : AppCompatActivity() {
             isHintEnabled = true
         }
 
-        val inputEditText = TextInputEditText(this).apply {
+        val inputEditText = com.google.android.material.textfield.TextInputEditText(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            TvKeyboardUtil.setupTvInput(this)
         }
 
         inputLayout.addView(inputEditText)
@@ -261,8 +300,11 @@ class ActivityMarkdownCreator : AppCompatActivity() {
             setPosButton(getString(R.string.ok)) {
                 val input = inputEditText.text.toString()
                 val formattedText = String.format(format.syntax, input)
-                binding.editText.text?.insert(position, formattedText)
-                binding.editText.setSelection(position + formattedText.length)
+                val fullText = markdownValue.text
+                markdownValue = TextFieldValue(
+                    fullText.substring(0, position) + formattedText + fullText.substring(position),
+                    TextRange(position + formattedText.length)
+                )
             }
             setNegButton(getString(R.string.cancel))
         }.show()
@@ -273,19 +315,12 @@ class ActivityMarkdownCreator : AppCompatActivity() {
     private fun previewMarkdown(preview: Boolean) {
         val markwon = buildMarkwon(this, false, anilist = true)
         if (preview) {
-            binding.editText.isVisible = false
-            binding.editText.isEnabled = false
+            markdownValue = TextFieldValue("")
             binding.markdownPreview.isVisible = true
             markwon.setMarkdown(binding.markdownPreview, AniMarkdown.getBasicAniHTML(text))
         } else {
-            binding.editText.isVisible = true
             binding.markdownPreview.isVisible = false
-            binding.editText.setText(text)
-            binding.editText.isEnabled = true
-            val markwonEditor = MarkwonEditor.create(markwon)
-            binding.editText.addTextChangedListener(
-                MarkwonEditorTextWatcher.withProcess(markwonEditor)
-            )
+            markdownValue = TextFieldValue(text)
         }
     }
 }

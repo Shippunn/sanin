@@ -28,7 +28,6 @@ import ani.sanin.media.user.ListViewPagerAdapter
 import ani.sanin.media.user.ListViewModel
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
-import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -104,8 +103,6 @@ class LibraryFragment : Fragment() {
             }
         }
 
-        TvKeyboardUtil.setupTvInput(binding.searchViewText)
-
         if (PrefManager.getVal<Boolean>(PrefName.RescueMode)) {
             binding.listSort.visibility = View.GONE
         }
@@ -172,7 +169,6 @@ class LibraryFragment : Fragment() {
         } else {
             binding.searchView.visibility = View.VISIBLE
             binding.searchViewText.requestFocus()
-            TvKeyboardUtil.showKeyboardDelayed(binding.searchViewText)
         }
     }
 

@@ -16,7 +16,6 @@ import ani.sanin.connections.anilist.SearchResults
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
-import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -138,11 +137,6 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
         }
         binding.searchBar.setEndIconOnClickListener { searchTitle() }
 
-        when (TvKeyboardUtil.keyboardMode()) {
-            0 -> TvKeyboardUtil.setupSystemKeyboard(binding.searchBarText)
-            1 -> TvKeyboardUtil.setupEditTextWithToggle(binding.searchBarText, binding.searchKeyboardToggle)
-            2 -> TvKeyboardUtil.setupEditTextForAlwaysVisible(binding.searchBarText)
-        }
         search = Runnable { searchTitle() }
         requestFocus = Runnable { binding.searchBarText.requestFocus() }
     }

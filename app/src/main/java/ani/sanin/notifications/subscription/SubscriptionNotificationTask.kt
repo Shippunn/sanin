@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -22,7 +23,6 @@ import ani.sanin.parsers.MangaSources
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
-import ani.sanin.util.TvKeyboardUtil
 import eu.kanade.tachiyomi.data.notification.Notifications.CHANNEL_SUBSCRIPTION_CHECK
 import eu.kanade.tachiyomi.data.notification.Notifications.CHANNEL_SUBSCRIPTION_CHECK_PROGRESS
 import eu.kanade.tachiyomi.data.notification.Notifications.ID_SUBSCRIPTION_CHECK_PROGRESS
@@ -144,7 +144,7 @@ class SubscriptionNotificationTask : Task {
                                     notification
                                 )
                         }
-                        if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !TvKeyboardUtil.isTv(context)) {
+                        if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !isTv(context)) {
                             App.currentActivity()?.let {
                                 val popupIntent = Intent(
                                     context.applicationContext,
@@ -249,6 +249,11 @@ class SubscriptionNotificationTask : Task {
                 PendingIntent.FLAG_ONE_SHOT
             }
         )
+    }
+
+    private fun isTv(context: Context): Boolean {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
+        return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun addSubscriptionToStore(notification: SubscriptionStore) {

@@ -171,16 +171,10 @@
                     android:fontFamily="@font/poppins_bold"
                     android:text="@string/download" />
 
-                <EditText
+                <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/downloadNo"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppins_bold"
-                    android:inputType="number"
-                    android:textColor="?attr/colorSecondary"
-                    android:textSize="12dp"
-                    tools:ignore="TextContrastCheck"
-                    tools:text="Number" />
+                    android:layout_height="wrap_content" />
                 <!--                <TextView-->
                 <!--                    android:id="@+id/downloadNo"-->
                 <!--                    android:layout_width="match_parent"-->

@@ -68,7 +68,6 @@ import ani.sanin.settings.saving.SharedPreferenceBooleanLiveData
 import ani.sanin.settings.saving.internal.PreferenceKeystore
 import ani.sanin.settings.saving.internal.PreferencePackager
 import ani.sanin.themes.ThemeManager
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.ui.components.NavigationPillsViewModel
 import ani.sanin.util.AudioHelper
 import ani.sanin.util.Logger
@@ -709,7 +708,6 @@ class MainActivity : AppCompatActivity() {
 
         // Inflate the dialog layout
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
-            TvKeyboardUtil.setupTvInput(userAgentTextBox)
             userAgentTextBox.hint = "Password"
             subtitle.visibility = View.VISIBLE
             subtitle.text = getString(R.string.enter_password_to_decrypt_file)
@@ -732,7 +730,6 @@ class MainActivity : AppCompatActivity() {
             }
             setOnShowListener {
                 dialogView.userAgentTextBox.requestFocus()
-                TvKeyboardUtil.showKeyboardDelayed(dialogView.userAgentTextBox)
             }
             show()
         }

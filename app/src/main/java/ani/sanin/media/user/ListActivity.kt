@@ -23,7 +23,6 @@ import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.FocusEffectUtil
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -130,8 +129,6 @@ class ListActivity : AppCompatActivity() {
             }
         }
 
-        TvKeyboardUtil.setupTvInput(binding.searchViewText)
-
         if (PrefManager.getVal<Boolean>(PrefName.RescueMode)) {
             binding.listSort.visibility = View.GONE
         }
@@ -210,7 +207,6 @@ class ListActivity : AppCompatActivity() {
         } else {
             binding.searchView.visibility = View.VISIBLE
             binding.searchViewText.requestFocus()
-            TvKeyboardUtil.showKeyboardDelayed(binding.searchViewText)
         }
     }
 }

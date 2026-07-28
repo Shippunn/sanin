@@ -8,6 +8,15 @@ import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.NumberPicker
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.getString
 import androidx.core.content.ContextCompat.startActivity
@@ -263,9 +272,23 @@ class AnimeWatchAdapter(
             dialogBinding.apply {
                 var refresh = false
                 var run = false
+                var downloadNoValue by mutableStateOf("0")
                 var reversed = media.selected!!.recyclerReversed
                 var style =
                     media.selected!!.recyclerStyle ?: PrefManager.getVal(PrefName.AnimeDefaultView)
+
+                downloadNo.setContent {
+                    OutlinedTextField(
+                        value = downloadNoValue,
+                        onValueChange = { downloadNoValue = it },
+                        singleLine = true,
+                        textStyle = androidx.compose.material3.MaterialTheme.typography.bodyMedium.copy(
+                            textAlign = TextAlign.Start
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors()
+                    )
+                }
 
                 mediaSourceTop.rotation = if (reversed) -90f else 90f
                 sortText.text = if (reversed) "Down to Up" else "Up to Down"
@@ -354,7 +377,7 @@ class AnimeWatchAdapter(
                 }
 
                 //implement Multi download
-                downloadNo.setText("0")
+                downloadNoValue = "0"
                 if (media.format == "LOCAL") {
                     animeDownloadContainer.visibility = View.GONE
                     mediaWebviewContainer.visibility = View.GONE
@@ -370,7 +393,7 @@ class AnimeWatchAdapter(
                         input.value = 1
                         setCustomView(input)
                         setPosButton(R.string.ok) {
-                            downloadNo.setText("${input.value}")
+                            downloadNoValue = "${input.value}"
                         }
                         setNegButton(R.string.cancel)
                         show()
@@ -406,7 +429,7 @@ class AnimeWatchAdapter(
                     setCustomView(dialogBinding.root)
                     setPosButton("OK") {
                         if (run) fragment.onIconPressed(style, reversed)
-                        if (downloadNo.text.toString() != "0") {
+                        if (downloadNoValue != "0") {
 
                         }
                         if (refresh) fragment.loadEpisodes(source, true)

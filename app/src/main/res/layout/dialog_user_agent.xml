@@ -15,18 +15,10 @@
         android:textSize="18sp"
         android:visibility="gone" />
 
-    <com.google.android.material.textfield.TextInputEditText
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/userAgentTextBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="@string/user_agent"
-        android:inputType="text"
-        android:imeOptions="actionDone"
-        app:boxCornerRadiusBottomEnd="8dp"
-        app:boxCornerRadiusBottomStart="8dp"
-        app:boxCornerRadiusTopEnd="8dp"
-        app:boxCornerRadiusTopStart="8dp"
-        app:hintAnimationEnabled="true" />
+        android:layout_marginTop="8dp" />
 
 </LinearLayout>

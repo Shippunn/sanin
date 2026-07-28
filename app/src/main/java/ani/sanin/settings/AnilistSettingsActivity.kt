@@ -3,10 +3,16 @@ package ani.sanin.settings
 import android.content.Context
 import android.os.Bundle
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
@@ -29,10 +35,7 @@ import ani.sanin.restartApp
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
 import ani.sanin.toast
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 
 class AnilistSettingsActivity : AppCompatActivity() {
@@ -267,35 +270,21 @@ class AnilistSettingsActivity : AppCompatActivity() {
 
     private fun addCustomListItem(listName: String, container: LinearLayout, isAnime: Boolean) {
         val customListItemView = layoutInflater.inflate(R.layout.item_custom_list, container, false)
-        val textInputLayout = customListItemView.findViewById<TextInputLayout>(R.id.customListItem)
-        val editText = textInputLayout.editText as? TextInputEditText
-        editText?.setText(listName)
-        editText?.let { TvKeyboardUtil.setupTvInput(it) }
-        textInputLayout.setEndIconOnClickListener {
-            val name = editText?.text.toString()
-            if (name.isNotEmpty()) {
-                val listExists = if (isAnime) {
-                    Anilist.animeCustomLists?.contains(name) ?: false
-                } else {
-                    Anilist.mangaCustomLists?.contains(name) ?: false
-                }
-
-                if (listExists) {
-                    customAlertDialog().apply {
-                        setTitle(getString(R.string.delete_custom_list))
-                        setMessage(getString(R.string.delete_custom_list_confirm, name))
-                        setPosButton(getString(R.string.delete)) {
-                            deleteCustomList(name, isAnime)
-                            container.removeView(customListItemView)
-                        }
-                        setNegButton(getString(R.string.cancel))
-                    }.show()
-                } else {
-                    container.removeView(customListItemView)
-                }
-            } else {
-                container.removeView(customListItemView)
-            }
+        val composeView = customListItemView.findViewById<androidx.compose.ui.platform.ComposeView>(R.id.customListItem)
+        val textState = mutableStateOf(listName)
+        composeView.setTag(textState)
+        composeView.setContent {
+            OutlinedTextField(
+                value = textState.value,
+                onValueChange = { textState.value = it },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
         }
         container.addView(customListItemView)
     }
@@ -318,14 +307,17 @@ class AnilistSettingsActivity : AppCompatActivity() {
     }
 
     private fun saveCustomLists() {
-        val animeCustomLists = binding.animeCustomListsContainer.children
-            .mapNotNull { (it.findViewById<TextInputLayout>(R.id.customListItem).editText as? TextInputEditText)?.text?.toString() }
-            .filter { it.isNotEmpty() }
-            .toList()
-        val mangaCustomLists = binding.mangaCustomListsContainer.children
-            .mapNotNull { (it.findViewById<TextInputLayout>(R.id.customListItem).editText as? TextInputEditText)?.text?.toString() }
-            .filter { it.isNotEmpty() }
-            .toList()
+        fun readList(container: LinearLayout): List<String> {
+            return container.children
+                .mapNotNull { view ->
+                    @Suppress("UNCHECKED_CAST")
+                    (view.findViewById<androidx.compose.ui.platform.ComposeView>(R.id.customListItem).getTag() as? MutableState<String>)?.value
+                }
+                .filter { it.isNotEmpty() }
+                .toList()
+        }
+        val animeCustomLists = readList(binding.animeCustomListsContainer)
+        val mangaCustomLists = readList(binding.mangaCustomListsContainer)
 
         lifecycleScope.launch {
             val success = anilistMutations.updateCustomLists(animeCustomLists, mangaCustomLists)

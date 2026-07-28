@@ -23,7 +23,6 @@ import ani.sanin.settings.saving.PrefManager
 import ani.sanin.snackString
 import ani.sanin.tryWithSuspend
 import ani.sanin.util.FocusEffectUtil
-import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -107,8 +106,6 @@ class LocalMappingSearchDialog : BottomSheetDialogFragment() {
             }
         }
 
-        TvKeyboardUtil.setupTvInput(binding.searchBarText)
-        dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
         binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
             return@setOnEditorActionListener when (actionId) {
                 EditorInfo.IME_ACTION_SEARCH -> {

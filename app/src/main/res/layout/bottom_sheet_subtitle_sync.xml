@@ -95,18 +95,11 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-        <EditText
+        <androidx.compose.ui.platform.ComposeView
             android:id="@+id/syncOffsetInput"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginVertical="8dp"
-            android:autofillHints="no"
-            android:focusable="true"
-            android:gravity="center"
-            android:hint="ms"
-            android:inputType="numberSigned"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="8dp" />
 
         <LinearLayout
             android:layout_width="match_parent"

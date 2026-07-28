@@ -6,9 +6,17 @@ import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.addTextChangedListener
@@ -17,7 +25,6 @@ import ani.sanin.R
 import ani.sanin.databinding.ActivityPlayerSettingsBinding
 import ani.sanin.initActivity
 import ani.sanin.media.Media
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.media.anime.VideoCache
 import ani.sanin.navBarHeight
 import ani.sanin.others.Xpandable
@@ -50,6 +57,7 @@ class PlayerSettingsActivity :
 
     lateinit var binding: ActivityPlayerSettingsBinding
     private val player = "player_settings"
+    private var skipTimeValue by mutableStateOf(PrefManager.getVal<Int>(PrefName.SkipTime).toString())
 
     var media: Media? = null
     var subtitle: Subtitle? = null
@@ -323,7 +331,34 @@ class PlayerSettingsActivity :
             PrefManager.setVal(PrefName.SeekSensitivity, value.toInt())
         }
 
-        binding.exoSkipTime.setText(PrefManager.getVal<Int>(PrefName.SkipTime).toString())
+        skipTimeValue = PrefManager.getVal<Int>(PrefName.SkipTime).toString()
+        binding.exoSkipTime.setContent {
+            val focusManager = LocalFocusManager.current
+            OutlinedTextField(
+                value = skipTimeValue,
+                onValueChange = { skipTimeValue = it },
+                singleLine = true,
+                enabled = false,
+                textStyle = androidx.compose.material3.MaterialTheme.typography.bodyLarge.copy(
+                    textAlign = TextAlign.Center
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
+                                else -> false
+                            }
+                        } else false
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
         binding.exoSkip.setOnClickListener {
             customAlertDialog().apply {
                 setTitle("Skip Time (seconds)")
@@ -331,14 +366,13 @@ class PlayerSettingsActivity :
                     setText(PrefManager.getVal<Int>(PrefName.SkipTime).toString())
                     inputType = android.text.InputType.TYPE_CLASS_NUMBER
                     selectAll()
-                    TvKeyboardUtil.setupTvInput(this)
                 }
                 setCustomView(input)
                 setPosButton(R.string.ok) {
                     val time = input.text.toString().toIntOrNull()
                     if (time != null) {
                         PrefManager.setVal(PrefName.SkipTime, time)
-                        binding.exoSkipTime.setText(time.toString())
+                        skipTimeValue = time.toString()
                     }
                 }
                 setNegButton(R.string.cancel)

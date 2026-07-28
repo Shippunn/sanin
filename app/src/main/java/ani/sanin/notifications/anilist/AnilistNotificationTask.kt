@@ -4,7 +4,7 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -19,7 +19,6 @@ import ani.sanin.profile.activity.ActivityItemBuilder
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
-import ani.sanin.util.TvKeyboardUtil
 import eu.kanade.tachiyomi.data.notification.Notifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -96,7 +95,7 @@ class AnilistNotificationTask : Task {
                                             notification
                                         )
                                 }
-                                if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !TvKeyboardUtil.isTv(context)) {
+                                if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !isTv(context)) {
                                     val coverUrl = it.media?.coverImage?.large ?: it.image
                                     App.currentActivity()?.let { activity ->
                                         val popupIntent = Intent(context, NotificationPopupActivity::class.java).apply {
@@ -142,6 +141,11 @@ class AnilistNotificationTask : Task {
             Logger.log(e)
             return false
         }
+    }
+
+    private fun isTv(context: Context): Boolean {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
+        return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun createNotification(

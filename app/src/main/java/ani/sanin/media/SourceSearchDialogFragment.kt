@@ -20,7 +20,6 @@ import ani.sanin.parsers.HAnimeSources
 import ani.sanin.px
 import ani.sanin.tryWithSuspend
 import ani.sanin.util.FocusEffectUtil
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.GlassComponent
 import ani.sanin.util.GlassEffectManager
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +85,6 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 val srcName = (source as? AnimeParser)?.name ?: "Search"
                 binding.searchSourceTitle.text = srcName
                 binding.searchBarText.setText(media!!.mainName())
-                TvKeyboardUtil.setupTvInput(binding.searchBarText)
                 binding.searchBar.setEndIconOnClickListener { search() }
                 binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
                     if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { search(); true } else false

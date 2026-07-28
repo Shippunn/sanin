@@ -1,12 +1,18 @@
 package ani.sanin.media.comments
 
 import android.annotation.SuppressLint
-import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -31,7 +37,6 @@ import ani.sanin.others.IdMappers
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
-import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,6 +61,7 @@ class CommentsFragment : Fragment() {
     private var commentsLoaded = false
     private var isAutoFilterOn = false
     private var isSpoilerMode = false
+    private var commentText by mutableStateOf("")
 
     private var traktResult: TraktSearchResult? = null
     private var displayedComments = mutableListOf<Comment>()
@@ -88,10 +94,32 @@ class CommentsFragment : Fragment() {
         setupCarousel()
 
         binding.commentUserAvatar.loadImage(Anilist.avatar)
-        val markwonEditor = io.noties.markwon.editor.MarkwonEditor.create(markwon)
-        binding.commentInput.addTextChangedListener(
-            io.noties.markwon.editor.MarkwonEditorTextWatcher.withProcess(markwonEditor)
-        )
+
+        binding.commentInput.setContent {
+            val focusManager = LocalFocusManager.current
+            OutlinedTextField(
+                value = commentText,
+                onValueChange = { commentText = it },
+                singleLine = false,
+                maxLines = 3,
+                placeholder = { androidx.compose.material3.Text("Add a comment...") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown) {
+                            when (ev.key) {
+                                Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
+                                else -> false
+                            }
+                        } else false
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
 
         val isOfflineOrLocal = !ani.sanin.isOnline(activity)
 
@@ -270,18 +298,15 @@ class CommentsFragment : Fragment() {
         binding.commentGif.setOnClickListener {
             val gifPicker = GifPickerBottomDialog.newInstance()
             gifPicker.setOnGifSelectedListener { gifUrl ->
-                val currentText = binding.commentInput.text.toString()
+                val currentText = commentText
                 val gifMarkdown = "![gif]($gifUrl)"
-                val newText = if (currentText.isEmpty()) gifMarkdown else "$currentText\n$gifMarkdown"
-                binding.commentInput.setText(newText)
-                binding.commentInput.setSelection(newText.length)
+                commentText = if (currentText.isEmpty()) gifMarkdown else "$currentText\n$gifMarkdown"
             }
             gifPicker.show(childFragmentManager, "gifPicker")
         }
 
         binding.commentInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                TvKeyboardUtil.showKeyboardDelayed(binding.commentInput)
             }
         }
     }
@@ -419,7 +444,6 @@ class CommentsFragment : Fragment() {
         binding.commentReplyToContainer.visibility = View.VISIBLE
         binding.commentReplyTo.text = "Replying to ${comment.username}"
         binding.commentInput.requestFocus()
-        TvKeyboardUtil.showKeyboardDelayed(binding.commentInput)
         interactionState = InteractionState.REPLY
     }
 
@@ -483,9 +507,7 @@ class CommentsFragment : Fragment() {
         interactionState = InteractionState.NONE
         commentWithInteraction = null
         binding.commentReplyToContainer.visibility = View.GONE
-        binding.commentInput.setText("")
-        val imm = activity.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(binding.commentInput.windowToken, 0)
+        commentText = ""
         return when (oldState) {
             InteractionState.EDIT -> InteractionState.EDIT
             InteractionState.REPLY -> InteractionState.REPLY
@@ -498,8 +520,8 @@ class CommentsFragment : Fragment() {
             processComment()
             return
         }
-        val commentText = binding.commentInput.text.toString()
-        if (commentText.isEmpty()) {
+        val commentTextVal = commentText
+        if (commentTextVal.isEmpty()) {
             snackString("Comment cannot be empty")
             return
         }
@@ -507,8 +529,8 @@ class CommentsFragment : Fragment() {
     }
 
     private fun processComment() {
-        val commentText = binding.commentInput.text.toString()
-        if (commentText.isEmpty()) {
+        val commentTextVal = commentText
+        if (commentTextVal.isEmpty()) {
             snackString("Comment cannot be empty")
             return
         }

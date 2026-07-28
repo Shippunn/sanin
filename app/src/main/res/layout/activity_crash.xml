@@ -44,29 +44,13 @@
             android:textAlignment="center"
             android:textColor="?attr/colorOnBackground" />
 
-        <ScrollView
-            android:id="@+id/crashReportScrollView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_margin="16dp"
-            android:scrollbars="vertical">
-
-            <EditText
+        <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/crashReportView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
-                android:fontFamily="@font/poppins"
-                android:inputType="textMultiLine|none"
-                android:padding="16dp"
-                android:textColor="?attr/colorOnBackground"
-                android:textIsSelectable="true"
-                android:textSize="12sp"
-                tools:ignore="LabelFor" />
-
-        </ScrollView>
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="16dp"
+                android:padding="16dp" />
 
     </LinearLayout>
 
