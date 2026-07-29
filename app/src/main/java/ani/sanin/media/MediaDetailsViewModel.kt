@@ -637,25 +637,46 @@ class MediaDetailsViewModel : ViewModel() {
 
     private val episodes = MutableLiveData<MutableMap<Int, MutableMap<String, Episode>>>(null)
     private val epsLoaded = mutableMapOf<Int, MutableMap<String, Episode>>()
+    private var episodesGeneration = 0
     fun getEpisodes(): LiveData<MutableMap<Int, MutableMap<String, Episode>>> = episodes
     suspend fun loadEpisodes(media: Media, i: Int, invalidate: Boolean = false) {
+        val gen = ++episodesGeneration
+        val needsFetch = !epsLoaded.containsKey(i) || invalidate
         epsLoaded.keys.removeAll { it != i }
-        if (!epsLoaded.containsKey(i) || invalidate) {
-            epsLoaded[i] = watchSources?.loadEpisodesFromMedia(i, media) ?: return
+        if (needsFetch) {
+            epsLoaded[i] = mutableMapOf()
+            episodes.postValue(epsLoaded)
+            val result = watchSources?.loadEpisodesFromMedia(i, media)
+            if (gen == episodesGeneration) {
+                epsLoaded[i] = result ?: mutableMapOf()
+                episodes.postValue(epsLoaded)
+            }
+        } else {
+            episodes.postValue(epsLoaded)
         }
-        episodes.postValue(epsLoaded)
     }
 
     suspend fun forceLoadEpisode(media: Media, i: Int) {
-        epsLoaded[i] = watchSources?.loadEpisodesFromMedia(i, media) ?: return
+        val gen = ++episodesGeneration
+        epsLoaded.keys.removeAll { it != i }
+        epsLoaded[i] = mutableMapOf()
         episodes.postValue(epsLoaded)
+        val result = watchSources?.loadEpisodesFromMedia(i, media)
+        if (gen == episodesGeneration) {
+            epsLoaded[i] = result ?: mutableMapOf()
+            episodes.postValue(epsLoaded)
+        }
     }
 
     suspend fun overrideEpisodes(i: Int, source: ShowResponse, id: Int) {
+        val gen = ++episodesGeneration
         watchSources?.saveResponse(i, id, source)
-        epsLoaded[i] =
-            watchSources?.loadEpisodes(i, source.link, source.extra, source.sAnime) ?: return
-        episodes.postValue(epsLoaded)
+        epsLoaded.keys.removeAll { it != i }
+        val result = watchSources?.loadEpisodes(i, source.link, source.extra, source.sAnime)
+        if (gen == episodesGeneration) {
+            epsLoaded[i] = result ?: mutableMapOf()
+            episodes.postValue(epsLoaded)
+        }
     }
 
     private var episode = MutableLiveData<Episode?>(null)
