@@ -95,6 +95,7 @@ object TvKeyboardUtil {
                 applyFocusBorder(v)
             } else {
                 removeFocusBorder(v)
+                getCompactKeyboard(editText)?.hide()
             }
         }
         if (editText.isFocused) {

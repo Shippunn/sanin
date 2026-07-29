@@ -173,15 +173,13 @@ class TvKeyboardView(
                 target?.let { t ->
                     t.clearFocus()
                     t.post {
-                        if (t.isFocused || (t.parent as? ViewGroup)?.findFocus() == t) {
-                            var p: View? = t
-                            while (p != null) {
-                                if (p.isFocusable && p !is EditText) {
-                                    p.requestFocus()
-                                    break
-                                }
-                                p = p.parent as? View
+                        var p: View? = t
+                        while (p != null) {
+                            if (p.isFocusable && p !is EditText) {
+                                p.requestFocus()
+                                break
                             }
+                            p = p.parent as? View
                         }
                     }
                 }
