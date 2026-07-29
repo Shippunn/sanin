@@ -18,6 +18,7 @@ object AnimeSources : WatchSources() {
             AniBdProvider(),
             AniZoneProvider(),
             AnimeGGProvider(),
+            AniVaultProvider(),
         )
     }
 
