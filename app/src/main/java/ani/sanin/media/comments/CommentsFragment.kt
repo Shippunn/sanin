@@ -212,12 +212,14 @@ class CommentsFragment : Fragment() {
                 android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
                     if (lm.focusedPosition < carouselAdapter.itemCount - 1) {
                         lm.scrollToNext()
+                        carouselAdapter.setFocusedPosition(lm.focusedPosition)
                     }
                     true
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_UP -> {
                     if (lm.focusedPosition > 0) {
                         lm.scrollToPrevious()
+                        carouselAdapter.setFocusedPosition(lm.focusedPosition)
                     }
                     true
                 }
@@ -240,6 +242,7 @@ class CommentsFragment : Fragment() {
             }
             override fun onChildViewDetachedFromWindow(view: View) {}
         })
+        binding.commentsList.post { binding.commentsList.requestFocus() }
     }
 
     private fun setupInputListeners() {

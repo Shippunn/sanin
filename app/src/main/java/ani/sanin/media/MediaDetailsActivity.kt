@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.GestureDetector
@@ -401,6 +402,21 @@ class MediaDetailsActivity : AppCompatActivity() {
                     }
                     if (binding.mediaNavPills?.visibility != View.VISIBLE &&
                         currentFocus?.focusSearch(View.FOCUS_LEFT) == null) {
+                        showNavPills()
+                        focusNavPillForSelectedTab()
+                        return true
+                    }
+                    if (selected == 1 &&
+                        resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE &&
+                        binding.mediaNavPills?.visibility != View.VISIBLE &&
+                        focusedId != null &&
+                        focusedId != R.id.mediaSourceSettings &&
+                        focusedId != R.id.mediaSourceSearch &&
+                        focusedId != R.id.mediaSourceSubscribe &&
+                        focusedId != R.id.mediaNestedButton &&
+                        focusedId != R.id.mediaSourceLanguage &&
+                        focusedId != R.id.mediaSourceRefresh &&
+                        focusedId != R.id.ScrollTop) {
                         showNavPills()
                         focusNavPillForSelectedTab()
                         return true

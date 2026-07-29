@@ -223,7 +223,6 @@ class AnimeWatchAdapter(
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSettings, binding.mediaSourceSettings, true)
         FocusEffectUtil.applyFocusListener(binding.animeSourceDubbed, binding.animeSourceDubbed, true)
         binding.animeSourceDubbed.nextFocusUpId = R.id.mediaSourceSettings
-        binding.animeSourceDubbed.nextFocusLeftId = R.id.mediaSourcePillScroll
         binding.animeSourceDubbed.nextFocusRightId = R.id.mediaSourceSearch
         binding.mediaSourceSettings.nextFocusDownId = R.id.animeSourceDubbed
         FocusEffectUtil.applyFocusListener(binding.mediaSourceSubscribe, binding.mediaSourceSubscribe, true)
