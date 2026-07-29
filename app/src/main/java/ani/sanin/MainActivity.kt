@@ -306,11 +306,15 @@ class MainActivity : AppCompatActivity() {
                 if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
                     ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
                         duration = 400L
-                        doOnEnd { binding.root.removeView(splash.root) }
+                        doOnEnd {
+                            binding.root.removeView(splash.root)
+                            showFirstTimeProviderDialog()
+                        }
                         start()
                     }
                 } else {
                     binding.root.removeView(splash.root)
+                    showFirstTimeProviderDialog()
                 }
         }
 
@@ -388,14 +392,6 @@ class MainActivity : AppCompatActivity() {
                     trimCachePeriodically()
                 }
             }
-        }
-
-        if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
-            val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
-            if (enabled.isEmpty()) {
-                FirstTimeProviderDialog().show(supportFragmentManager, "FirstTimeProvider")
-            }
-            PrefManager.setVal(PrefName.FirstTimeProviderShown, true)
         }
 
         var launched = false
@@ -1035,6 +1031,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch (_: Exception) { }
+    }
+
+    private fun showFirstTimeProviderDialog() {
+        if (!PrefManager.getVal<Boolean>(PrefName.FirstTimeProviderShown)) {
+            val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
+            if (enabled.isEmpty()) {
+                FirstTimeProviderDialog().show(supportFragmentManager, "FirstTimeProvider")
+            }
+            PrefManager.setVal(PrefName.FirstTimeProviderShown, true)
+        }
     }
 
 }
