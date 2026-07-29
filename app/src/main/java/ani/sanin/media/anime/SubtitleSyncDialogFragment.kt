@@ -1,25 +1,19 @@
 package ani.sanin.media.anime
 
+import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.text.style.TextAlign
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
@@ -27,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.databinding.BottomSheetSubtitleSyncBinding
+import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.databinding.ItemSubtitleSyncBinding
 import ani.sanin.media.MediaDetailsViewModel
 import ani.sanin.settings.saving.PrefManager
@@ -55,7 +50,6 @@ class SubtitleSyncDialogFragment : DialogFragment() {
     private var updateJob: Job? = null
     private var adapter: SyncAdapter? = null
     private var prevPlayingIndex: Int = -1
-    private var syncOffsetText by mutableStateOf("0")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,44 +89,34 @@ class SubtitleSyncDialogFragment : DialogFragment() {
     private fun onCueClicked(cue: SyncCue) {
         val playerPos = getPlayerPosition()
         currentOffset = playerPos - cue.startTimeMs
-        syncOffsetText = currentOffset.toString()
+        binding.syncOffsetInput.setText(currentOffset.toString())
         applyOffset()
     }
 
     private fun setupViews() {
-        syncOffsetText = currentOffset.toString()
-        binding.syncOffsetInput.setContent {
-            OutlinedTextField(
-                value = syncOffsetText,
-                onValueChange = {
-                    syncOffsetText = it
-                    it.toLongOrNull()?.let { offset ->
-                        currentOffset = offset
-                        updateStatusText()
-                    }
-                },
-                singleLine = true,
-                textStyle = androidx.compose.material3.MaterialTheme.typography.bodyLarge.copy(
-                    textAlign = TextAlign.Center
-                ),
-                modifier = Modifier
-                    .fillMaxWidth(),
-                placeholder = { androidx.compose.material3.Text("ms") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
-        }
+        binding.syncOffsetInput.setText(currentOffset.toString())
+        binding.syncOffsetInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                s?.toString()?.toLongOrNull()?.let { offset ->
+                    currentOffset = offset
+                    updateStatusText()
+                }
+            }
+        })
 
         applySyncFocus(binding.syncSubtractMore)
         applySyncFocus(binding.syncSubtract)
+        applySyncFocus(binding.syncOffsetInput)
         applySyncFocus(binding.syncAdd)
         applySyncFocus(binding.syncAddMore)
         applySyncFocus(binding.syncCancel)
         applySyncFocus(binding.syncReset)
         applySyncFocus(binding.syncApply)
+
+        TvKeyboardUtil.setupTvInput(binding.syncOffsetInput)
+        dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
 
         binding.syncSubtractMore.setOnClickListener { changeBy(-1000L) }
         binding.syncSubtract.setOnClickListener { changeBy(-100L) }
@@ -203,8 +187,8 @@ class SubtitleSyncDialogFragment : DialogFragment() {
     }
 
     private fun changeBy(delta: Long) {
-        val current = (syncOffsetText.toLongOrNull() ?: 0) + delta
-        syncOffsetText = current.toString()
+        val current = (binding.syncOffsetInput.text?.toString()?.toLongOrNull() ?: 0) + delta
+        binding.syncOffsetInput.setText(current.toString())
     }
 
     private fun applyOffset() {
@@ -216,7 +200,7 @@ class SubtitleSyncDialogFragment : DialogFragment() {
 
     private fun resetOffset() {
         currentOffset = 0L
-        syncOffsetText = "0"
+        binding.syncOffsetInput.setText("0")
         PrefManager.setVal(PrefName.SubtitleDelay, 0L)
         PrefManager.setVal(PrefName.SubtitleSyncEnabled, false)
         (requireActivity() as? ExoplayerView)?.applySubtitleOffset(0L)

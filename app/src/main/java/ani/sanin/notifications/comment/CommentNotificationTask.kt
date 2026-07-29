@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -23,6 +22,7 @@ import ani.sanin.notifications.subscription.NotificationPopupActivity
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
+import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -340,7 +340,7 @@ class CommentNotificationTask : Task {
     }
 
     private fun showPopup(context: Context, title: String, message: String) {
-        if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !isTv(context)) {
+        if (PrefManager.getVal<Boolean>(PrefName.NotificationPopup) && !TvKeyboardUtil.isTv(context)) {
             App.currentActivity()?.let {
                 val popupIntent = Intent(context, NotificationPopupActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION
@@ -350,11 +350,6 @@ class CommentNotificationTask : Task {
                 context.startActivity(popupIntent)
             }
         }
-    }
-
-    private fun isTv(context: Context): Boolean {
-        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
-        return uiModeManager?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun Int?.isGlobal() = this == 3 || this == 420

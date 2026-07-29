@@ -222,12 +222,22 @@
                         app:srcCompat="@drawable/ic_round_add_circle_24"
                         tools:ignore="ContentDescription" />
 
-                    <androidx.compose.ui.platform.ComposeView
+                    <EditText
                         android:id="@+id/commentInput"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:layout_weight="1" />
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:fontFamily="@font/poppins"
+                        android:hint="Add a comment..."
+                        android:inputType="textMultiLine"
+                        android:maxLength="300"
+                        android:maxLines="3"
+                        android:textColor="#FFFFFFFF"
+                        android:textColorHint="#FF666666"
+                        android:textSize="13sp"
+                        tools:ignore="HardcodedText" />
 
                     <ImageButton
                         android:id="@+id/commentSend"

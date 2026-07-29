@@ -6,15 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.*
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
@@ -30,14 +22,13 @@ import ani.sanin.settings.saving.internal.PreferenceKeystore
 import ani.sanin.settings.saving.internal.PreferencePackager
 import ani.sanin.toast
 import ani.sanin.util.Logger
+import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 
 class LoginFragment : Fragment() {
 
     private var _binding: FragmentLoginBinding? = null
     private val binding get() = _binding!!
-    private var tokenText by mutableStateOf("")
-    private var dialogPasswordText by mutableStateOf("")
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,8 +54,8 @@ class LoginFragment : Fragment() {
 
         binding.loginQrButton.visibility = View.GONE
         binding.loginTokenSubmit.setOnClickListener {
-            val token = tokenText.trim()
-            if (token.isNotBlank()) {
+            val token = binding.loginTokenEditText.text?.toString()?.trim()
+            if (!token.isNullOrBlank()) {
                 PrefManager.setVal(PrefName.AnilistToken, token)
                 if (Anilist.getSavedToken()) {
                     toast("Login successful")
@@ -77,30 +68,7 @@ class LoginFragment : Fragment() {
             }
         }
 
-        binding.loginTokenEditText.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = tokenText,
-                onValueChange = { tokenText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text("Paste token") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown) {
-                            when (ev.key) {
-                                Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
-                                else -> false
-                            }
-                        } else false
-                    },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
-        }
+        TvKeyboardUtil.setupTvInput(binding.loginTokenEditText)
 
         val openDocumentLauncher =
             registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -155,30 +123,20 @@ class LoginFragment : Fragment() {
     private fun passwordAlertDialog(callback: (CharArray?) -> Unit) {
         val password = CharArray(16).apply { fill('0') }
 
-        val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-        dialogView.userAgentTextBox.setContent {
-            OutlinedTextField(
-                value = dialogPasswordText,
-                onValueChange = { dialogPasswordText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text("Password") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
+        // Inflate the dialog layout
+        val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
+            userAgentTextBox.hint = "Password"
+            subtitle.visibility = View.VISIBLE
+            subtitle.text = getString(R.string.enter_password_to_decrypt_file)
         }
-        dialogView.subtitle.visibility = View.VISIBLE
-        dialogView.subtitle.text = getString(R.string.enter_password_to_decrypt_file)
 
         requireActivity().customAlertDialog().apply {
             setTitle("Enter Password")
             setCustomView(dialogView.root)
             setPosButton(R.string.ok) {
-                if (dialogPasswordText.isNotBlank()) {
-                    dialogPasswordText.trim().toCharArray(password)
+                val editText = dialogView.userAgentTextBox
+                if (editText.text?.isNotBlank() == true) {
+                    editText.text?.toString()?.trim()?.toCharArray(password)
                     callback(password)
                 } else {
                     toast("Password cannot be empty")
@@ -189,6 +147,8 @@ class LoginFragment : Fragment() {
                 callback(null)
             }
         }.show()
+
+
     }
 
     private fun restartApp() {

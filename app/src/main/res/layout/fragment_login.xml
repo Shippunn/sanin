@@ -79,11 +79,26 @@
             android:orientation="horizontal"
             android:visibility="gone">
 
-            <androidx.compose.ui.platform.ComposeView
-                android:id="@+id/loginTokenEditText"
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="48dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:cardCornerRadius="8dp"
+                app:strokeColor="?attr/colorPrimaryContainer"
+                app:strokeWidth="2dp">
+
+                <EditText
+                    android:id="@+id/loginTokenEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:fontFamily="@font/poppins"
+                    android:hint="Paste token"
+                    android:inputType="text"
+                    android:padding="8dp"
+                    android:textSize="12sp" />
+            </com.google.android.material.card.MaterialCardView>
 
             <Button
                 android:id="@+id/loginTokenSubmit"

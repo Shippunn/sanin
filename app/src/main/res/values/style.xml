@@ -104,4 +104,56 @@
 
     <style name="ThemeOverlay_Sanin_MediaRouter" parent="ThemeOverlay.AppCompat" />
 
+    <style name="TvKeyboardKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:layout_margin">2dp</item>
+    </style>
+
+    <style name="TvKeyboardKeyDanger">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:textColor">#FF6B6B</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:layout_margin">2dp</item>
+    </style>
+
+    <style name="TvKeyboardKeyCompact">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:layout_margin">1dp</item>
+    </style>
+
+    <style name="TvKeyboardKeyDangerCompact">
+        <item name="android:layout_width">32dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:textColor">#FF6B6B</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:layout_margin">1dp</item>
+    </style>
 </resources>

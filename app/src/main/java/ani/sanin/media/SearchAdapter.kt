@@ -28,6 +28,7 @@ import ani.sanin.others.imagesearch.ImageSearchActivity
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.TvKeyboardUtil
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_CHECKED
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_INDETERMINATE
 import com.google.android.material.checkbox.MaterialCheckBox.STATE_UNCHECKED
@@ -289,6 +290,11 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             } else visibility = View.GONE
         }
 
+        when (TvKeyboardUtil.keyboardMode()) {
+            0 -> TvKeyboardUtil.setupSystemKeyboard(binding.searchBarText)
+            1 -> TvKeyboardUtil.setupEditTextWithToggle(binding.searchBarText, binding.searchKeyboardToggle)
+            2 -> TvKeyboardUtil.setupEditTextForAlwaysVisible(binding.searchBarText)
+        }
         search = Runnable { searchTitle() }
         requestFocus = Runnable { binding.searchBarText.requestFocus() }
     }

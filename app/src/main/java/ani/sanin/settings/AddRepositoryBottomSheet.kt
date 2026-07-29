@@ -4,24 +4,11 @@ import android.content.Context
 import android.os.Bundle
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import android.view.inputmethod.EditorInfo
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import ani.sanin.R
@@ -31,6 +18,7 @@ import ani.sanin.databinding.ItemRepoBinding
 import ani.sanin.media.MediaType
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
+import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 import ani.sanin.util.FocusEffectUtil
 import com.xwray.groupie.GroupieAdapter
@@ -80,8 +68,6 @@ class AddRepositoryBottomSheet : DialogFragment() {
     private var repositories: MutableList<String> = mutableListOf()
     private var onRepositoryRemoved: ((String, MediaType) -> Unit)? = null
     private var adapter: GroupieAdapter = GroupieAdapter()
-    private var repositoryInputValue by mutableStateOf("")
-    private var repositoryInputError by mutableStateOf<String?>(null)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -110,53 +96,40 @@ class AddRepositoryBottomSheet : DialogFragment() {
         )
         adapter.addAll(repositories.map { RepoItem(it, mediaType, ::onRepositoryRemoved) })
 
-        binding.repositoryInput.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = repositoryInputValue,
-                onValueChange = { repositoryInputValue = it; repositoryInputError = null },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.anime_add_repository)) },
-                isError = repositoryInputError != null,
-                supportingText = repositoryInputError?.let { err ->
-                    { androidx.compose.material3.Text(err) }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent { ev ->
-                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
-                                val url = repositoryInputValue
-                                if (url.isNotBlank()) {
-                                    val error = isValidUrl(url)
-                                    if (error == null) {
-                                        acceptUrl(url)
-                                    } else {
-                                        repositoryInputError = error
-                                    }
-                                }
-                                true
-                            } else false
-                        },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
-                    cursorColor = Color.White
-                )
-            )
-        }
+        dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
+        binding.repositoryInput.hint = getString(R.string.anime_add_repository)
+        TvKeyboardUtil.setupTvInput(binding.repositoryInput)
 
         binding.addButton.setOnClickListener {
-            val input = repositoryInputValue
+            val input = binding.repositoryInput.text.toString()
             val error = isValidUrl(input)
             if (error == null) {
                 acceptUrl(input)
             } else {
-                repositoryInputError = error
+                binding.repositoryInput.error = error
             }
         }
 
         binding.cancelButton.setOnClickListener {
             dismiss()
+        }
+
+        binding.repositoryInput.setOnEditorActionListener { textView, action, keyEvent ->
+            if (action == EditorInfo.IME_ACTION_DONE ||
+                (keyEvent?.action == KeyEvent.ACTION_UP && keyEvent.keyCode == KeyEvent.KEYCODE_ENTER)
+            ) {
+                val url = textView.text.toString()
+                if (url.isNotBlank()) {
+                    val error = isValidUrl(url)
+                    if (error == null) {
+                        acceptUrl(url)
+                        return@setOnEditorActionListener true
+                    } else {
+                        binding.repositoryInput.error = error
+                    }
+                }
+            }
+            false
         }
     }
 

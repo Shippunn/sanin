@@ -16,6 +16,7 @@ import ani.sanin.databinding.BottomSheetGifPickerBinding
 import ani.sanin.databinding.ItemGifBinding
 import ani.sanin.loadImage
 import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,6 +70,9 @@ class GifPickerBottomDialog : BottomSheetDialogFragment() {
                 }
             }
         })
+
+        TvKeyboardUtil.setupTvInput(binding.gifSearchInput)
+        dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
 
         loadTrending()
     }

@@ -8,17 +8,10 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.*
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.documentfile.provider.DocumentFile
@@ -33,6 +26,7 @@ import ani.sanin.savePrefsToDownloads
 import ani.sanin.restartApp
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
+import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.settings.saving.internal.Location
 import ani.sanin.settings.saving.internal.PreferenceKeystore
 import ani.sanin.settings.saving.internal.PreferencePackager
@@ -249,6 +243,25 @@ class SettingsCommonActivity : AppCompatActivity() {
                             },
                         ),
                         Settings(
+                            type = 1,
+                            name = "Keyboard Mode",
+                            desc = "System / Custom keyboard",
+                            icon = R.drawable.ic_round_keyboard_24,
+                            onClick = {
+                                val current = PrefManager.getVal<Int>(PrefName.KeyboardMode)
+                                val labels = arrayOf("System Keyboard", "Custom")
+                                val idx = if (current == 2) 1 else 0
+                                customAlertDialog().apply {
+                                    setTitle("Keyboard Mode")
+                                    singleChoiceItems(labels, idx) { index ->
+                                        PrefManager.setVal(PrefName.KeyboardMode, if (index == 1) 2 else 0)
+                                        restartApp()
+                                    }
+                                    show()
+                                }
+                            },
+                        ),
+                        Settings(
                             type = 2,
                             name = getString(R.string.search_source_list),
                             desc = getString(R.string.search_source_list_desc),
@@ -339,36 +352,18 @@ class SettingsCommonActivity : AppCompatActivity() {
         }
     }
 
-    private var passwordText by mutableStateOf("")
-
     private fun passwordAlertDialog(
         isExporting: Boolean,
         callback: (CharArray?) -> Unit,
     ) {
         val password = CharArray(16).apply { fill('0') }
 
+        // Inflate the dialog layout
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-        dialogView.userAgentTextBox.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = passwordText,
-                onValueChange = { passwordText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
-                            true
-                        } else false
-                    },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
-        }
+        TvKeyboardUtil.setupTvInput(dialogView.userAgentTextBox)
+        val box = dialogView.userAgentTextBox
+        box.hint = getString(R.string.password)
+        box.setSingleLine()
 
         val dialog =
             AlertDialog
@@ -383,15 +378,26 @@ class SettingsCommonActivity : AppCompatActivity() {
                 }.create()
 
         fun handleOkAction() {
-            if (passwordText.isNotBlank()) {
-                passwordText.trim().toCharArray(password)
+            val editText = dialogView.userAgentTextBox
+            if (editText.text?.isNotBlank() == true) {
+                editText.text
+                    ?.toString()
+                    ?.trim()
+                    ?.toCharArray(password)
                 dialog.dismiss()
                 callback(password)
             } else {
                 toast(getString(R.string.password_cannot_be_empty))
             }
         }
-
+        box.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                handleOkAction()
+                true
+            } else {
+                false
+            }
+        }
         dialogView.subtitle.visibility = View.VISIBLE
         if (!isExporting) {
             dialogView.subtitle.text =
@@ -401,12 +407,15 @@ class SettingsCommonActivity : AppCompatActivity() {
         dialog.window?.apply {
             setDimAmount(0.8f)
             attributes.windowAnimations = android.R.style.Animation_Dialog
+            TvKeyboardUtil.retainWindowFocus(this)
         }
         dialog.setOnShowListener {
             dialogView.userAgentTextBox.requestFocus()
+            TvKeyboardUtil.showKeyboardDelayed(dialogView.userAgentTextBox)
         }
         dialog.show()
 
+        // Override the positive button here
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             handleOkAction()
         }

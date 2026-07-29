@@ -4,13 +4,6 @@ import android.os.Bundle
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -107,36 +100,21 @@ class SettingsExtensionsActivity : AppCompatActivity() {
                         desc = getString(R.string.user_agent_desc),
                         icon = R.drawable.ic_round_video_settings_24,
                         onClick = {
-                            var userAgentText by mutableStateOf(
-                                PrefManager.getVal<String>(PrefName.DefaultUserAgent)
-                            )
                             val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
-                            dialogView.userAgentTextBox.setContent {
-                                OutlinedTextField(
-                                    value = userAgentText,
-                                    onValueChange = { userAgentText = it },
-                                    singleLine = true,
-                                    placeholder = { Text("User-Agent") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = ComposeColor.White,
-                                        unfocusedTextColor = ComposeColor.White,
-                                        cursorColor = ComposeColor.White
-                                    )
-                                )
-                            }
+                            val editText = dialogView.userAgentTextBox
+                            editText.setText(PrefManager.getVal<String>(PrefName.DefaultUserAgent))
                             context.customAlertDialog().apply {
                                 setTitle(R.string.user_agent)
                                 setCustomView(dialogView.root)
                                 setPosButton(R.string.ok) {
                                     PrefManager.setVal(
                                         PrefName.DefaultUserAgent,
-                                        userAgentText
+                                        editText.text.toString()
                                     )
                                 }
                                 setNeutralButton(R.string.reset) {
                                     PrefManager.removeVal(PrefName.DefaultUserAgent)
-                                    userAgentText = ""
+                                    editText.setText("")
                                 }
                                 setNegButton(R.string.cancel)
                             }.show()

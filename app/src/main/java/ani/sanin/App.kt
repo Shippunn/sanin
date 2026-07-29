@@ -20,6 +20,7 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FinalExceptionHandler
 import ani.sanin.util.LogcatBuffer
 import ani.sanin.util.Logger
+import ani.sanin.util.TvKeyboardUtil
 import com.google.android.material.color.DynamicColors
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.extension.anime.AnimeExtensionManager
@@ -143,6 +144,7 @@ class App : Application() {
         var lastActivity: String? = null
         override fun onActivityCreated(p0: Activity, p1: Bundle?) {
             lastActivity = p0.javaClass.simpleName
+            TvKeyboardUtil.retainWindowFocus(p0.window)
         }
 
         override fun onActivityStarted(p0: Activity) {
