@@ -38,6 +38,7 @@ class TvKeyboardView(
 
     private var isSymbolsMode = false
     private var isCapsLock = false
+    private var isShifted = false
 
     private lateinit var modeToggle: TextView
     private lateinit var capsLock: TextView
@@ -86,9 +87,10 @@ class TvKeyboardView(
             previewEditText.showSoftInputOnFocus = false
         }
 
-        for (id in letterIds) {
-            val v = findViewById<TextView>(id)
+        for (i in letterIds.indices) {
+            val v = findViewById<TextView>(letterIds[i])
             if (firstKey == null) firstKey = v
+            v.text = letters.getOrElse(i) { "" }
             letterKeys.add(v)
             allKeys.add(v)
         }
@@ -109,6 +111,9 @@ class TvKeyboardView(
                 else removeKeyFocus(view)
             }
         }
+
+        isShifted = true
+        updateLetterCase()
     }
 
     private fun applyKeyFocus(v: View) {
@@ -184,7 +189,14 @@ class TvKeyboardView(
             R.id.keyModeToggle -> toggleMode()
             R.id.keyCapsLock -> toggleCapsLock()
             else -> {
-                val char = view.text?.toString() ?: return
+                var char = view.text?.toString() ?: return
+                if (!isSymbolsMode && isCapsLock) {
+                    char = char.uppercase()
+                } else if (!isSymbolsMode && isShifted) {
+                    char = char.uppercase()
+                    isShifted = false
+                    updateLetterCase()
+                }
                 text.insert(minPos, char)
                 src.setSelection(minPos + char.length)
             }
@@ -217,29 +229,30 @@ class TvKeyboardView(
             letterKeys[i].text = chars.getOrElse(i) { "" }
         }
         modeToggle.text = if (isSymbolsMode) "ABC" else "\u003F123"
-        if (!isSymbolsMode && isCapsLock) {
-            for (i in letterKeys.indices) {
-                letterKeys[i].text = letterKeys[i].text.toString().uppercase()
-            }
-        }
+        updateLetterCase()
     }
 
     private fun toggleCapsLock() {
         isCapsLock = !isCapsLock
         capsLock.text = if (isCapsLock) "CAPS" else "caps"
         capsLock.alpha = if (isCapsLock) 1.0f else 0.5f
-        if (!isSymbolsMode) {
-            for (i in letterKeys.indices) {
-                val key = letterKeys[i]
-                val text = key.text.toString()
-                key.text = if (isCapsLock) text.uppercase() else text.lowercase()
-            }
+        updateLetterCase()
+    }
+
+    private fun updateLetterCase() {
+        if (isSymbolsMode) return
+        val upper = isCapsLock || isShifted
+        for (i in letterKeys.indices) {
+            val base = letters.getOrElse(i) { "" }
+            letterKeys[i].text = if (upper) base.uppercase() else base
         }
     }
 
     private var keyboardHeight = 0
 
     fun show() {
+        isShifted = true
+        updateLetterCase()
         if (compact) {
             syncFromTarget()
             visibility = VISIBLE

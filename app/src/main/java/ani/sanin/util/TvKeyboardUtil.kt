@@ -16,6 +16,7 @@ import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
@@ -300,13 +301,27 @@ object TvKeyboardUtil {
                 this.tag = TAG_KEYBOARD_COMPACT
                 visibility = View.GONE
             }
+            val landscape = view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val params = FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                if (landscape) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.START or Gravity.BOTTOM
                 bottomMargin = (16 * view.resources.displayMetrics.density).toInt()
                 leftMargin = (16 * view.resources.displayMetrics.density).toInt()
+            }
+            if (landscape) {
+                keyboard.post {
+                    val content = keyboard.getChildAt(0) as? LinearLayout ?: return@post
+                    for (i in 0 until content.childCount) {
+                        val child = content.getChildAt(i)
+                        val lp = child.layoutParams
+                        if (lp != null) {
+                            lp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                            child.layoutParams = lp
+                        }
+                    }
+                }
             }
             decorView.addView(keyboard, params)
         }
