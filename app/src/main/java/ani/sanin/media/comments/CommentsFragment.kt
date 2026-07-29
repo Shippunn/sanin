@@ -242,7 +242,6 @@ class CommentsFragment : Fragment() {
             }
             override fun onChildViewDetachedFromWindow(view: View) {}
         })
-        binding.commentsList.post { binding.commentsList.requestFocus() }
     }
 
     private fun setupInputListeners() {
