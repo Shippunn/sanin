@@ -6,8 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
@@ -16,7 +14,6 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
-import androidx.compose.ui.text.input.ImeAction
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -27,7 +24,6 @@ import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
-import ani.sanin.connections.comments.CommentResponse
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment
@@ -44,8 +40,6 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -116,13 +110,10 @@ class CommentsFragment : Fragment() {
                         if (ev.type == KeyEventType.KeyDown) {
                             when (ev.key) {
                                 Key.DirectionDown -> { focusManager.moveFocus(FocusDirection.Down); true }
-                                Key.Escape -> { focusManager.clearFocus(); true }
                                 else -> false
                             }
                         } else false
                     },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = ComposeColor.White,
                     unfocusedTextColor = ComposeColor.White,
@@ -346,14 +337,8 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        try {
-            coroutineScope {
-                val traktDef = if (hasTrakt && traktResult != null) async { loadTraktComments() } else null
-                val saninDef = async { loadSaninComments() }
-                traktDef?.await()
-                saninDef.await()
-            }
-        } catch (_: Exception) { }
+        if (hasTrakt && traktResult != null) loadTraktComments()
+        loadSaninComments()
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
@@ -362,18 +347,12 @@ class CommentsFragment : Fragment() {
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
         binding.commentsList.visibility = View.VISIBLE
-        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
     }
 
     private suspend fun loadSaninComments() {
         val effectiveFilter = getEffectiveFilter()
-        var comments: CommentResponse? = null
-        repeat(3) { attempt ->
-            comments = withContext(Dispatchers.IO) {
-                CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
-            }
-            if (comments != null) return@repeat
-            if (attempt < 2) kotlinx.coroutines.delay(1000L shl attempt)
+        val comments = withContext(Dispatchers.IO) {
+            CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
         }
         displayedComments.addAll(comments?.comments ?: emptyList())
         totalPages = comments?.totalPages ?: 1
@@ -391,11 +370,6 @@ class CommentsFragment : Fragment() {
             TraktAPI.getComments(type, id, page = 1, sort = sort)
         }
         displayedComments.addAll(traktComments.map { traktToComment(it) })
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
     }
 
     private fun traktToComment(tc: TraktComment): Comment {

@@ -22,9 +22,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import ani.sanin.R
@@ -127,31 +124,19 @@ class AddRepositoryBottomSheet : DialogFragment() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown) {
-                            when (ev.key) {
-                                Key.Enter -> {
-                                    val url = repositoryInputValue
-                                    if (url.isNotBlank()) {
-                                        val error = isValidUrl(url)
-                                        if (error == null) {
-                                            acceptUrl(url)
-                                        } else {
-                                            repositoryInputError = error
-                                        }
+                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
+                                val url = repositoryInputValue
+                                if (url.isNotBlank()) {
+                                    val error = isValidUrl(url)
+                                    if (error == null) {
+                                        acceptUrl(url)
+                                    } else {
+                                        repositoryInputError = error
                                     }
-                                    true
                                 }
-                                Key.DirectionDown -> {
-                                    binding.cancelButton.requestFocus()
-                                    true
-                                }
-                                Key.Escape -> { focusManager.clearFocus(); true }
-                                else -> false
-                            }
-                        } else false
-                    },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                true
+                            } else false
+                        },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,

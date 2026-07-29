@@ -77,7 +77,7 @@ class SearchActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val focused = currentFocus
-                if (focused?.id == R.id.searchBarCompose && !backHandled) {
+                if (focused?.id == R.id.searchBarText && !backHandled) {
                     focused.clearFocus()
                     backHandled = true
                     return
@@ -483,10 +483,6 @@ class SearchActivity : AppCompatActivity() {
             window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED)
             search()
         }
-    }
-
-    fun focusResults() {
-        binding.searchRecyclerView.requestFocus()
     }
 
     var state: Parcelable? = null

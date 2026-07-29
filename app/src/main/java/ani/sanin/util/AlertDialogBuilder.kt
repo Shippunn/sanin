@@ -1,11 +1,11 @@
 package ani.sanin.util
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Build
 import android.view.WindowManager
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import ani.sanin.R
 
 class AlertDialogBuilder(private val context: Context) {
@@ -205,10 +205,12 @@ class AlertDialogBuilder(private val context: Context) {
         }
         builder.setCancelable(cancelable)
         val dialog = builder.create()
-        onShow?.invoke()
         attach?.invoke(dialog)
         dialog.setOnDismissListener {
             onDismiss?.invoke()
+        }
+        dialog.setOnShowListener {
+            onShow?.invoke()
         }
         dialog.window?.apply {
             setDimAmount(0.5f)

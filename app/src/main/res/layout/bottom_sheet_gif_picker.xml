@@ -29,12 +29,28 @@
         tools:ignore="HardcodedText" />
 
     <!-- Search Field -->
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/gifSearchInput"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="8dp"
+        app:boxBackgroundMode="outline"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        android:hint="Search GIFs">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/gifSearchInput"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingVertical="0dp" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Loader -->
     <FrameLayout

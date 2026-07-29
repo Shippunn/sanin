@@ -1,5 +1,6 @@
 package ani.sanin.media
 
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,7 @@ abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHead
     private val itemViewType = 6969
     var search: Runnable? = null
     var requestFocus: Runnable? = null
-    protected var searchTextValue: String = ""
+    protected var textWatcher: TextWatcher? = null
     protected lateinit var searchHistoryAdapter: SearchHistoryAdapter
     protected lateinit var binding: ItemSearchHeaderBinding
 
@@ -73,9 +74,9 @@ abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHead
     }
 
     fun addHistory() {
-        if (::searchHistoryAdapter.isInitialized && searchTextValue.isNotBlank()) {
-            searchHistoryAdapter.add(searchTextValue)
-        }
+        if (::searchHistoryAdapter.isInitialized && binding.searchBarText.text.toString()
+                .isNotBlank()
+        ) searchHistoryAdapter.add(binding.searchBarText.text.toString())
     }
 
     inner class SearchHeaderViewHolder(val binding: ItemSearchHeaderBinding) :

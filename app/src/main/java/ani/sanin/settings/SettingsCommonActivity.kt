@@ -1,6 +1,6 @@
 package ani.sanin.settings
 
-import androidx.appcompat.app.AlertDialog
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -14,14 +14,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.*
-import androidx.compose.ui.text.input.ImeAction
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.documentfile.provider.DocumentFile
@@ -351,6 +348,27 @@ class SettingsCommonActivity : AppCompatActivity() {
         val password = CharArray(16).apply { fill('0') }
 
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
+        dialogView.userAgentTextBox.setContent {
+            val focusManager = LocalFocusManager.current
+            OutlinedTextField(
+                value = passwordText,
+                onValueChange = { passwordText = it },
+                singleLine = true,
+                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onPreviewKeyEvent { ev ->
+                        if (ev.type == KeyEventType.KeyDown && ev.key == Key.Enter) {
+                            true
+                        } else false
+                    },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = ComposeColor.White,
+                    unfocusedTextColor = ComposeColor.White,
+                    cursorColor = ComposeColor.White
+                )
+            )
+        }
 
         val dialog =
             AlertDialog
@@ -380,39 +398,14 @@ class SettingsCommonActivity : AppCompatActivity() {
                 getString(R.string.enter_password_to_decrypt_file)
         }
 
-        dialogView.userAgentTextBox.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = passwordText,
-                onValueChange = { passwordText = it },
-                singleLine = true,
-                placeholder = { androidx.compose.material3.Text(getString(R.string.password)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown) {
-                            when (ev.key) {
-                                Key.Enter -> true
-                                Key.Escape -> { focusManager.clearFocus(); true }
-                                else -> false
-                            }
-                        } else false
-                    },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White
-                )
-            )
-        }
         dialog.window?.apply {
             setDimAmount(0.8f)
             attributes.windowAnimations = android.R.style.Animation_Dialog
         }
+        dialog.setOnShowListener {
+            dialogView.userAgentTextBox.requestFocus()
+        }
         dialog.show()
-        dialogView.userAgentTextBox.requestFocus()
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             handleOkAction()

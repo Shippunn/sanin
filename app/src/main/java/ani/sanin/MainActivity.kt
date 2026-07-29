@@ -28,17 +28,12 @@ import androidx.core.view.doOnAttach
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.*
-import androidx.compose.ui.text.input.ImeAction
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
@@ -722,6 +717,20 @@ class MainActivity : AppCompatActivity() {
         val dialogView = DialogUserAgentBinding.inflate(layoutInflater).apply {
             subtitle.visibility = View.VISIBLE
             subtitle.text = getString(R.string.enter_password_to_decrypt_file)
+            userAgentTextBox.setContent {
+                OutlinedTextField(
+                    value = passwordText,
+                    onValueChange = { passwordText = it },
+                    singleLine = true,
+                    placeholder = { Text("Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = ComposeColor.White,
+                        unfocusedTextColor = ComposeColor.White,
+                        cursorColor = ComposeColor.White
+                    )
+                )
+            }
         }
         customAlertDialog().apply {
             setTitle("Enter Password")
@@ -738,31 +747,10 @@ class MainActivity : AppCompatActivity() {
                 password.fill('0')
                 callback(null)
             }
-            dialogView.userAgentTextBox.setContent {
-                val focusManager = LocalFocusManager.current
-                OutlinedTextField(
-                    value = passwordText,
-                    onValueChange = { passwordText = it },
-                    singleLine = true,
-                    placeholder = { Text("Password") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onPreviewKeyEvent { ev ->
-                            if (ev.type == KeyEventType.KeyDown && ev.key == Key.Escape) {
-                                focusManager.clearFocus(); true
-                            } else false
-                        },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = ComposeColor.White,
-                        unfocusedTextColor = ComposeColor.White,
-                        cursorColor = ComposeColor.White
-                    )
-                )
+            setOnShowListener {
+                dialogView.userAgentTextBox.requestFocus()
             }
             show()
-            dialogView.userAgentTextBox.requestFocus()
         }
     }
 

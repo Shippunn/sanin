@@ -5,17 +5,12 @@ import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.*
-import androidx.compose.ui.text.input.ImeAction
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -116,6 +111,20 @@ class SettingsExtensionsActivity : AppCompatActivity() {
                                 PrefManager.getVal<String>(PrefName.DefaultUserAgent)
                             )
                             val dialogView = DialogUserAgentBinding.inflate(layoutInflater)
+                            dialogView.userAgentTextBox.setContent {
+                                OutlinedTextField(
+                                    value = userAgentText,
+                                    onValueChange = { userAgentText = it },
+                                    singleLine = true,
+                                    placeholder = { Text("User-Agent") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = ComposeColor.White,
+                                        unfocusedTextColor = ComposeColor.White,
+                                        cursorColor = ComposeColor.White
+                                    )
+                                )
+                            }
                             context.customAlertDialog().apply {
                                 setTitle(R.string.user_agent)
                                 setCustomView(dialogView.root)
@@ -130,29 +139,6 @@ class SettingsExtensionsActivity : AppCompatActivity() {
                                     userAgentText = ""
                                 }
                                 setNegButton(R.string.cancel)
-                                dialogView.userAgentTextBox.setContent {
-                                    val focusManager = LocalFocusManager.current
-                                    OutlinedTextField(
-                                        value = userAgentText,
-                                        onValueChange = { userAgentText = it },
-                                        singleLine = true,
-                                        placeholder = { Text("User-Agent") },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .onPreviewKeyEvent { ev ->
-                                                if (ev.type == KeyEventType.KeyDown && ev.key == Key.Escape) {
-                                                    focusManager.clearFocus(); true
-                                                } else false
-                                            },
-                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                        colors = OutlinedTextFieldDefaults.colors(
-                                            focusedTextColor = ComposeColor.White,
-                                            unfocusedTextColor = ComposeColor.White,
-                                            cursorColor = ComposeColor.White
-                                        )
-                                    )
-                                }
                             }.show()
                         }
                     ),

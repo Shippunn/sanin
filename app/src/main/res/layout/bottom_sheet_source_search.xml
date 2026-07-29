@@ -72,11 +72,37 @@
             android:textSize="20sp"
             android:textStyle="bold" />
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/searchBarCompose"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/searchBar"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_margin="16dp" />
+            android:layout_margin="16dp"
+            android:hint="@string/search"
+            android:transitionName="@string/search"
+            app:boxBackgroundColor="?android:colorBackground"
+            app:boxBackgroundMode="outline"
+            app:boxCornerRadiusBottomEnd="28dp"
+            app:boxCornerRadiusBottomStart="28dp"
+            app:boxCornerRadiusTopEnd="28dp"
+            app:boxCornerRadiusTopStart="28dp"
+            app:boxStrokeColor="@color/text_input_layout_stroke_color"
+            app:endIconDrawable="@drawable/ic_round_search_24"
+            app:hintAnimationEnabled="true">
+
+            <AutoCompleteTextView
+                android:id="@+id/searchBarText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/poppins_bold"
+                android:imeOptions="actionSearch"
+                android:inputType="textPersonName"
+                android:padding="8dp"
+                android:selectAllOnFocus="true"
+                android:textSize="14sp"
+                tools:ignore="LabelFor,TextContrastCheck" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <FrameLayout
             android:id="@+id/searchProgress"

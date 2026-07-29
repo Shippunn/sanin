@@ -1,27 +1,13 @@
 package ani.sanin.media.comments
 
+import android.content.Context
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color as ComposeColor
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import android.view.inputmethod.InputMethodManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.BottomSheetDialogFragment
@@ -45,8 +31,6 @@ class GifPickerBottomDialog : BottomSheetDialogFragment() {
 
     private var onGifSelected: ((String) -> Unit)? = null
     private var searchJob: Job? = null
-    private var gifSearchText by mutableStateOf("")
-    private val gifSearchFocusRequester = FocusRequester()
 
     private val apiKey = "29Hflu9yLfJoQy9uVbrSg5pPkaGgIr7CDDpx0bCtVxQFBTnNWXb4moqYsR70Yzzv"
     private val baseUrl = "https://api.klipy.com"
@@ -69,49 +53,22 @@ class GifPickerBottomDialog : BottomSheetDialogFragment() {
 
         binding.gifRecycler.layoutManager = GridLayoutManager(context, 2)
 
-        binding.gifSearchInput.setContent {
-            val focusManager = LocalFocusManager.current
-            OutlinedTextField(
-                value = gifSearchText,
-                onValueChange = { newVal ->
-                    gifSearchText = newVal
-                    val query = newVal.trim()
-                    searchJob?.cancel()
-                    searchJob = CoroutineScope(Dispatchers.Main).launch {
-                        delay(800)
-                        if (query.isEmpty()) loadTrending()
-                        else searchGifs(query)
-                    }
-                },
-                singleLine = true,
-                placeholder = { Text("Search GIFs", fontSize = 14.sp) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(gifSearchFocusRequester)
-                    .onPreviewKeyEvent { ev ->
-                        if (ev.type == KeyEventType.KeyDown) {
-                            when (ev.key) {
-                                Key.DirectionDown -> {
-                                    focusManager.moveFocus(FocusDirection.Down)
-                                    true
-                                }
-                                Key.Escape -> { focusManager.clearFocus(); true }
-                                else -> false
-                            }
-                        } else false
-                    },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = { searchGifs(gifSearchText.trim()) }),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = ComposeColor.White,
-                    unfocusedTextColor = ComposeColor.White,
-                    cursorColor = ComposeColor.White,
-                    focusedBorderColor = ComposeColor.White.copy(alpha = 0.5f),
-                    unfocusedBorderColor = ComposeColor.White.copy(alpha = 0.3f)
-                )
-            )
-        }
+        binding.gifSearchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                searchJob?.cancel()
+                val query = s?.toString()?.trim() ?: ""
+
+                searchJob = CoroutineScope(Dispatchers.Main).launch {
+                    delay(800)
+                    if (query.isEmpty()) loadTrending()
+                    else searchGifs(query)
+                }
+            }
+        })
 
         loadTrending()
     }
