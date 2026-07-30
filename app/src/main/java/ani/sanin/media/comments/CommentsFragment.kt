@@ -132,7 +132,7 @@ class CommentsFragment : Fragment() {
                         binding.commentCurrentProgress.visibility = View.GONE
                         binding.commentMessageContainer.visibility = View.GONE
                         binding.commentsProgressBar.visibility = View.GONE
-                    } else if (CommentsAPI.authToken != null || TraktAuth.isLoggedIn()) {
+                    } else {
                         lifecycleScope.launch {
                             traktResult = lookupTraktIds()
                             val commentId = arguments?.getInt("commentId")
@@ -142,7 +142,8 @@ class CommentsFragment : Fragment() {
                                 loadAndDisplayComments()
                             }
                         }
-                    } else {
+                    }
+                    if (CommentsAPI.authToken == null && !TraktAuth.isLoggedIn()) {
                         binding.commentMessageContainer.visibility = View.GONE
                     }
                 }
