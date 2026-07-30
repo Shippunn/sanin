@@ -368,6 +368,8 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 navPillsViewModel.currentTab.collect { tabIndex ->
                     switchTab(tabIndex)
+                    binding.mainAvatarContainer.visibility =
+                        if (tabIndex == 3) View.GONE else View.VISIBLE
                 }
             }
 
