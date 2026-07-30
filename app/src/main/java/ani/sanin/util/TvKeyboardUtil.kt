@@ -95,7 +95,6 @@ object TvKeyboardUtil {
                 applyFocusBorder(v)
             } else {
                 removeFocusBorder(v)
-                getCompactKeyboard(editText)?.hide()
             }
         }
         if (editText.isFocused) {
@@ -331,6 +330,14 @@ object TvKeyboardUtil {
 
     fun ensureCompactKeyboardVisible(view: View) {
         getCompactKeyboard(view)
+    }
+
+    fun isCompactKeyboardVisible(view: View): Boolean {
+        return getCompactKeyboard(view)?.isKeyboardVisible() == true
+    }
+
+    fun hideCompactKeyboard(view: View) {
+        getCompactKeyboard(view)?.hide()
     }
 
     private fun showCustomKeyboard(view: View) {

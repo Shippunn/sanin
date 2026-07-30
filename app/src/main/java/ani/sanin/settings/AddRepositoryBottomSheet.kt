@@ -100,6 +100,16 @@ class AddRepositoryBottomSheet : DialogFragment() {
         binding.repositoryInput.hint = getString(R.string.anime_add_repository)
         TvKeyboardUtil.setupTvInput(binding.repositoryInput)
 
+        dialog?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+                if (TvKeyboardUtil.isCompactKeyboardVisible(binding.repositoryInput)) {
+                    TvKeyboardUtil.hideCompactKeyboard(binding.repositoryInput)
+                    return@setOnKeyListener true
+                }
+            }
+            false
+        }
+
         binding.addButton.setOnClickListener {
             val input = binding.repositoryInput.text.toString()
             val error = isValidUrl(input)
