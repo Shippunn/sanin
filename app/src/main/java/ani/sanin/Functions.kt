@@ -701,20 +701,20 @@ fun String.findBetween(a: String, b: String): String? {
     return string.ifEmpty { null }
 }
 
-fun ImageView.loadImage(url: String?, size: Int = 0, placeholder: Int? = null) {
+fun ImageView.loadImage(url: String?, size: Int = 0) {
     if (!url.isNullOrEmpty()) {
         val localFile = File(url)
         if (localFile.exists()) {
             loadLocalImage(localFile, size)
         } else {
-            loadImage(FileUrl(url), size, placeholder)
+            loadImage(FileUrl(url), size)
         }
     } else if (tag != "no_fallback") {
         setImageResource(R.drawable.ic_round_person_24)
     }
 }
 
-fun ImageView.loadImage(file: FileUrl?, size: Int = 0, placeholder: Int? = null) {
+fun ImageView.loadImage(file: FileUrl?, size: Int = 0) {
     file?.url = PrefManager.getVal<String>(PrefName.ImageUrl).ifEmpty { file.url }
     if (file?.url?.isNotEmpty() == true) {
         tryWith {
@@ -724,9 +724,7 @@ fun ImageView.loadImage(file: FileUrl?, size: Int = 0, placeholder: Int? = null)
             } else {
                 val glideUrl = GlideUrl(file.url) { file.headers }
                 Glide.with(this.context).load(glideUrl).transition(withCrossFade()).override(size)
-                    .error(R.drawable.ic_round_person_24)
-                    .apply { if (placeholder != null) placeholder(placeholder) }
-                    .into(this)
+                    .error(R.drawable.ic_round_person_24).into(this)
             }
         }
     }
