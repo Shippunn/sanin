@@ -1,5 +1,6 @@
 package ani.sanin.home
 
+import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.loadImage
@@ -21,9 +26,15 @@ class BannerCarouselAdapter(
     private val items: List<Media>,
     private val scope: CoroutineScope,
     private val onItemClick: (Media) -> Unit,
-    private val backdropUrls: Map<Int, String?> = emptyMap(),
-    private val logoUrls: Map<Int, String?> = emptyMap(),
+    private var backdropUrls: Map<Int, String?> = emptyMap(),
+    private var logoUrls: Map<Int, String?> = emptyMap(),
 ) : RecyclerView.Adapter<BannerCarouselAdapter.ViewHolder>() {
+
+    fun updateUrls(backdrops: Map<Int, String?>, logos: Map<Int, String?>) {
+        backdropUrls = backdrops
+        logoUrls = logos
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -35,14 +46,31 @@ class BannerCarouselAdapter(
         val media = items[position]
         val ctx = holder.itemView.context
 
-        // --- Banner images from pre-fetched backdrop map (AniZip, fallback AniList) ---
+        // --- Banner image (AniZip backdrop, fallback AniList banner/cover) ---
         val anizipUrl = backdropUrls[media.id]
         val imageUrl = if (!anizipUrl.isNullOrBlank()) anizipUrl
                        else media.banner ?: media.cover
         if (!imageUrl.isNullOrBlank()) {
             holder.bannerBg.visibility = View.VISIBLE
-            holder.bannerBg.loadImage(imageUrl)
-            holder.bannerImage.loadImage(imageUrl)
+            holder.bannerImage.visibility = View.VISIBLE
+            Glide.with(holder.itemView.context)
+                .load(imageUrl)
+                .placeholder(R.color.bg_black)
+                .error(R.drawable.ic_round_person_24)
+                .listener(object : RequestListener<Drawable> {
+                    override fun onResourceReady(
+                        resource: Drawable, model: Any, target: Target<Drawable>,
+                        dataSource: DataSource, isFirstResource: Boolean
+                    ): Boolean {
+                        holder.bannerBg.setImageDrawable(resource)
+                        return false
+                    }
+                    override fun onLoadFailed(
+                        e: GlideException?, model: Any?, target: Target<Drawable>,
+                        isFirstResource: Boolean
+                    ): Boolean = false
+                })
+                .into(holder.bannerImage)
         }
 
         // --- Clearlogo (pre-fetched) / Title fallback ---

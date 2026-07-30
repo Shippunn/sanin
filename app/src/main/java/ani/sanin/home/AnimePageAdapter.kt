@@ -117,41 +117,43 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
         rv.isFocusable = false
         rv.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         val scope = CoroutineScope(Dispatchers.Main)
+        bannerAdapter = BannerCarouselAdapter(
+            media, scope, { item ->
+                val context = binding.root.context
+                ContextCompat.startActivity(
+                    context,
+                    Intent(context, ani.sanin.media.MediaDetailsActivity::class.java)
+                        .putExtra("media", item)
+                        .putExtra("anime", true),
+                    null
+                )
+            }
+        )
+        rv.adapter = bannerAdapter
+        setupTrendingDots(rv, media.size)
+        rv.layoutAnimation = LayoutAnimationController(setSlideIn(), 0.25f)
+        trendingBinding.titleContainer.startAnimation(setSlideUp())
+        binding.animeSeasonsCont.layoutAnimation =
+            LayoutAnimationController(setSlideIn(), 0.25f)
+        trendingAutoScrollHandler?.removeCallbacksAndMessages(null)
+        trendingAutoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        trendingAutoScrollRunnable = object : Runnable {
+            private var currentIndex = 0
+            override fun run() {
+                if (media.isEmpty()) return
+                currentIndex = (currentIndex + 1) % media.size
+                rv.smoothScrollToPosition(currentIndex)
+                trendingAutoScrollHandler?.postDelayed(this, 5000L)
+            }
+        }
+        trendingAutoScrollHandler?.postDelayed(trendingAutoScrollRunnable!!, 5000L)
+
         scope.launch(Dispatchers.IO) {
             val allImages = AniZip.getImagesBatch(media.map { it.id })
             val backdrops = allImages.mapValues { it.value.backdropUrl }
             val logos = allImages.mapValues { it.value.logoUrl }
             withContext(Dispatchers.Main) {
-                bannerAdapter = BannerCarouselAdapter(
-                    media, scope, { item ->
-                        val context = binding.root.context
-                        ContextCompat.startActivity(
-                            context,
-                            Intent(context, ani.sanin.media.MediaDetailsActivity::class.java)
-                                .putExtra("media", item)
-                                .putExtra("anime", true),
-                            null
-                        )
-                    }, backdrops, logos
-                )
-                rv.adapter = bannerAdapter
-                setupTrendingDots(rv, media.size)
-                rv.layoutAnimation = LayoutAnimationController(setSlideIn(), 0.25f)
-                trendingBinding.titleContainer.startAnimation(setSlideUp())
-                binding.animeSeasonsCont.layoutAnimation =
-                    LayoutAnimationController(setSlideIn(), 0.25f)
-                trendingAutoScrollHandler?.removeCallbacksAndMessages(null)
-                trendingAutoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
-                trendingAutoScrollRunnable = object : Runnable {
-                    private var currentIndex = 0
-                    override fun run() {
-                        if (media.isEmpty()) return
-                        currentIndex = (currentIndex + 1) % media.size
-                        rv.smoothScrollToPosition(currentIndex)
-                        trendingAutoScrollHandler?.postDelayed(this, 5000L)
-                    }
-                }
-                trendingAutoScrollHandler?.postDelayed(trendingAutoScrollRunnable!!, 5000L)
+                bannerAdapter?.updateUrls(backdrops, logos)
             }
         }
     }
