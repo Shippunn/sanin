@@ -101,8 +101,10 @@ class AddRepositoryBottomSheet : DialogFragment() {
         TvKeyboardUtil.setupTvInput(binding.repositoryInput)
 
         dialog?.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
+            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
                 if (TvKeyboardUtil.isCompactKeyboardVisible(binding.repositoryInput)) {
+                    binding.repositoryInput.clearFocus()
+                    binding.addButton.requestFocus()
                     TvKeyboardUtil.hideCompactKeyboard(binding.repositoryInput)
                     return@setOnKeyListener true
                 }
