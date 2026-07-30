@@ -160,7 +160,7 @@ class ThemeManager(private val context: Activity) {
         fun accentColorToInt(index: Int): Int = when (index) {
             0 -> Color.parseColor("#005B96")
             1 -> Color.parseColor("#00BCD4")
-            2 -> Color.parseColor("#8B0000")
+            2 -> Color.parseColor("#FF000D")
             3 -> Color.parseColor("#8BC34A")
             4 -> Color.parseColor("#FFD700")
             5 -> Color.parseColor("#FF4D00")

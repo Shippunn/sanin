@@ -320,20 +320,20 @@
     <color name="md_theme_dark_sun_inverseSurface">#E6E1E6</color>
     <color name="md_theme_dark_sun_inversePrimary">#CCAC00</color>
 
-    <!-- blood (seed #8B0000) -->
-    <color name="seed_blood">#8B0000</color>
-    <color name="md_theme_light_blood_primary">#B52619</color>
+    <!-- blood (seed #FF000D) -->
+    <color name="seed_blood">#FF000D</color>
+    <color name="md_theme_light_blood_primary">#FF000D</color>
     <color name="md_theme_light_blood_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_blood_primaryContainer">#FFDAD4</color>
-    <color name="md_theme_light_blood_onPrimaryContainer">#410000</color>
-    <color name="md_theme_light_blood_secondary">#775651</color>
+    <color name="md_theme_light_blood_primaryContainer">#FF000D</color>
+    <color name="md_theme_light_blood_onPrimaryContainer">#FFFFFF</color>
+    <color name="md_theme_light_blood_secondary">#FF000D</color>
     <color name="md_theme_light_blood_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_blood_secondaryContainer">#FFDAD4</color>
-    <color name="md_theme_light_blood_onSecondaryContainer">#2C1512</color>
-    <color name="md_theme_light_blood_tertiary">#705C2E</color>
+    <color name="md_theme_light_blood_secondaryContainer">#FF000D</color>
+    <color name="md_theme_light_blood_onSecondaryContainer">#FFFFFF</color>
+    <color name="md_theme_light_blood_tertiary">#FF000D</color>
     <color name="md_theme_light_blood_onTertiary">#FFFFFF</color>
-    <color name="md_theme_light_blood_tertiaryContainer">#FBDFA6</color>
-    <color name="md_theme_light_blood_onTertiaryContainer">#251A00</color>
+    <color name="md_theme_light_blood_tertiaryContainer">#FF000D</color>
+    <color name="md_theme_light_blood_onTertiaryContainer">#FFFFFF</color>
     <color name="md_theme_light_blood_error">#BA1A1A</color>
     <color name="md_theme_light_blood_onError">#FFFFFF</color>
     <color name="md_theme_light_blood_errorContainer">#FFDAD6</color>
@@ -347,19 +347,19 @@
     <color name="md_theme_light_blood_outline">#857370</color>
     <color name="md_theme_light_blood_inverseOnSurface">#FBEEEC</color>
     <color name="md_theme_light_blood_inverseSurface">#362F2E</color>
-    <color name="md_theme_light_blood_inversePrimary">#FFB4A8</color>
-    <color name="md_theme_dark_blood_primary">#FFB4A8</color>
-    <color name="md_theme_dark_blood_onPrimary">#690000</color>
-    <color name="md_theme_dark_blood_primaryContainer">#920703</color>
-    <color name="md_theme_dark_blood_onPrimaryContainer">#FFDAD4</color>
-    <color name="md_theme_dark_blood_secondary">#E7BDB6</color>
-    <color name="md_theme_dark_blood_onSecondary">#442925</color>
-    <color name="md_theme_dark_blood_secondaryContainer">#5D3F3B</color>
-    <color name="md_theme_dark_blood_onSecondaryContainer">#FFDAD4</color>
-    <color name="md_theme_dark_blood_tertiary">#DEC48C</color>
-    <color name="md_theme_dark_blood_onTertiary">#3E2E04</color>
-    <color name="md_theme_dark_blood_tertiaryContainer">#564419</color>
-    <color name="md_theme_dark_blood_onTertiaryContainer">#FBDFA6</color>
+    <color name="md_theme_light_blood_inversePrimary">#FF000D</color>
+    <color name="md_theme_dark_blood_primary">#FF000D</color>
+    <color name="md_theme_dark_blood_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_blood_primaryContainer">#FF000D</color>
+    <color name="md_theme_dark_blood_onPrimaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_blood_secondary">#FF000D</color>
+    <color name="md_theme_dark_blood_onSecondary">#FFFFFF</color>
+    <color name="md_theme_dark_blood_secondaryContainer">#FF000D</color>
+    <color name="md_theme_dark_blood_onSecondaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_blood_tertiary">#FF000D</color>
+    <color name="md_theme_dark_blood_onTertiary">#FFFFFF</color>
+    <color name="md_theme_dark_blood_tertiaryContainer">#FF000D</color>
+    <color name="md_theme_dark_blood_onTertiaryContainer">#FFFFFF</color>
     <color name="md_theme_dark_blood_error">#FFB4AB</color>
     <color name="md_theme_dark_blood_onError">#690005</color>
     <color name="md_theme_dark_blood_errorContainer">#93000A</color>
@@ -373,7 +373,7 @@
     <color name="md_theme_dark_blood_outline">#A08C89</color>
     <color name="md_theme_dark_blood_inverseOnSurface">#201A19</color>
     <color name="md_theme_dark_blood_inverseSurface">#EDE0DD</color>
-    <color name="md_theme_dark_blood_inversePrimary">#B52619</color>
+    <color name="md_theme_dark_blood_inversePrimary">#FF000D</color>
 
     <!-- ocean (seed #00BCD4) -->
     <color name="seed_ocean">#00BCD4</color>
@@ -432,18 +432,18 @@
 
     <!-- kurama (seed #FF4D00) -->
     <color name="seed_kurama">#FF4D00</color>
-    <color name="md_theme_light_kurama_primary">#AE3200</color>
+    <color name="md_theme_light_kurama_primary">#FF4D00</color>
     <color name="md_theme_light_kurama_onPrimary">#FFFFFF</color>
-    <color name="md_theme_light_kurama_primaryContainer">#FFDBD0</color>
-    <color name="md_theme_light_kurama_onPrimaryContainer">#3A0B00</color>
-    <color name="md_theme_light_kurama_secondary">#77574D</color>
+    <color name="md_theme_light_kurama_primaryContainer">#FF4D00</color>
+    <color name="md_theme_light_kurama_onPrimaryContainer">#FFFFFF</color>
+    <color name="md_theme_light_kurama_secondary">#FF4D00</color>
     <color name="md_theme_light_kurama_onSecondary">#FFFFFF</color>
-    <color name="md_theme_light_kurama_secondaryContainer">#FFDBD0</color>
-    <color name="md_theme_light_kurama_onSecondaryContainer">#2C150E</color>
-    <color name="md_theme_light_kurama_tertiary">#6B5E2F</color>
+    <color name="md_theme_light_kurama_secondaryContainer">#FF4D00</color>
+    <color name="md_theme_light_kurama_onSecondaryContainer">#FFFFFF</color>
+    <color name="md_theme_light_kurama_tertiary">#FF4D00</color>
     <color name="md_theme_light_kurama_onTertiary">#FFFFFF</color>
-    <color name="md_theme_light_kurama_tertiaryContainer">#F5E2A7</color>
-    <color name="md_theme_light_kurama_onTertiaryContainer">#231B00</color>
+    <color name="md_theme_light_kurama_tertiaryContainer">#FF4D00</color>
+    <color name="md_theme_light_kurama_onTertiaryContainer">#FFFFFF</color>
     <color name="md_theme_light_kurama_error">#BA1A1A</color>
     <color name="md_theme_light_kurama_onError">#FFFFFF</color>
     <color name="md_theme_light_kurama_errorContainer">#FFDAD6</color>
@@ -457,19 +457,19 @@
     <color name="md_theme_light_kurama_outline">#85736E</color>
     <color name="md_theme_light_kurama_inverseOnSurface">#FBEEEA</color>
     <color name="md_theme_light_kurama_inverseSurface">#362F2D</color>
-    <color name="md_theme_light_kurama_inversePrimary">#FFB59E</color>
-    <color name="md_theme_dark_kurama_primary">#FFB59E</color>
-    <color name="md_theme_dark_kurama_onPrimary">#5E1700</color>
-    <color name="md_theme_dark_kurama_primaryContainer">#852400</color>
-    <color name="md_theme_dark_kurama_onPrimaryContainer">#FFDBD0</color>
-    <color name="md_theme_dark_kurama_secondary">#E7BDB1</color>
-    <color name="md_theme_dark_kurama_onSecondary">#442A22</color>
-    <color name="md_theme_dark_kurama_secondaryContainer">#5D4037</color>
-    <color name="md_theme_dark_kurama_onSecondaryContainer">#FFDBD0</color>
-    <color name="md_theme_dark_kurama_tertiary">#D8C68D</color>
-    <color name="md_theme_dark_kurama_onTertiary">#3A3005</color>
-    <color name="md_theme_dark_kurama_tertiaryContainer">#52461A</color>
-    <color name="md_theme_dark_kurama_onTertiaryContainer">#F5E2A7</color>
+    <color name="md_theme_light_kurama_inversePrimary">#FF4D00</color>
+    <color name="md_theme_dark_kurama_primary">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onPrimary">#FFFFFF</color>
+    <color name="md_theme_dark_kurama_primaryContainer">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onPrimaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_kurama_secondary">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onSecondary">#FFFFFF</color>
+    <color name="md_theme_dark_kurama_secondaryContainer">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onSecondaryContainer">#FFFFFF</color>
+    <color name="md_theme_dark_kurama_tertiary">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onTertiary">#FFFFFF</color>
+    <color name="md_theme_dark_kurama_tertiaryContainer">#FF4D00</color>
+    <color name="md_theme_dark_kurama_onTertiaryContainer">#FFFFFF</color>
     <color name="md_theme_dark_kurama_error">#FFB4AB</color>
     <color name="md_theme_dark_kurama_onError">#690005</color>
     <color name="md_theme_dark_kurama_errorContainer">#93000A</color>
@@ -483,6 +483,6 @@
     <color name="md_theme_dark_kurama_outline">#A08C87</color>
     <color name="md_theme_dark_kurama_inverseOnSurface">#201A18</color>
     <color name="md_theme_dark_kurama_inverseSurface">#EDE0DC</color>
-    <color name="md_theme_dark_kurama_inversePrimary">#AE3200</color>
+    <color name="md_theme_dark_kurama_inversePrimary">#FF4D00</color>
 
 </resources>
