@@ -206,6 +206,15 @@ class CommentsFragment : Fragment() {
             }
         })
 
+        binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+            override fun onChildViewAttachedToWindow(view: View) {
+                if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                    view.nextFocusRightId = R.id.commentsPoster
+                }
+            }
+            override fun onChildViewDetachedFromWindow(view: View) {}
+        })
+
         binding.commentsList.setOnKeyListener { v, keyCode, event ->
             if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
             when (keyCode) {
@@ -234,14 +243,7 @@ class CommentsFragment : Fragment() {
             }
         }
 
-        binding.commentsList.addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
-            override fun onChildViewAttachedToWindow(view: View) {
-                if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-                    view.nextFocusRightId = R.id.commentsPoster
-                }
-            }
-            override fun onChildViewDetachedFromWindow(view: View) {}
-        })
+        binding.commentsList.post { binding.commentsList.requestFocus() }
     }
 
     private fun setupInputListeners() {
