@@ -428,6 +428,25 @@ class MediaDetailsActivity : AppCompatActivity() {
                         }
                     }
                 }
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                    if (selected == 2) {
+                        val rv = binding.mediaTabContent?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.commentsList)
+                        if (rv?.isVisible == true && binding.mediaNavPills?.visibility != View.VISIBLE) {
+                            val lm = rv.layoutManager as? CommentsCarouselLayoutManager
+                            val adapter = rv.adapter as? CommentsCarouselAdapter
+                            if (lm != null && adapter != null) {
+                                val pos = lm.focusedPosition
+                                if (pos in 0 until adapter.itemCount) {
+                                    val frag = supportFragmentManager.findFragmentByTag("comments") as? CommentsFragment
+                                    frag?.let {
+                                        adapter.currentList.getOrNull(pos)?.let { comment -> it.openCommentDetail(comment) }
+                                    }
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
                 KeyEvent.KEYCODE_MENU -> {
                     if (binding.mediaNavPills?.visibility != View.VISIBLE) {
                         showNavPills()
