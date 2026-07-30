@@ -33,7 +33,7 @@ import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
-import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -72,17 +72,19 @@ class SearchActivity : AppCompatActivity() {
         ThemeManager(this).applyTheme()
         binding = ActivitySearchBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        FocusEffectUtil.applyFocusListener(binding.root)
-        var backHandled = false
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val focused = currentFocus
-                if (focused?.id == R.id.searchBarText && !backHandled) {
+                if (focused != null && focused.id == R.id.searchBarText) {
+                    if (TvKeyboardUtil.isCompactKeyboardVisible(focused)) {
+                        TvKeyboardUtil.hideCompactKeyboard(focused)
+                    }
                     focused.clearFocus()
-                    backHandled = true
+                    binding.searchRecyclerView.findViewById<View>(R.id.searchByImage)?.let {
+                        it.post { it.requestFocus() }
+                    }
                     return
                 }
-                backHandled = false
                 isEnabled = false
                 onBackPressedDispatcher.onBackPressed()
             }

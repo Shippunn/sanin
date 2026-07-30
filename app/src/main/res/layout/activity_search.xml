@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".media.SearchActivity"
-    android:focusable="true"
     android:background="?attr/colorSurface">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -12,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
+        android:focusable="true"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingBottom="128dp"
