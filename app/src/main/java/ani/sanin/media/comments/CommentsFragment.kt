@@ -239,6 +239,13 @@ class CommentsFragment : Fragment() {
                     }
                     true
                 }
+                android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.KEYCODE_ENTER -> {
+                    val pos = lm.focusedPosition
+                    if (pos in 0 until carouselAdapter.itemCount) {
+                        carouselAdapter.currentList.getOrNull(pos)?.let { openCommentDetail(it) }
+                    }
+                    true
+                }
                 else -> false
             }
         }

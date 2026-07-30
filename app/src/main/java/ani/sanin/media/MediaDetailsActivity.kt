@@ -37,6 +37,7 @@ import ani.sanin.initActivity
 import ani.sanin.loadImage
 import ani.sanin.openLinkInBrowser
 import ani.sanin.media.anime.AnimeWatchFragment
+import ani.sanin.media.comments.CommentsCarouselAdapter
 import ani.sanin.media.comments.CommentsCarouselLayoutManager
 import ani.sanin.media.comments.CommentsFragment
 import ani.sanin.others.getSerialized
@@ -412,12 +413,15 @@ class MediaDetailsActivity : AppCompatActivity() {
                         val rv = binding.mediaTabContent?.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.commentsList)
                         if (rv?.isVisible == true && binding.mediaNavPills?.visibility != View.VISIBLE) {
                             val lm = rv.layoutManager as? CommentsCarouselLayoutManager
-                            if (lm != null && rv.adapter != null) {
-                                if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && lm.focusedPosition < rv.adapter!!.itemCount - 1) {
+                            val adapter = rv.adapter as? CommentsCarouselAdapter
+                            if (lm != null && adapter != null) {
+                                if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && lm.focusedPosition < adapter.itemCount - 1) {
                                     lm.scrollToNext()
+                                    adapter.setFocusedPosition(lm.focusedPosition)
                                     return true
                                 } else if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP && lm.focusedPosition > 0) {
                                     lm.scrollToPrevious()
+                                    adapter.setFocusedPosition(lm.focusedPosition)
                                     return true
                                 }
                             }
