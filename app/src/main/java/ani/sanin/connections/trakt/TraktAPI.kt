@@ -3,7 +3,6 @@ package ani.sanin.connections.trakt
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
-import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -13,8 +12,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.util.concurrent.TimeUnit
 
 object TraktAPI {
@@ -28,7 +25,7 @@ object TraktAPI {
             ?: HARDCODED_CLIENT_ID
 
     private val client: OkHttpClient by lazy {
-        Injekt.get<NetworkHelper>().client.newBuilder()
+        OkHttpClient.Builder()
             .connectTimeout(8, TimeUnit.SECONDS)
             .readTimeout(8, TimeUnit.SECONDS)
             .callTimeout(15, TimeUnit.SECONDS)
