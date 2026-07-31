@@ -283,7 +283,7 @@ class AnimeWatchFragment : Fragment() {
                     binding.mediaSourceRecycler.adapter =
                         ConcatAdapter(headerAdapter, episodeAdapter)
 
-                    loadEpisodesJob?.cancel()
+                    cancelLoadEpisodesJob("media-observer-init")
                     loadEpisodesJob = lifecycleScope.launch(Dispatchers.IO) {
                         val offline =
                             !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
@@ -300,6 +300,7 @@ class AnimeWatchFragment : Fragment() {
                             launch { model.fetchFillerEpisodes(media) }
                         }
                     }
+                    logLoadEpisodesJobCompletion("media-observer-init")
                     loaded = true
                 } else {
                     reload()
@@ -462,7 +463,7 @@ class AnimeWatchFragment : Fragment() {
     }
 
     fun onSourceChange(i: Int): AnimeParser {
-        loadEpisodesJob?.cancel()
+        cancelLoadEpisodesJob("onSourceChange")
         val oldIdx = media.selected?.sourceIndex ?: -1
         media.anime?.episodes = null
         val selected = model.loadSelected(media)
@@ -499,9 +500,34 @@ class AnimeWatchFragment : Fragment() {
     }
 
     fun loadEpisodes(i: Int, invalidate: Boolean) {
-        loadEpisodesJob?.cancel()
+        cancelLoadEpisodesJob("loadEpisodes($i,$invalidate)")
         Logger.log("Watch: loadEpisodes requested source idx=$i invalidate=$invalidate")
         loadEpisodesJob = lifecycleScope.launch(Dispatchers.IO) { model.loadEpisodes(media, i, invalidate) }
+        logLoadEpisodesJobCompletion("loadEpisodes($i,$invalidate)")
+    }
+
+    private fun cancelLoadEpisodesJob(caller: String) {
+        val job = loadEpisodesJob
+        if (job != null && job.isActive) {
+            Logger.log(Log.WARN, "Watch: CANCEL loadEpisodesJob (active) from $caller")
+            job.cancel()
+        } else {
+            Logger.log("Watch: cancel loadEpisodesJob (inactive/null) from $caller")
+        }
+        loadEpisodesJob = null
+    }
+
+    private fun logLoadEpisodesJobCompletion(tag: String) {
+        loadEpisodesJob?.invokeOnCompletion { cause ->
+            if (cause != null) {
+                Logger.log(
+                    Log.ERROR,
+                    "Watch: job[$tag] ENDED: ${cause.message}\n${cause.stackTraceToString()}"
+                )
+            } else {
+                Logger.log("Watch: job[$tag] ENDED normally")
+            }
+        }
     }
 
     fun loadKitsuEpisodesAsync() {
@@ -653,6 +679,7 @@ class AnimeWatchFragment : Fragment() {
     }
 
     override fun onDestroy() {
+        Logger.log("Watch: onDestroy")
         model.watchSources?.flushText()
         super.onDestroy()
         try {
@@ -663,6 +690,7 @@ class AnimeWatchFragment : Fragment() {
     var state: Parcelable? = null
     override fun onResume() {
         super.onResume()
+        Logger.log("Watch: onResume")
         binding.mediaInfoProgressBar.visibility = progress
         binding.mediaSourceRecycler.layoutManager?.onRestoreInstanceState(state)
 
@@ -671,7 +699,18 @@ class AnimeWatchFragment : Fragment() {
 
     override fun onPause() {
         super.onPause()
+        Logger.log("Watch: onPause")
         state = binding.mediaSourceRecycler.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Logger.log("Watch: onStop")
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        Logger.log("Watch: onDestroyView")
     }
 
     companion object {
