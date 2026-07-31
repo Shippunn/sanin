@@ -10,10 +10,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
+import java.util.concurrent.TimeUnit
 
 object TraktAPI {
     private const val BASE_URL = "https://api.trakt.tv"
@@ -25,7 +27,13 @@ object TraktAPI {
             ?.takeIf { it.isNotBlank() }
             ?: HARDCODED_CLIENT_ID
 
-    private val client get() = Injekt.get<NetworkHelper>().client
+    private val client: OkHttpClient by lazy {
+        Injekt.get<NetworkHelper>().client.newBuilder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .callTimeout(15, TimeUnit.SECONDS)
+            .build()
+    }
 
     private fun headers(): Map<String, String> = mapOf(
         "trakt-api-key" to clientId,

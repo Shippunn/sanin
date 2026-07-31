@@ -31,6 +31,7 @@ import ani.sanin.others.IdMappers
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
+import ani.sanin.util.Logger
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
@@ -133,6 +134,8 @@ class CommentsFragment : Fragment() {
                         binding.commentMessageContainer.visibility = View.GONE
                         binding.commentsProgressBar.visibility = View.GONE
                     } else {
+                        binding.commentsProgressBar.visibility = View.VISIBLE
+                        binding.commentsList.visibility = View.GONE
                         lifecycleScope.launch {
                             traktResult = lookupTraktIds()
                             val commentId = arguments?.getInt("commentId")
@@ -323,7 +326,13 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        if (hasTrakt && traktResult != null) loadTraktComments()
+        if (hasTrakt && traktResult != null) {
+            try {
+                loadTraktComments()
+            } catch (e: Exception) {
+                Logger.log("Trakt comments failed: ${e.message}")
+            }
+        }
         loadSaninComments()
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
