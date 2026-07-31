@@ -237,7 +237,7 @@ enum class PrefName(val data: Pref) {
     SubStroke(Pref(Location.Player, Float::class, 8f)),
     SubBottomMargin(Pref(Location.Player, Float::class, 1f)),
     Font(Pref(Location.Player, Int::class, 0)),
-    FontSize(Pref(Location.Player, Int::class, 20)),
+    FontSize(Pref(Location.Player, Int::class, 26)),
     Locale(Pref(Location.Player, Int::class, 2)),
     TimeStampsEnabled(Pref(Location.Player, Boolean::class, true)),
     AutoHideTimeStamps(Pref(Location.Player, Boolean::class, true)),

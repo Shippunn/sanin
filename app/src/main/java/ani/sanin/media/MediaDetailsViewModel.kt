@@ -666,16 +666,30 @@ class MediaDetailsViewModel : ViewModel() {
     suspend fun loadEpisodeVideos(ep: Episode, i: Int, post: Boolean = true) {
         val link = ep.link ?: return
         if (!ep.allStreams || ep.extractors.isNullOrEmpty()) {
-            val existingExtractors = ep.extractors?.toMutableList() ?: mutableListOf()
+            val existingExtractors = ep.extractors?.filterNotNull().orEmpty().toMutableList()
+            if (existingExtractors.size != ep.extractors?.size) {
+                Logger.log(
+                    Log.WARN,
+                    "Watch: null extractor(s) in stale list for episode '${ep.number}' — dropped"
+                )
+            }
             val list = mutableListOf<VideoExtractor>()
             ep.extractors = list
             watchSources?.get(i)?.apply {
                 if (!post && !allowsPreloading) return@apply
+                val sourceName = this.name
                 ep.sEpisode?.let {
                     loadByVideoServers(link, ep.extra, it) { extractor ->
-                        if (extractor.videos.isNotEmpty()) {
-                            list.add(extractor)
-                            ep.extractorCallback?.invoke(extractor)
+                        try {
+                            if (extractor.videos.isNotEmpty()) {
+                                list.add(extractor)
+                                ep.extractorCallback?.invoke(extractor)
+                            }
+                        } catch (e: Exception) {
+                            Logger.log(
+                                Log.ERROR,
+                                "Watch: bad extractor from '$sourceName' for episode '${ep.number}': ${e.message}"
+                            )
                         }
                     }
                 }
@@ -686,11 +700,18 @@ class MediaDetailsViewModel : ViewModel() {
                     ep.extractors = existingExtractors
             }
         }
+        val extractorList = ep.extractors?.filterNotNull().orEmpty()
+        if (extractorList.size != ep.extractors?.size) {
+            Logger.log(
+                Log.WARN,
+                "Watch: null extractor(s) inside ep.extractors for episode '${ep.number}' — filtered before use"
+            )
+        }
         Logger.log(
-            "Watch: episode '${ep.number}' extractors=${ep.extractors?.size} " +
-                "videos=${ep.extractors?.sumOf { it.videos.size }} source idx=$i post=$post"
+            "Watch: episode '${ep.number}' extractors=${extractorList.size} " +
+                "videos=${extractorList.sumOf { it.videos.size }} source idx=$i post=$post"
         )
-        if (ep.extractors.isNullOrEmpty()) {
+        if (extractorList.isEmpty()) {
             Logger.log(Log.ERROR, "Watch: NO video servers found for episode '${ep.number}' source idx=$i")
         }
 
