@@ -558,7 +558,11 @@ data class Comment(
     @SerialName("total_votes")
     val totalVotes: Int,
     @Transient
-    val isTrakt: Boolean = false
+    val isTrakt: Boolean = false,
+    @Transient
+    val isReddit: Boolean = false,
+    @Transient
+    val redditThreadId: String? = null
 )
 
 @Serializable

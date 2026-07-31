@@ -74,6 +74,7 @@ enum class PrefName(val data: Pref) {
     ConfirmPlayerExit(Pref(Location.General, Boolean::class, false)),
     TraktClientId(Pref(Location.General, String::class, "")),
     TraktCommentsEnabled(Pref(Location.General, Int::class, 1)),
+    RedditCommentsEnabled(Pref(Location.General, Int::class, 1)),
     TraktAccessToken(Pref(Location.Protected, String::class, "")),
     TraktUsername(Pref(Location.Protected, String::class, "")),
 
