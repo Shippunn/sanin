@@ -26,6 +26,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings.System
 import android.util.AttributeSet
+import android.util.Log
 import android.util.Rational
 import android.util.TypedValue
 import android.view.GestureDetector
@@ -3367,10 +3368,12 @@ class ExoplayerView :
         }
 
     override fun onPlayerError(error: PlaybackException) {
+        val epLabel = media.anime?.selectedEpisode ?: "?"
         when (error.errorCode) {
             PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS,
             PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
                 -> {
+                Logger.log(Log.ERROR, "Player: source exception (${error.errorCode}) on ep '$epLabel': ${error.message}")
                 toast("Source Exception : ${error.message}")
                 isPlayerPlaying = true
                 sourceClick()
@@ -3381,6 +3384,11 @@ class ExoplayerView :
                 -> {
                 if (playerErrorRetryCount < MAX_PLAYER_ERROR_RETRIES) {
                     playerErrorRetryCount++
+                    Logger.log(
+                        Log.WARN,
+                        "Player: retry ${playerErrorRetryCount}/$MAX_PLAYER_ERROR_RETRIES " +
+                            "on ep '$epLabel' (${error.errorCode}) ${error.errorCodeName}: ${error.message}"
+                    )
                     val savedPosition = exoPlayer.currentPosition.takeIf { it > 0 }
                         ?: playbackPosition
                     exoPlayer.setMediaSource(mediaSource, savedPosition)
@@ -3388,12 +3396,14 @@ class ExoplayerView :
                     exoPlayer.play()
                 } else {
                     playerErrorRetryCount = 0
+                    Logger.log(Log.ERROR, "Player: fatal error on ep '$epLabel' (${error.errorCode}) ${error.errorCodeName}: ${error.message}")
                     toast("Player Error ${error.errorCode} (${error.errorCodeName}) : ${error.message}")
                     Injekt.get<CrashlyticsInterface>().logException(error)
                 }
             }
 
             else -> {
+                Logger.log(Log.ERROR, "Player: unhandled error on ep '$epLabel' (${error.errorCode}) ${error.errorCodeName}: ${error.message}")
                 toast("Player Error ${error.errorCode} (${error.errorCodeName}) : ${error.message}")
                 Injekt.get<CrashlyticsInterface>().logException(error)
             }
@@ -3403,18 +3413,26 @@ class ExoplayerView :
     private var isBuffering = true
 
     override fun onPlaybackStateChanged(playbackState: Int) {
+        val epLabel = media.anime?.selectedEpisode ?: "?"
         if (playbackState == ExoPlayer.STATE_READY) {
+            Logger.log("Player: READY on ep '$epLabel' duration=${exoPlayer.duration} pos=${exoPlayer.currentPosition}")
             exoPlayer.play()
             if (episodeLength == 0f) {
                 episodeLength = exoPlayer.duration.toFloat()
             }
         }
         isBuffering = playbackState == Player.STATE_BUFFERING
-        if (playbackState == Player.STATE_ENDED && PrefManager.getVal(PrefName.AutoPlay)) {
-            if (interacted) {
-                exoNext.performClick()
-            } else {
-                toast(getString(R.string.autoplay_cancelled))
+        if (isBuffering) {
+            Logger.log(Log.WARN, "Player: BUFFERING on ep '$epLabel' pos=${exoPlayer.currentPosition} (${exoPlayer.playbackState})")
+        }
+        if (playbackState == Player.STATE_ENDED) {
+            Logger.log("Player: ENDED on ep '$epLabel'")
+            if (PrefManager.getVal(PrefName.AutoPlay)) {
+                if (interacted) {
+                    exoNext.performClick()
+                } else {
+                    toast(getString(R.string.autoplay_cancelled))
+                }
             }
         }
         super.onPlaybackStateChanged(playbackState)
@@ -3827,6 +3845,10 @@ class ExoplayerView :
     }
 
     private fun startExoPlayer() {
+        Logger.log(
+            "Player: starting ep '${media.anime?.selectedEpisode}' server='${media.selected?.server}' " +
+                "source='${media.selected?.sourceIndex}' uri=${mediaItem?.localConfiguration?.uri}"
+        )
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
         playerView.player = exoPlayer

@@ -763,7 +763,7 @@
                         android:fontFamily="@font/poppins_bold"
                         android:paddingStart="32dp"
                         android:paddingEnd="32dp"
-                        android:text="Brightness"
+                        android:text="Background Banner (Info & Comment Tab)"
                         app:drawableStartCompat="@drawable/ic_round_brightness_medium_24"
                         app:drawableTint="?attr/colorPrimary" />
 
@@ -774,7 +774,7 @@
                         android:layout_marginStart="32dp"
                         android:layout_marginEnd="32dp"
                         android:stepSize="0.05"
-                        android:value="1.0"
+                        android:value="0.20"
                         android:valueFrom="0.0"
                         android:valueTo="1.0"
                         app:labelBehavior="floating"

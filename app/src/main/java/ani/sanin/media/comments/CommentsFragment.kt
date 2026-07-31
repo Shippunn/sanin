@@ -3,6 +3,7 @@ package ani.sanin.media.comments
 import android.annotation.SuppressLint
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -136,6 +137,7 @@ class CommentsFragment : Fragment() {
                     } else {
                         binding.commentsProgressBar.visibility = View.VISIBLE
                         binding.commentsList.visibility = View.GONE
+                        Logger.log("Comments: starting load media=$mediaId (offline=false)")
                         lifecycleScope.launch {
                             traktResult = lookupTraktIds()
                             val commentId = arguments?.getInt("commentId")
@@ -314,8 +316,18 @@ class CommentsFragment : Fragment() {
     }
 
     private suspend fun lookupTraktIds(): TraktSearchResult? {
-        val imdbId = IdMappers.getImdbId(mediaId) ?: return null
-        return TraktAPI.searchByImdb(imdbId)
+        val imdbId = IdMappers.getImdbId(mediaId) ?: run {
+            Logger.log("Comments: no IMDB id for media $mediaId, skipping Trakt")
+            return null
+        }
+        Logger.log("Comments: looking up Trakt for media $mediaId (imdb=$imdbId)")
+        val result = TraktAPI.searchByImdb(imdbId)
+        if (result != null) {
+            Logger.log("Comments: Trakt found '${result.title}' (traktId=${result.traktId} type=${result.mediaType})")
+        } else {
+            Logger.log(Log.ERROR, "Comments: Trakt lookup FAILED for imdb=$imdbId")
+        }
+        return result
     }
 
     suspend fun loadAndDisplayComments() {
@@ -326,11 +338,12 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
+        Logger.log("Comments: loading comments for media $mediaId (trakt=$hasTrakt)")
         if (hasTrakt && traktResult != null) {
             try {
                 loadTraktComments()
             } catch (e: Exception) {
-                Logger.log("Trakt comments failed: ${e.message}")
+                Logger.log(Log.ERROR, "Comments: Trakt comments failed: ${e.message}")
             }
         }
         loadSaninComments()
@@ -338,6 +351,7 @@ class CommentsFragment : Fragment() {
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
         displayedComments.addAll(merged)
+        Logger.log("Comments: displayed ${displayedComments.size} comments (sanin+trakt merged)")
 
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
@@ -346,11 +360,18 @@ class CommentsFragment : Fragment() {
 
     private suspend fun loadSaninComments() {
         val effectiveFilter = getEffectiveFilter()
-        val comments = withContext(Dispatchers.IO) {
-            CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
+        Logger.log("Comments: fetching Sanin comments media=$mediaId tag=$effectiveFilter")
+        try {
+            val comments = withContext(Dispatchers.IO) {
+                CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
+            }
+            displayedComments.addAll(comments?.comments ?: emptyList())
+            totalPages = comments?.totalPages ?: 1
+            Logger.log("Comments: Sanin fetched ${comments?.comments?.size ?: 0} comments (totalPages=${comments?.totalPages})")
+        } catch (e: Exception) {
+            Logger.log(Log.ERROR, "Comments: Sanin fetch FAILED: ${e.message}")
+            throw e
         }
-        displayedComments.addAll(comments?.comments ?: emptyList())
-        totalPages = comments?.totalPages ?: 1
     }
 
     private suspend fun loadTraktComments() {
@@ -361,10 +382,12 @@ class CommentsFragment : Fragment() {
             "oldest" -> "oldest"
             else -> "likes"
         }
+        Logger.log("Comments: fetching Trakt comments type=$type id=$id sort=$sort")
         val traktComments = withContext(Dispatchers.IO) {
             TraktAPI.getComments(type, id, page = 1, sort = sort)
         }
         displayedComments.addAll(traktComments.map { traktToComment(it) })
+        Logger.log("Comments: Trakt fetched ${traktComments.size} comments")
     }
 
     private fun traktToComment(tc: TraktComment): Comment {
@@ -392,11 +415,13 @@ class CommentsFragment : Fragment() {
         binding.commentsProgressBar.visibility = View.VISIBLE
         binding.commentsList.visibility = View.GONE
         displayedComments.clear()
+        Logger.log("Comments: loading single comment $commentId for media $mediaId")
 
         val comment = withContext(Dispatchers.IO) {
             CommentsAPI.getSingleComment(commentId)
         }
         if (comment != null) displayedComments.add(comment)
+        else Logger.log(Log.ERROR, "Comments: single comment $commentId NOT FOUND")
 
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
@@ -558,6 +583,7 @@ class CommentsFragment : Fragment() {
             CommentsAPI.comment(mediaId, parentId, text, tag)
         }
         if (result != null) {
+            Logger.log("Comments: posted comment id=${result.commentId} media=$mediaId parent=$parentId")
             val newComment = Comment(
                 commentId = result.commentId ?: 0,
                 userId = (Anilist.userid ?: 0).toString(),
@@ -579,6 +605,7 @@ class CommentsFragment : Fragment() {
             carouselAdapter.notifyItemInserted(0)
             snackString("Comment posted")
         } else {
+            Logger.log(Log.ERROR, "Comments: FAILED to post comment media=$mediaId parent=$parentId")
             snackString("Failed to post comment")
         }
     }
@@ -589,11 +616,13 @@ class CommentsFragment : Fragment() {
             CommentsAPI.editComment(target.commentId, text)
         }
         if (result != null) {
+            Logger.log("Comments: edited comment id=${target.commentId}")
             target.content = text
             val idx = displayedComments.indexOfFirst { it.commentId == target.commentId }
             if (idx >= 0) carouselAdapter.notifyItemChanged(idx)
             snackString("Comment edited")
         } else {
+            Logger.log(Log.ERROR, "Comments: FAILED to edit comment id=${target.commentId}")
             snackString("Failed to edit comment")
         }
     }

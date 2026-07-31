@@ -272,10 +272,14 @@ class MediaDetailsActivity : AppCompatActivity() {
             }
             when (idx) {
                 0 -> {
+                    binding.mediaBgGradient?.visibility = View.VISIBLE
+                    binding.mediaRightBg?.visibility = View.VISIBLE
                     binding.mediaInfoFragmentContainer!!.visibility = View.VISIBLE
                     binding.mediaRightPanel!!.visibility = View.GONE
                 }
                 1 -> {
+                    binding.mediaBgGradient?.visibility = View.GONE
+                    binding.mediaRightBg?.visibility = View.VISIBLE
                     binding.mediaInfoFragmentContainer!!.visibility = View.GONE
                     binding.mediaRightPanel!!.visibility = View.VISIBLE
                     binding.mediaTabContent?.let {
@@ -284,6 +288,8 @@ class MediaDetailsActivity : AppCompatActivity() {
                     }
                 }
                 2 -> {
+                    binding.mediaBgGradient?.visibility = View.GONE
+                    binding.mediaRightBg?.visibility = View.GONE
                     binding.mediaInfoFragmentContainer!!.visibility = View.GONE
                     binding.mediaRightPanel!!.visibility = View.VISIBLE
                     binding.mediaTabContent?.let {

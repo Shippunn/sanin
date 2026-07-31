@@ -1,5 +1,6 @@
 package ani.sanin.parsers
 
+import android.util.Log
 import ani.sanin.Lazier
 import ani.sanin.media.Media
 import ani.sanin.media.anime.Episode
@@ -22,10 +23,18 @@ abstract class WatchSources : BaseSources() {
     }
 
     suspend fun loadEpisodesFromMedia(i: Int, media: Media): MutableMap<String, Episode> {
-        return tryWithSuspend(true) {
-            val res = get(i).autoSearch(media) ?: return@tryWithSuspend mutableMapOf()
-            loadEpisodes(i, res.link, res.extra, res.sAnime)
-        } ?: mutableMapOf()
+        val parser = get(i)
+        Logger.log("Watch: loadEpisodesFromMedia source='${parser.name}' (idx $i) media='${media.name}'")
+        val res = tryWithSuspend(true) {
+            parser.autoSearch(media)
+        }
+        if (res == null) {
+            Logger.log(Log.ERROR, "Watch: FAILED autoSearch for source='${parser.name}' (idx $i) media='${media.name}'")
+            return mutableMapOf()
+        }
+        val map = loadEpisodes(i, res.link, res.extra, res.sAnime)
+        Logger.log("Watch: loaded ${map.size} episodes from source='${parser.name}' (idx $i) media='${media.name}'")
+        return map
     }
 
     suspend fun loadEpisodes(
@@ -58,6 +67,9 @@ abstract class WatchSources : BaseSources() {
                     sEpisode = sEpisode
                 )
             }
+        } ?: Logger.log(Log.ERROR, "Watch: FAILED loadEpisodes source='${parser.name}' (idx $i) link='$showLink'")
+        if (map.isEmpty()) {
+            Logger.log(Log.WARN, "Watch: loadEpisodes returned 0 episodes source='${parser.name}' (idx $i) link='$showLink'")
         }
         return map
     }

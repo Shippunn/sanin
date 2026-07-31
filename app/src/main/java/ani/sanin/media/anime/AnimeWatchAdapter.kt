@@ -45,6 +45,7 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
 import ani.sanin.toast
 import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.Logger
 import ani.sanin.util.customAlertDialog
 import com.google.android.material.chip.Chip
 import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
@@ -155,6 +156,7 @@ class AnimeWatchAdapter(
                         autoSelect = false
                         val idx = chip.tag as Int
                         if (idx == source) return@setOnClickListener
+                        Logger.log("Watch: source chip clicked '${watchSources.names.getOrNull(idx)}' (idx $idx)")
                         fragment.onSourceChange(idx).apply {
                             binding.mediaSourceTitle.text = showUserText
                             showUserTextListener = {
@@ -184,6 +186,7 @@ class AnimeWatchAdapter(
 
         binding.mediaSourceLanguage.setOnItemClickListener { _, _, i, _ ->
             // Check if 'extension' and 'selected' properties exist and are accessible
+            Logger.log("Watch: language dropdown selected index $i")
             (watchSources[source] as? DynamicAnimeParser)?.let { ext ->
                 ext.sourceLanguage = i
                 fragment.onLangChange(i)

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -261,6 +262,11 @@ class AnimeWatchFragment : Fragment() {
 
                 if (!loaded) {
                     model.watchSources = if (media.isAdult) HAnimeSources else AnimeSources
+                    Logger.log(
+                        "Watch: initialized sources=${model.watchSources!!.names.size} " +
+                            "selected='${model.watchSources!!.list.getOrNull(media.selected!!.sourceIndex)?.name}' " +
+                            "(idx ${media.selected!!.sourceIndex})"
+                    )
 
                     val offlineMode =
                         model.watchSources!!.isDownloadedSource(media.selected!!.sourceIndex)
@@ -283,6 +289,7 @@ class AnimeWatchFragment : Fragment() {
                             !isOnline(binding.root.context) || PrefManager.getVal(PrefName.OfflineMode)
                         val isLocal = model.watchSources!!.list.getOrNull(media.selected!!.sourceIndex)?.name == "Local"
                         if (offline && !isLocal) {
+                            Logger.log(Log.WARN, "Watch: offline detected, switching to source idx ${model.watchSources!!.list.lastIndex}")
                             media.selected!!.sourceIndex = model.watchSources!!.list.lastIndex
                         }
                         // Load episodes immediately — don't block on metadata APIs
@@ -303,6 +310,7 @@ class AnimeWatchFragment : Fragment() {
             if (loadedEpisodes != null) {
                 val episodes = loadedEpisodes[media.selected!!.sourceIndex]
                 if (episodes != null) {
+                    Logger.log("Watch: episode list received ${episodes.size} eps from source idx ${media.selected!!.sourceIndex}")
                     viewLifecycleOwner.lifecycleScope.launch {
                         withContext(Dispatchers.Default) {
                             enrichEpisodes(episodes)
@@ -327,6 +335,7 @@ class AnimeWatchFragment : Fragment() {
                             val last = if (position + 1 == stored) total else (limit * (position + 1))
                             start = limit * (position)
                             end = last - 1
+                            Logger.log("Watch: generating ${stored} chips (total=$total limit=$limit) selected chip $position")
                             headerAdapter.updateChips(
                                 limit,
                                 arr,
@@ -424,6 +433,10 @@ class AnimeWatchFragment : Fragment() {
     private fun refreshEpisodes() {
         val eps = media.anime?.episodes
         if (eps != null) {
+            Logger.log(
+                "Watch: metadata refresh kitsu=${media.anime?.kitsuEpisodes?.size} " +
+                    "filler=${media.anime?.fillerEpisodes?.size} anify=${media.anime?.anifyEpisodes?.size}"
+            )
             viewLifecycleOwner.lifecycleScope.launch {
                 withContext(Dispatchers.Default) {
                     enrichEpisodes(eps)
@@ -450,6 +463,7 @@ class AnimeWatchFragment : Fragment() {
 
     fun onSourceChange(i: Int): AnimeParser {
         loadEpisodesJob?.cancel()
+        val oldIdx = media.selected?.sourceIndex ?: -1
         media.anime?.episodes = null
         val selected = model.loadSelected(media)
         model.watchSources?.get(selected.sourceIndex)?.showUserTextListener = null
@@ -457,7 +471,11 @@ class AnimeWatchFragment : Fragment() {
         selected.server = null
         model.saveSelected(media.id, selected)
         media.selected = selected
-        return model.watchSources?.get(i)!!
+        val parser = model.watchSources?.get(i)!!
+        Logger.log(
+            "Watch: source change '${model.watchSources?.get(oldIdx)?.name ?: "?"}'($oldIdx) -> '${parser.name}'($i)"
+        )
+        return parser
     }
 
     fun onLangChange(i: Int) {
@@ -465,6 +483,7 @@ class AnimeWatchFragment : Fragment() {
         selected.langIndex = i
         model.saveSelected(media.id, selected)
         media.selected = selected
+        Logger.log("Watch: language changed to index $i")
     }
 
     fun onDubClicked(checked: Boolean) {
@@ -473,6 +492,7 @@ class AnimeWatchFragment : Fragment() {
         selected.preferDub = checked
         model.saveSelected(media.id, selected)
         media.selected = selected
+        Logger.log("Watch: dub ${if (checked) "enabled" else "disabled"} for source '${model.watchSources?.get(selected.sourceIndex)?.name}' (idx ${selected.sourceIndex})")
         lifecycleScope.launch(Dispatchers.IO) {
             model.forceLoadEpisode(media, selected.sourceIndex)
         }
@@ -480,6 +500,7 @@ class AnimeWatchFragment : Fragment() {
 
     fun loadEpisodes(i: Int, invalidate: Boolean) {
         loadEpisodesJob?.cancel()
+        Logger.log("Watch: loadEpisodes requested source idx=$i invalidate=$invalidate")
         loadEpisodesJob = lifecycleScope.launch(Dispatchers.IO) { model.loadEpisodes(media, i, invalidate) }
     }
 
@@ -501,6 +522,7 @@ class AnimeWatchFragment : Fragment() {
         start = s
         end = e
         model.saveSelected(media.id, media.selected!!)
+        Logger.log("Watch: chip clicked index $i (episodes range $s-$e)")
         reload()
     }
 
@@ -515,6 +537,7 @@ class AnimeWatchFragment : Fragment() {
     }
 
     fun openSettings(pkg: AnimeExtension.Installed) {
+        Logger.log("Watch: opening extension settings pkg='${pkg.name}' sources=${pkg.sources.size} configurable=${pkg.sources.filterIsInstance<ConfigurableAnimeSource>().size}")
         val changeUIVisibility: (Boolean) -> Unit = { show ->
             val activity = activity
             if (activity is MediaDetailsActivity && isAdded) {
@@ -586,6 +609,7 @@ class AnimeWatchFragment : Fragment() {
     fun onEpisodeClick(i: String) {
         model.continueMedia = false
         model.saveSelected(media.id, media.selected!!)
+        Logger.log("Watch: episode clicked '$i' source='${model.watchSources?.get(media.selected!!.sourceIndex)?.name}' (idx ${media.selected!!.sourceIndex})")
         model.onEpisodeClick(media, i, requireActivity().supportFragmentManager)
     }
 
@@ -621,6 +645,10 @@ class AnimeWatchFragment : Fragment() {
             if (reverse)
                 arr = (arr.reversed() as? ArrayList<Episode>) ?: arr
         }
+        Logger.log(
+            "Watch: reload list=${arr.size} (total=${media.anime!!.episodes?.size}) slice=$start..${end ?: media.anime!!.episodes!!.size - 1} " +
+                "reverse=$reverse downloaded=$isDownloaded"
+        )
         episodeAdapter.submitList(arr, style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
     }
 

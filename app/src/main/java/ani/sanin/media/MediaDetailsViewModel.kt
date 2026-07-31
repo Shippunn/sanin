@@ -641,12 +641,14 @@ class MediaDetailsViewModel : ViewModel() {
     suspend fun loadEpisodes(media: Media, i: Int, invalidate: Boolean = false) {
         epsLoaded.keys.removeAll { it != i }
         if (!epsLoaded.containsKey(i) || invalidate) {
+            Logger.log("Watch: ViewModel loadEpisodes source idx=$i invalidate=$invalidate media='${media.name}'")
             epsLoaded[i] = watchSources?.loadEpisodesFromMedia(i, media) ?: return
         }
         episodes.postValue(epsLoaded)
     }
 
     suspend fun forceLoadEpisode(media: Media, i: Int) {
+        Logger.log("Watch: ViewModel forceLoadEpisode source idx=$i media='${media.name}'")
         epsLoaded[i] = watchSources?.loadEpisodesFromMedia(i, media) ?: return
         episodes.postValue(epsLoaded)
     }
@@ -684,7 +686,13 @@ class MediaDetailsViewModel : ViewModel() {
                     ep.extractors = existingExtractors
             }
         }
-
+        Logger.log(
+            "Watch: episode '${ep.number}' extractors=${ep.extractors?.size} " +
+                "videos=${ep.extractors?.sumOf { it.videos.size }} source idx=$i post=$post"
+        )
+        if (ep.extractors.isNullOrEmpty()) {
+            Logger.log(Log.ERROR, "Watch: NO video servers found for episode '${ep.number}' source idx=$i")
+        }
 
         if (post) {
             episode.postValue(ep)
@@ -748,6 +756,7 @@ class MediaDetailsViewModel : ViewModel() {
         val link = ep.link ?: return false
 
         if (ep.extractors?.find{ it.server.name == server } == null) {
+            Logger.log("Watch: loading single video server '$server' for episode '${ep.number}' source idx=${selected.sourceIndex}")
             if(ep.extractors == null){
                 ep.extractors = mutableListOf(watchSources?.get(selected.sourceIndex)?.let {
                     selected.sourceIndex = selected.sourceIndex
@@ -809,9 +818,11 @@ class MediaDetailsViewModel : ViewModel() {
                 for (ep in episodes){
                     if (media.anime?.episodes?.get(ep) == null) {
                         snackString(currContext()?.getString(R.string.episode_not_found, ep))
+                        Logger.log(Log.ERROR, "Watch: episode '$ep' not found in list of ${media.anime?.episodes?.size} for '${media.name}'")
                         return@post
                     }
                 }
+                Logger.log("Watch: opening selector for episode(s) ${episodes.joinToString(",")} source='${watchSources?.get(media.selected?.sourceIndex ?: 0)?.name}' (idx ${media.selected?.sourceIndex})")
                 media.selected = this.loadSelected(media)
                 val selector =
                     SelectorDialogFragment.newInstance(

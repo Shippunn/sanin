@@ -16,7 +16,7 @@
 
     <View
         android:id="@+id/mediaBgGradient"
-        android:layout_width="260dp"
+        android:layout_width="320dp"
         android:layout_height="match_parent"
         android:background="@drawable/gradient_rtl_dark"
         android:importantForAccessibility="no" />

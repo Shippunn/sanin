@@ -73,7 +73,7 @@ enum class PrefName(val data: Pref) {
     AutoUpdateExtensions(Pref(Location.General, Boolean::class, true)),
     ConfirmPlayerExit(Pref(Location.General, Boolean::class, false)),
     TraktClientId(Pref(Location.General, String::class, "")),
-    TraktCommentsEnabled(Pref(Location.General, Int::class, 1)),
+    TraktCommentsEnabled(Pref(Location.General, Int::class, 0)),
     TraktAccessToken(Pref(Location.Protected, String::class, "")),
     TraktUsername(Pref(Location.Protected, String::class, "")),
 
@@ -182,7 +182,7 @@ enum class PrefName(val data: Pref) {
     ContinueWatchingCardRoundness(Pref(Location.UI, Int::class, 60)),
     CardTitlePosition(Pref(Location.UI, Int::class, 0)),
     CardSize(Pref(Location.UI, Float::class, 1.5f)),
-    BannerBrightness(Pref(Location.UI, Float::class, 1.0f)),
+    BannerBrightness(Pref(Location.UI, Float::class, 0.20f)),
     ShowNewEpisodeBadge(Pref(Location.UI, Boolean::class, true)),
     ShowReleasingIndicator(Pref(Location.UI, Boolean::class, true)),
     CardGradientIntensity(Pref(Location.UI, Float::class, 0.7f)),
