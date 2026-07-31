@@ -15,11 +15,10 @@ import ani.sanin.R
 import ani.sanin.buildMarkwon
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
-import ani.sanin.connections.comments.CommentsAPI
-import ani.sanin.connections.reddit.RedditAPI
-import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
+import ani.sanin.connections.comments.CommentsAPI
+import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment
 import ani.sanin.connections.trakt.TraktAuth
 import ani.sanin.connections.trakt.TraktComment
@@ -334,13 +333,6 @@ class CommentsFragment : Fragment() {
                 Logger.log("Trakt comments failed: ${e.message}")
             }
         }
-        if (PrefManager.getVal<Int>(PrefName.RedditCommentsEnabled) == 1) {
-            try {
-                loadRedditThreads()
-            } catch (e: Exception) {
-                Logger.log("Reddit threads failed: ${e.message}")
-            }
-        }
         loadSaninComments()
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
@@ -373,61 +365,6 @@ class CommentsFragment : Fragment() {
             TraktAPI.getComments(type, id, page = 1, sort = sort)
         }
         displayedComments.addAll(traktComments.map { traktToComment(it) })
-    }
-
-    private suspend fun loadRedditThreads() {
-        val progress = userProgress ?: 0
-        val episodes = if (progress > 0) (progress - 2..progress + 1).filter { it > 0 } else emptyList()
-
-        if (episodes.isEmpty()) {
-            val latest = RedditAPI.searchThreads("$mediaName episode discussion").firstOrNull()
-            if (latest != null) displayedComments.add(redditToComment(latest))
-            return
-        }
-
-        val found = RedditAPI.searchThreads("$mediaName episode discussion")
-            .filter { it.episode in episodes }
-        val foundEps = found.mapNotNull { it.episode }.toSet()
-        displayedComments.addAll(found.map { redditToComment(it) })
-
-        for (ep in episodes) {
-            if (ep !in foundEps) {
-                val thread = RedditAPI.searchThreads("$mediaName episode $ep discussion")
-                    .firstOrNull { it.episode == ep }
-                if (thread != null) displayedComments.add(redditToComment(thread))
-            }
-        }
-    }
-
-    private fun redditToComment(t: RedditAPI.RedditThread): Comment {
-        return Comment(
-            commentId = t.id.base36ToInt(),
-            userId = t.id,
-            mediaId = mediaId,
-            parentCommentId = null,
-            content = t.title,
-            timestamp = isoFromEpoch(t.createdUtc),
-            deleted = false,
-            tag = null,
-            upvotes = t.score,
-            downvotes = 0,
-            userVoteType = 0,
-            username = "r/anime",
-            profilePictureUrl = null,
-            totalVotes = t.score,
-            replyCount = t.numComments,
-            isReddit = true,
-            redditThreadId = t.id
-        )
-    }
-
-    private fun String.base36ToInt(): Int =
-        fold(0) { acc, c -> acc * 36 + c.digitToInt(36) }
-
-    private fun isoFromEpoch(epochSeconds: Long): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
-        return sdf.format(java.util.Date(epochSeconds * 1000))
     }
 
     private fun traktToComment(tc: TraktComment): Comment {
@@ -508,23 +445,6 @@ class CommentsFragment : Fragment() {
     }
 
     fun showCommentMenu(comment: Comment, position: Int) {
-        if (comment.isReddit) {
-            activity.customAlertDialog().apply {
-                setTitle(comment.username)
-                singleChoiceItems(arrayOf("View Full", "Copy Text")) { which ->
-                    when (which) {
-                        0 -> openCommentDetail(comment)
-                        1 -> {
-                            val clipboard = requireContext().getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("comment", comment.content))
-                            snackString("Copied")
-                        }
-                    }
-                }
-                show()
-            }
-            return
-        }
         activity.customAlertDialog().apply {
             setTitle(comment.username)
             singleChoiceItems(arrayOf("View Full", "Copy Text", "Report")) { which ->
@@ -548,16 +468,6 @@ class CommentsFragment : Fragment() {
     }
 
     fun openCommentDetail(comment: Comment) {
-        if (comment.isReddit) {
-            val threadId = comment.redditThreadId ?: return
-            lifecycleScope.launch {
-                val comments = withContext(Dispatchers.IO) {
-                    RedditAPI.getThreadComments(threadId)
-                }
-                RedditThreadDialog.newInstance(comment.content, comments).show(childFragmentManager, "redditThread")
-            }
-            return
-        }
         val dialog = CommentZoomDialog()
         val bundle = Bundle().apply {
             putInt("commentId", comment.commentId)

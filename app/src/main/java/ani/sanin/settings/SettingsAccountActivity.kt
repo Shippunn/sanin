@@ -226,17 +226,6 @@ class SettingsAccountActivity : AppCompatActivity() {
                     isVisible = true
                 ),
                 Settings(
-                    type = 2,
-                    name = "Reddit Discussions",
-                    desc = "Show episode discussions from r/anime in the comments tab",
-                    icon = R.drawable.ic_round_comment_24,
-                    isChecked = PrefManager.getVal<Int>(PrefName.RedditCommentsEnabled) == 1,
-                    switch = { isChecked, _ ->
-                        PrefManager.setVal(PrefName.RedditCommentsEnabled, if (isChecked) 1 else 0)
-                    },
-                    isVisible = true
-                ),
-                Settings(
                     type = 0,
                     name = if (TraktAuth.isLoggedIn()) "Trakt: ${TraktAuth.username}" else "Login to Trakt",
                     desc = if (TraktAuth.isLoggedIn()) "Tap to logout" else "Like, reply & post on Trakt",
