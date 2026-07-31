@@ -567,9 +567,9 @@ class AnimeWatchFragment : Fragment() {
         val changeUIVisibility: (Boolean) -> Unit = { show ->
             val activity = activity
             if (activity is MediaDetailsActivity && isAdded) {
-                activity.findViewById<AppBarLayout>(R.id.mediaAppBar)?.isVisible = show
+                activity.findViewById<AppBarLayout>(R.id.mediaAppBar)?.isGone = true
                 activity.findViewById<View>(R.id.mediaTabContent)?.isVisible = show
-                activity.findViewById<CardView>(R.id.mediaCover)?.isVisible = show
+                activity.findViewById<CardView>(R.id.mediaCover)?.isGone = true
                 activity.findViewById<CardView>(R.id.mediaClose).isVisible = show
                 activity.findViewById<View>(R.id.mediaNavPills)?.isVisible = show
                 activity.findViewById<FrameLayout>(R.id.fragmentExtensionsContainer).isGone = show
@@ -648,6 +648,11 @@ class AnimeWatchFragment : Fragment() {
 
     @SuppressLint("NotifyDataSetChanged")
     private fun reload() {
+        if (!::headerAdapter.isInitialized || !::episodeAdapter.isInitialized) {
+            Logger.log(Log.WARN, "Watch: reload skipped, adapters not initialized (header=${::headerAdapter.isInitialized} episode=${::episodeAdapter.isInitialized})")
+            return
+        }
+        Logger.log("Watch: reload start")
         val selected = model.loadSelected(media)
 
         // Find latest episode for subscription
@@ -676,6 +681,7 @@ class AnimeWatchFragment : Fragment() {
                 "reverse=$reverse downloaded=$isDownloaded"
         )
         episodeAdapter.submitList(arr, style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
+        Logger.log("Watch: reload done")
     }
 
     override fun onDestroy() {
