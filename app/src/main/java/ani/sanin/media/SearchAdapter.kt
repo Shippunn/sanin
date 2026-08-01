@@ -114,6 +114,8 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             binding.searchResultGrid,
             binding.searchResultList
         )
+        binding.clearHistory.nextFocusRightId = R.id.searchFilter
+        binding.searchFilter.nextFocusLeftId = R.id.clearHistory
         binding.searchFilter.setOnClickListener {
             SearchFilterBottomDialog.newInstance().show(activity.supportFragmentManager, "dialog")
         }
