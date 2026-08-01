@@ -653,35 +653,54 @@ class AnimeWatchFragment : Fragment() {
             return
         }
         Logger.log("Watch: reload start")
-        val selected = model.loadSelected(media)
+        try {
+            val selected = model.loadSelected(media)
+            Logger.log("Watch: reload selected")
 
-        // Find latest episode for subscription
-        selected.latest =
-            media.anime?.episodes?.values?.maxOfOrNull { it.number.toFloatOrNull() ?: 0f } ?: 0f
-        selected.latest =
-            media.userProgress?.toFloat()?.takeIf { selected.latest < it } ?: selected.latest
+            // Find latest episode for subscription
+            selected.latest =
+                media.anime?.episodes?.values?.maxOfOrNull { it.number.toFloatOrNull() ?: 0f } ?: 0f
+            selected.latest =
+                media.userProgress?.toFloat()?.takeIf { selected.latest < it } ?: selected.latest
 
-        model.saveSelected(media.id, selected)
-        headerAdapter.handleEpisodes()
-        episodeAdapter.refreshCache()
-        val isDownloaded = model.watchSources!!.isDownloadedSource(media.selected!!.sourceIndex)
-        episodeAdapter.offlineMode = isDownloaded
-        var arr: ArrayList<Episode> = arrayListOf()
-        if (media.anime!!.episodes != null) {
-            val end = if (end != null && end!! < media.anime!!.episodes!!.size) end else null
-            arr.addAll(
-                media.anime!!.episodes!!.values.toList()
-                    .slice(start..(end ?: (media.anime!!.episodes!!.size - 1)))
+            model.saveSelected(media.id, selected)
+            Logger.log("Watch: reload saved")
+
+            headerAdapter.handleEpisodes()
+            episodeAdapter.refreshCache()
+            Logger.log("Watch: reload header+cache")
+
+            val watchSources = model.watchSources
+            val mediaSelected = media.selected
+            if (watchSources == null || mediaSelected == null) {
+                Logger.log(Log.WARN, "Watch: reload skipped, watchSources=${watchSources != null} selected=${mediaSelected != null}")
+                return
+            }
+            val isDownloaded = watchSources.isDownloadedSource(mediaSelected.sourceIndex)
+            episodeAdapter.offlineMode = isDownloaded
+            Logger.log("Watch: reload sources (downloaded=$isDownloaded)")
+
+            val episodes = media.anime?.episodes
+            var arr: ArrayList<Episode> = arrayListOf()
+            if (episodes != null && episodes.isNotEmpty()) {
+                val values = episodes.values.filterNotNull()
+                val endIdx = if (end != null && end!! < values.size) end!! else values.size - 1
+                if (start <= endIdx) {
+                    arr.addAll(values.slice(start..endIdx))
+                }
+                if (reverse)
+                    arr = (arr.reversed() as? ArrayList<Episode>) ?: arr
+            }
+            Logger.log(
+                "Watch: reload list=${arr.size} (total=${episodes?.size} nonNull=${episodes?.values?.count { it != null }}) " +
+                    "slice=$start..${end ?: episodes?.size?.minus(1) ?: -1} reverse=$reverse downloaded=$isDownloaded"
             )
-            if (reverse)
-                arr = (arr.reversed() as? ArrayList<Episode>) ?: arr
+            episodeAdapter.submitList(arr, style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
+            Logger.log("Watch: reload done")
+        } catch (e: Exception) {
+            Logger.log(Log.ERROR, "Watch: reload FAILED: ${e.message}")
+            Logger.log(e)
         }
-        Logger.log(
-            "Watch: reload list=${arr.size} (total=${media.anime!!.episodes?.size}) slice=$start..${end ?: media.anime!!.episodes!!.size - 1} " +
-                "reverse=$reverse downloaded=$isDownloaded"
-        )
-        episodeAdapter.submitList(arr, style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
-        Logger.log("Watch: reload done")
     }
 
     override fun onDestroy() {

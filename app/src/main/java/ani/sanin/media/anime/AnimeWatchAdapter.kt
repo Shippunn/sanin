@@ -61,6 +61,7 @@ class AnimeWatchAdapter(
     private val watchSources: WatchSources
 ) : RecyclerView.Adapter<AnimeWatchAdapter.ViewHolder>() {
     private var autoSelect = true
+    private var chipRowFocused = false
     var subscribe: MediaDetailsActivity.PopImageButton? = null
     private var _binding: ItemMediaSourceBinding? = null
 
@@ -182,6 +183,15 @@ class AnimeWatchAdapter(
                     }
                 }
             chipGroup.addView(chip)
+        }
+
+        if (!chipRowFocused) {
+            chipRowFocused = true
+            chipGroup.post {
+                if (!chipGroup.hasFocus() && chipGroup.childCount > 0) {
+                    chipGroup.getChildAt(0).requestFocus()
+                }
+            }
         }
 
         binding.mediaSourceLanguage.setOnItemClickListener { _, _, i, _ ->
