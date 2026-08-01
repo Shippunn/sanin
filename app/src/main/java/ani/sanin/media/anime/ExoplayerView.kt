@@ -3868,7 +3868,7 @@ class ExoplayerView :
 
         override fun setEnabled(enabled: Boolean) {
             this.enabled = enabled
-            super.setEnabled(!forceDisabled && this.enabled)
+            super.setEnabled(!forceDisabled)
         }
 
         fun setForceDisabled(forceDisabled: Boolean) {
