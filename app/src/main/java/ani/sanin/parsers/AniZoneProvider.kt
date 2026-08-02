@@ -20,6 +20,28 @@ class AniZoneProvider : NativeAnimeParser() {
                 val html = get("$baseUrl/anime?search=${encode(query)}", baseUrl, "text/html,application/json,*/*")
 
                 val seen = mutableSetOf<String>()
+                val cardPattern = Regex(
+                    """<div\s+x-data="([^"]*)"[^>]*wire:key="a-([a-z0-9-]+)"[^>]*>(.*?)(?=<div\s+x-data=|\z)""",
+                    setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+                )
+                val cardResults = cardPattern.findAll(html).mapNotNull { match ->
+                    val xData = match.groupValues[1]
+                    val slug = match.groupValues[2]
+                    if (!seen.add(slug)) return@mapNotNull null
+                    val name = Regex("""getTitle\(\s*this\.anmTitles\s*,\s*'([^']*)'\s*\)""", RegexOption.IGNORE_CASE)
+                        .find(xData)?.groupValues?.get(1)?.trim()
+                        ?.takeIf { it.isNotEmpty() }
+                        ?: return@mapNotNull null
+                    val fullUrl = "$baseUrl/anime/$slug"
+                    val coverUrl = Regex("""<img\b[^>]*src=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                        .find(match.groupValues[3])?.groupValues?.get(1) ?: defaultImage
+                    ShowResponse(
+                        name = name, link = fullUrl, coverUrl = coverUrl,
+                        extra = mutableMapOf("slug" to slug)
+                    )
+                }.toList()
+                if (cardResults.isNotEmpty()) return@withContext cardResults
+
                 Regex(
                     """<a\b[^>]*href=["'](?:https://anizone\.to)?/anime/([a-z0-9-]+)(?:[/?#][^"']*)?["'][^>]*>(.*?)</a>""",
                     setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
