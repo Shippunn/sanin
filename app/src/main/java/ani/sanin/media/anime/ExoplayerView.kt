@@ -227,6 +227,7 @@ class ExoplayerView :
     private lateinit var exoAudioTrack: ImageButton
     private lateinit var exoSpeed: ImageButton
     private lateinit var exoScreen: ImageButton
+    private lateinit var exoRotate: ImageButton
     private lateinit var exoNext: ImageButton
     private lateinit var exoPrev: ImageButton
     private lateinit var exoSkipOpEd: ImageButton
@@ -521,6 +522,7 @@ class ExoplayerView :
 
         exoSpeed = playerView.findViewById(androidx.media3.ui.R.id.exo_playback_speed)
         exoScreen = playerView.findViewById(R.id.exo_screen)
+        exoRotate = playerView.findViewById(R.id.exo_rotate)
         exoBrightness = playerView.findViewById(R.id.exo_brightness)
         exoVolume = playerView.findViewById(R.id.exo_volume)
         exoBrightnessCont = playerView.findViewById(R.id.exo_brightness_cont)
@@ -755,7 +757,7 @@ class ExoplayerView :
             }
         listOf(
             androidx.media3.ui.R.id.exo_play, R.id.exo_source, R.id.exo_settings, R.id.exo_sub,
-            R.id.exo_audio, R.id.exo_screen,
+            R.id.exo_audio, R.id.exo_screen, R.id.exo_rotate,
             R.id.exo_skip_op_ed, R.id.exo_back, R.id.exo_skip, R.id.exo_next_ep,
             R.id.exo_prev_ep,
             androidx.media3.ui.R.id.exo_playback_speed,
@@ -772,7 +774,7 @@ class ExoplayerView :
         animeTitle.isFocusable = false
         listOf(
             androidx.media3.ui.R.id.exo_play, R.id.exo_source, R.id.exo_settings, R.id.exo_sub,
-            R.id.exo_audio, R.id.exo_screen,
+            R.id.exo_audio, R.id.exo_screen, R.id.exo_rotate,
             R.id.exo_skip_op_ed, R.id.exo_back, R.id.exo_skip, R.id.exo_next_ep,
             R.id.exo_prev_ep,
             androidx.media3.ui.R.id.exo_playback_speed,
@@ -808,10 +810,18 @@ class ExoplayerView :
         exoPlay.nextFocusDownId = androidx.media3.ui.R.id.exo_progress
         playerView.findViewById<View>(R.id.exo_prev_ep).nextFocusDownId = androidx.media3.ui.R.id.exo_progress
         playerView.findViewById<View>(R.id.exo_next_ep).nextFocusDownId = androidx.media3.ui.R.id.exo_progress
-        val bottomIds = listOf(R.id.exo_settings, R.id.exo_source, R.id.exo_sub, R.id.exo_audio, R.id.exo_screen)
+        val bottomIds = listOf(R.id.exo_settings, R.id.exo_source, R.id.exo_sub, R.id.exo_audio, R.id.exo_screen, R.id.exo_rotate)
         for (id in bottomIds) {
             playerView.findViewById<View>(id)?.nextFocusUpId = androidx.media3.ui.R.id.exo_progress
         }
+        val skipView = playerView.findViewById<View>(R.id.exo_skip)
+        skipView.nextFocusDownId = R.id.exo_rotate
+        skipView.nextFocusRightId = R.id.exo_screen
+        skipView.nextFocusLeftId = R.id.exo_skip_op_ed
+        skipView.nextFocusUpId = R.id.exo_ep_sel_btn
+        playerView.findViewById<View>(R.id.exo_skip_op_ed).nextFocusRightId = R.id.exo_skip
+        playerView.findViewById<View>(R.id.exo_rotate).nextFocusUpId = R.id.exo_skip
+        playerView.findViewById<View>(R.id.exo_screen).nextFocusUpId = R.id.exo_skip
         progressBar.setOnFocusChangeListener { _, hasFocus ->
             if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SeekBarAnimations)) {
                 progressBar.animate().scaleY(if (hasFocus) 2.5f else 1f).setDuration(150).start()
@@ -1481,6 +1491,17 @@ class ExoplayerView :
                 },
             )
             PrefManager.setCustomVal("${media.id}_fullscreenInt", isFullscreen)
+        }
+
+        // Rotate: toggle between landscape and portrait
+        exoRotate.setOnClickListener {
+            val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            requestedOrientation =
+                if (isLandscape) {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                }
         }
 
         // Settings

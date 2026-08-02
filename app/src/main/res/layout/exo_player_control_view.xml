@@ -169,6 +169,18 @@
                         tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
 
                     <ImageButton
+                        android:id="@+id/exo_rotate"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:focusable="true"
+                        android:backgroundTint="#00FFFFFF"
+                        android:src="@drawable/ic_round_screen_rotation_alt_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:tint="#fff"
+                        tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
+
+                    <ImageButton
                         android:id="@+id/exo_screen"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
