@@ -20,15 +20,18 @@ class SenshiProvider : NativeAnimeParser() {
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)
         if (saved != null) return saved
-        val malId = mediaObj.idMAL ?: return null
-        if (malId <= 0) return null
+        val malId = mediaObj.idMAL
+        if (malId == null || malId <= 0) {
+            Logger.log("Senshi autoSearch: no MAL id for '${mediaObj.mainName()}' (anilist=${mediaObj.id}) — cannot query MAL-based API")
+            return null
+        }
         val response = ShowResponse(
             name = mediaObj.mainName(),
             link = saveName,
             coverUrl = mediaObj.cover ?: defaultImage,
             extra = mutableMapOf(
                 "anilist_id" to mediaObj.id.toString(),
-                "mal_id" to mediaObj.idMAL.toString()
+                "mal_id" to malId.toString()
             )
         )
         saveShowResponse(mediaObj.id, response)

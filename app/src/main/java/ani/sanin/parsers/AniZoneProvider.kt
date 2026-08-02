@@ -56,9 +56,24 @@ class AniZoneProvider : NativeAnimeParser() {
             try {
                 val slug = animeLink.substringAfter("/anime/").substringBefore("?")
                 val html = get("$baseUrl/anime/$slug", "$baseUrl/", "text/html,application/json,*/*")
-                val count = Regex("""\b(\d+)\s+Episodes\b""", RegexOption.IGNORE_CASE)
-                    .find(html)?.groupValues?.get(1)?.toIntOrNull() ?: return@withContext emptyList()
 
+                if (html.isBlank()) {
+                    Logger.log("AniZone loadEpisodes: empty response for slug='$slug'")
+                    return@withContext emptyList()
+                }
+
+                val count = Regex("""\b(\d+)\s+Episodes?\b""", RegexOption.IGNORE_CASE)
+                    .find(html)?.groupValues?.get(1)?.toIntOrNull()
+                    ?: Regex("""Episodes?\s*[:=]\s*(\d+)""", RegexOption.IGNORE_CASE)
+                        .find(html)?.groupValues?.get(1)?.toIntOrNull()
+                    ?: Regex("""\b(\d+)\s+EP\b""", RegexOption.IGNORE_CASE)
+                        .find(html)?.groupValues?.get(1)?.toIntOrNull()
+                    ?: run {
+                        Logger.log("AniZone loadEpisodes: no episode count found in HTML for slug='$slug' (html size=${html.length})")
+                        return@withContext emptyList()
+                    }
+
+                Logger.log("AniZone loadEpisodes: found $count episodes for slug='$slug'")
                 (1..count).map { number ->
                     Episode(
                         number = number.toString(),
