@@ -70,7 +70,7 @@ class SearchFilterBottomDialog : BottomSheetDialogFragment() {
     ) {
         field.setAdapter(null)
         field.setOnClickListener {
-            customAlertDialog().apply {
+            requireContext().customAlertDialog().apply {
                 setTitle(titleRes)
                 singleChoiceItems(items, items.indexOf(current)) { index ->
                     field.setText(items[index])
