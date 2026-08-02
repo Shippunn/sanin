@@ -347,6 +347,11 @@ class AnimeWatchFragment : Fragment() {
 
                         headerAdapter.subscribeButton(true)
                         reload()
+
+                        pendingEpisodeClick?.let { ep ->
+                            pendingEpisodeClick = null
+                            onEpisodeClick(ep)
+                        }
                     }
                 }
             }
@@ -466,6 +471,11 @@ class AnimeWatchFragment : Fragment() {
         cancelLoadEpisodesJob("onSourceChange")
         val oldIdx = media.selected?.sourceIndex ?: -1
         media.anime?.episodes = null
+        pendingEpisodeClick = null
+        if (::episodeAdapter.isInitialized) {
+            episodeAdapter.submitList(emptyList())
+            Logger.log("Watch: stale episode list cleared on source change")
+        }
         val selected = model.loadSelected(media)
         model.watchSources?.get(selected.sourceIndex)?.showUserTextListener = null
         selected.sourceIndex = i
@@ -632,10 +642,18 @@ class AnimeWatchFragment : Fragment() {
         }
     }
 
+    private var pendingEpisodeClick: String? = null
+
     fun onEpisodeClick(i: String) {
         model.continueMedia = false
         model.saveSelected(media.id, media.selected!!)
-        Logger.log("Watch: episode clicked '$i' source='${model.watchSources?.get(media.selected!!.sourceIndex)?.name}' (idx ${media.selected!!.sourceIndex})")
+        val sourceName = model.watchSources?.get(media.selected!!.sourceIndex)?.name ?: "?"
+        if (media.anime?.episodes == null) {
+            pendingEpisodeClick = i
+            Logger.log("Watch: episode '$i' queued — episodes still loading for source='$sourceName' (idx ${media.selected!!.sourceIndex})")
+            return
+        }
+        Logger.log("Watch: episode clicked '$i' source='$sourceName' (idx ${media.selected!!.sourceIndex})")
         model.onEpisodeClick(media, i, requireActivity().supportFragmentManager)
     }
 
