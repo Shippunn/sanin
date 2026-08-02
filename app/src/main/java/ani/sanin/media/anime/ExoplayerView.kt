@@ -47,6 +47,8 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import androidx.activity.addCallback
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -317,7 +319,7 @@ class ExoplayerView :
     private lateinit var pauseOverlay: View
     private lateinit var pauseTitle: TextView
     private lateinit var pauseSynopsis: TextView
-    private lateinit var pauseGenres: TextView
+    private lateinit var pauseGenres: ChipGroup
     private lateinit var pauseRating: TextView
     private lateinit var pauseLogo: ImageView
     val model: MediaDetailsViewModel by viewModels()
@@ -1301,7 +1303,22 @@ class ExoplayerView :
         pauseSynopsis.text = media.description?.let {
             if (it.isBlank()) null else android.text.Html.fromHtml(it, android.text.Html.FROM_HTML_MODE_LEGACY).toString()
         } ?: ""
-        pauseGenres.text = media.genres?.joinToString(", ")?.ifBlank { null } ?: ""
+        pauseGenres.removeAllViews()
+        media.genres?.filter { it.isNotBlank() }?.forEach { genre ->
+            val chip = Chip(this).apply {
+                text = genre
+                isClickable = false
+                isFocusable = false
+                chipBackgroundColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
+                chipStrokeColor = android.content.res.ColorStateList.valueOf(TypedValue().also {
+                    theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, it, true)
+                }.data)
+                chipStrokeWidth = resources.displayMetrics.density
+                setTextColor(android.graphics.Color.WHITE)
+                textSize = 12f
+            }
+            pauseGenres.addView(chip)
+        }
         lifecycleScope.launch(Dispatchers.Main) {
             val logoUrl = LogoApi.getLogoUrl(media.id)
             if (!logoUrl.isNullOrBlank()) {

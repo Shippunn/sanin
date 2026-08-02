@@ -227,16 +227,13 @@
                 android:ellipsize="end"
                 tools:text="Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid giants called Titans..." />
 
-            <TextView
+            <com.google.android.material.chip.ChipGroup
                 android:id="@+id/exo_pause_genres"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:alpha="0.85"
-                android:fontFamily="@font/poppins"
-                android:textColor="?attr/colorSecondary"
-                android:textSize="16sp"
-                tools:text="Action, Drama, Fantasy, Horror" />
+                app:chipSpacingHorizontal="6dp"
+                app:chipSpacingVertical="-4dp" />
 
             <TextView
                 android:id="@+id/exo_pause_rating"
