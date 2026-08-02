@@ -473,7 +473,7 @@ class AnimeWatchFragment : Fragment() {
         media.anime?.episodes = null
         pendingEpisodeClick = null
         if (::episodeAdapter.isInitialized) {
-            episodeAdapter.submitList(emptyList())
+            episodeAdapter.submitList(emptyList(), style ?: PrefManager.getVal(PrefName.AnimeDefaultView))
             Logger.log("Watch: stale episode list cleared on source change")
         }
         val selected = model.loadSelected(media)
