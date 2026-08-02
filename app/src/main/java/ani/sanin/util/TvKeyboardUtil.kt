@@ -101,9 +101,14 @@ object TvKeyboardUtil {
         editText.setOnFocusChangeListener { v, hasFocus ->
             tvkLog("mode2 focus change ${describe(v)} hasFocus=$hasFocus")
             if (hasFocus) {
-                getCompactKeyboard(editText)?.apply {
-                    target = editText
-                    show()
+                val keyboard = getCompactKeyboard(editText)
+                if (keyboard?.isAutoShowSuppressed() == true) {
+                    tvkLog("mode2 focus change suppressed (keyboard was just hidden)")
+                } else {
+                    keyboard?.apply {
+                        target = editText
+                        show()
+                    }
                 }
                 applyFocusBorder(v)
             } else {

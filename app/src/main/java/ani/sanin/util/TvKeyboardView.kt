@@ -3,6 +3,7 @@ package ani.sanin.util
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.Log
 import android.view.KeyEvent
@@ -45,6 +46,11 @@ class TvKeyboardView(
     private var isSymbolsMode = false
     private var isCapsLock = false
     private var isShifted = false
+
+    private var autoShowSuppressedUntil = 0L
+
+    internal fun isAutoShowSuppressed(): Boolean =
+        SystemClock.uptimeMillis() < autoShowSuppressedUntil
 
     private lateinit var modeToggle: TextView
     private lateinit var capsLock: TextView
@@ -285,6 +291,8 @@ class TvKeyboardView(
         if (compact) {
             tvkLog("hide() compact visible=$isVisible target=${target?.let { it.id }}")
             syncToTarget()
+            autoShowSuppressedUntil = SystemClock.uptimeMillis() + 200
+            target?.clearFocus()
             clearFocus()
             visibility = GONE
             return
