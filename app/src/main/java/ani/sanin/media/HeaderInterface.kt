@@ -1,29 +1,26 @@
 package ani.sanin.media
 
 import android.text.TextWatcher
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
-import androidx.recyclerview.widget.RecyclerView
+import ani.sanin.R
 import ani.sanin.databinding.ItemSearchHeaderBinding
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 
-abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHeaderViewHolder>() {
-    private val itemViewType = 6969
+abstract class HeaderInterface(
+    val activity: SearchActivity,
+    protected val binding: ItemSearchHeaderBinding
+) {
     var search: Runnable? = null
     var requestFocus: Runnable? = null
     protected var textWatcher: TextWatcher? = null
     protected lateinit var searchHistoryAdapter: SearchHistoryAdapter
-    protected lateinit var binding: ItemSearchHeaderBinding
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchHeaderViewHolder {
-        val binding =
-            ItemSearchHeaderBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return SearchHeaderViewHolder(binding)
-    }
+    abstract fun bind()
+
+    protected open fun imageSearchVisible(): Boolean = true
 
     fun setHistoryVisibility(visible: Boolean) {
         if (visible) {
@@ -36,7 +33,8 @@ abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHead
             }
             binding.searchResultLayout.visibility = View.GONE
             binding.searchHistoryList.visibility = View.VISIBLE
-            binding.searchByImage.visibility = View.VISIBLE
+            binding.searchHistoryLabel.visibility = View.VISIBLE
+            binding.searchByImage.visibility = if (imageSearchVisible()) View.VISIBLE else View.GONE
             updateClearHistoryVisibility()
         } else {
             if (binding.searchResultLayout.visibility != View.VISIBLE) {
@@ -50,10 +48,24 @@ abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHead
             }
 
             binding.searchResultLayout.visibility = View.VISIBLE
-            binding.clearHistory.visibility = View.GONE
             binding.searchHistoryList.visibility = View.GONE
+            binding.searchHistoryLabel.visibility = View.GONE
+            binding.clearHistory.visibility = View.GONE
             binding.searchByImage.visibility = View.GONE
         }
+        updateActionRowFocusTargets()
+    }
+
+    protected fun updateActionRowFocusTargets() {
+        val historyFocusable = binding.searchHistoryList.visibility == View.VISIBLE &&
+            ::searchHistoryAdapter.isInitialized && searchHistoryAdapter.itemCount > 0
+        val target =
+            if (historyFocusable) R.id.searchHistoryTextView else R.id.searchRecyclerView
+        binding.searchFilter.nextFocusDownId = target
+        binding.clearHistory.nextFocusDownId = target
+        binding.searchList.nextFocusDownId = target
+        binding.searchAdultCheck.nextFocusDownId = target
+        binding.searchByImage.nextFocusDownId = target
     }
 
     private fun fadeInAnimation(): Animation {
@@ -70,21 +82,13 @@ abstract class HeaderInterface : RecyclerView.Adapter<HeaderInterface.SearchHead
 
     protected fun updateClearHistoryVisibility() {
         binding.clearHistory.visibility =
-            if (searchHistoryAdapter.itemCount > 0) View.VISIBLE else View.GONE
+            if (::searchHistoryAdapter.isInitialized && searchHistoryAdapter.itemCount > 0) View.VISIBLE else View.GONE
+        updateActionRowFocusTargets()
     }
 
     fun addHistory() {
         if (::searchHistoryAdapter.isInitialized && binding.searchBarText.text.toString()
                 .isNotBlank()
         ) searchHistoryAdapter.add(binding.searchBarText.text.toString())
-    }
-
-    inner class SearchHeaderViewHolder(val binding: ItemSearchHeaderBinding) :
-        RecyclerView.ViewHolder(binding.root)
-
-    override fun getItemCount(): Int = 1
-
-    override fun getItemViewType(position: Int): Int {
-        return itemViewType
     }
 }

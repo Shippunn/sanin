@@ -22,10 +22,14 @@ data class SearchHistory(val search: String, val time: Long) : Serializable {
     }
 }
 
-class SearchHistoryAdapter(type: SearchType, private val searchClicked: (String) -> Unit) :
-    ListAdapter<String, SearchHistoryAdapter.SearchHistoryViewHolder>(
-        DIFF_CALLBACK_INSTALLED
-    ) {
+class SearchHistoryAdapter(
+    type: SearchType,
+    private val upFocusId: Int,
+    private val searchClicked: (String) -> Unit
+) : ListAdapter<String, SearchHistoryAdapter.SearchHistoryViewHolder>(
+    DIFF_CALLBACK_INSTALLED
+) {
+    var onItemCountChanged: (() -> Unit)? = null
     private var searchHistoryLiveData: SharedPreferenceClassLiveData<List<SearchHistory>>? = null
     private var searchHistory: MutableList<SearchHistory>? = null
     private var historyType: PrefName = when (type) {
@@ -46,6 +50,7 @@ class SearchHistoryAdapter(type: SearchType, private val searchClicked: (String)
         searchHistoryLiveData?.observeForever { data ->
             searchHistory = data.toMutableList()
             submitList(searchHistory?.sorted())
+            onItemCountChanged?.invoke()
         }
     }
 
@@ -55,6 +60,7 @@ class SearchHistoryAdapter(type: SearchType, private val searchClicked: (String)
         }
         PrefManager.setVal(historyType, searchHistory)
         submitList(searchHistory?.sorted())
+        onItemCountChanged?.invoke()
     }
 
     fun add(item: String) {
@@ -69,12 +75,14 @@ class SearchHistoryAdapter(type: SearchType, private val searchClicked: (String)
         }
         submitList(searchHistory?.sorted())
         PrefManager.setVal(historyType, searchHistory)
+        onItemCountChanged?.invoke()
     }
 
     fun clearHistory() {
         searchHistory?.clear()
         PrefManager.setVal(historyType, searchHistory)
         submitList(searchHistory?.sorted())
+        onItemCountChanged?.invoke()
     }
 
     override fun onCreateViewHolder(
@@ -86,6 +94,8 @@ class SearchHistoryAdapter(type: SearchType, private val searchClicked: (String)
         val binding = ItemSearchHistoryBinding.bind(view)
         binding.searchHistoryTextView.isFocusable = true
         binding.closeTextView.isFocusable = true
+        binding.searchHistoryTextView.nextFocusUpId = upFocusId
+        binding.closeTextView.nextFocusUpId = upFocusId
         FocusEffectUtil.applyFocusListener(binding.searchHistoryTextView, binding.closeTextView)
         return SearchHistoryViewHolder(view)
     }

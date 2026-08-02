@@ -47,6 +47,7 @@
 
     <string name="search">Search</string>
     <string name="search_results">Search Results</string>
+    <string name="search_history">Search History</string>
     <string name="sort_by">Sort By</string>
     <string name="genre">Genre</string>
     <string name="top_score">Top Score</string>

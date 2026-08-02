@@ -8,7 +8,7 @@ import android.view.View.GONE
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.AnimationUtils
-import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,6 +21,7 @@ import ani.sanin.connections.anilist.Anilist
 import ani.sanin.databinding.BottomSheetSearchFilterBinding
 import ani.sanin.databinding.ItemChipBinding
 import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.customAlertDialog
 import com.google.android.material.chip.Chip
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
@@ -59,6 +60,25 @@ class SearchFilterBottomDialog : BottomSheetDialogFragment() {
         val targetView = view ?: binding.sortByFilter
         val bounceZoomAnimation = AnimationUtils.loadAnimation(requireContext(), R.anim.bounce_zoom)
         targetView.startAnimation(bounceZoomAnimation)
+    }
+
+    private fun setupDnsDropdown(
+        field: AutoCompleteTextView,
+        titleRes: Int,
+        items: Array<String>,
+        current: String?
+    ) {
+        field.setAdapter(null)
+        field.setOnClickListener {
+            customAlertDialog().apply {
+                setTitle(titleRes)
+                singleChoiceItems(items, items.indexOf(current)) { index ->
+                    field.setText(items[index])
+                    field.setSelection(items[index].length)
+                }
+                show()
+            }
+        }
     }
 
     private fun setSortByFilterImage() {
@@ -299,55 +319,51 @@ class SearchFilterBottomDialog : BottomSheetDialogFragment() {
         val format =
             if (activity.aniMangaResult.type == "ANIME") Anilist.animeStatus else Anilist.mangaStatus
         binding.searchStatus.setText(activity.aniMangaResult.status?.replace("_", " "))
-        binding.searchStatus.setAdapter(
-            ArrayAdapter(
-                binding.root.context,
-                R.layout.item_dropdown,
-                format
-            )
+        setupDnsDropdown(
+            binding.searchStatus,
+            R.string.status_title,
+            format.toTypedArray(),
+            activity.aniMangaResult.status?.replace("_", " ")
         )
 
         binding.searchSource.setText(activity.aniMangaResult.source?.replace("_", " "))
-        binding.searchSource.setAdapter(
-            ArrayAdapter(
-                binding.root.context,
-                R.layout.item_dropdown,
-                Anilist.source.toTypedArray()
-            )
+        setupDnsDropdown(
+            binding.searchSource,
+            R.string.source,
+            Anilist.source.toTypedArray(),
+            activity.aniMangaResult.source?.replace("_", " ")
         )
 
         binding.searchFormat.setText(activity.aniMangaResult.format)
-        binding.searchFormat.setAdapter(
-            ArrayAdapter(
-                binding.root.context,
-                R.layout.item_dropdown,
-                (if (activity.aniMangaResult.type == "ANIME") Anilist.animeFormats else Anilist.mangaFormats).toTypedArray()
-            )
+        setupDnsDropdown(
+            binding.searchFormat,
+            R.string.format,
+            (if (activity.aniMangaResult.type == "ANIME") Anilist.animeFormats else Anilist.mangaFormats).toTypedArray(),
+            activity.aniMangaResult.format
         )
 
-        if (activity.aniMangaResult.type == "ANIME") {
-            binding.searchYear.setText(activity.aniMangaResult.seasonYear?.toString())
-        } else {
-            binding.searchYear.setText(activity.aniMangaResult.startYear?.toString())
-        }
-        binding.searchYear.setAdapter(
-            ArrayAdapter(
-                binding.root.context,
-                R.layout.item_dropdown,
-                (1970 until Calendar.getInstance().get(Calendar.YEAR) + 2).map { it.toString() }
-                    .reversed().toTypedArray()
-            )
+        val years = (1970 until Calendar.getInstance().get(Calendar.YEAR) + 2).map { it.toString() }
+            .reversed().toTypedArray()
+        binding.searchYear.setText(
+            if (activity.aniMangaResult.type == "ANIME") activity.aniMangaResult.seasonYear?.toString()
+            else activity.aniMangaResult.startYear?.toString()
+        )
+        setupDnsDropdown(
+            binding.searchYear,
+            R.string.year,
+            years,
+            if (activity.aniMangaResult.type == "ANIME") activity.aniMangaResult.seasonYear?.toString()
+            else activity.aniMangaResult.startYear?.toString()
         )
 
         if (activity.aniMangaResult.type == "MANGA") binding.searchSeasonCont.visibility = GONE
         else {
             binding.searchSeason.setText(activity.aniMangaResult.season)
-            binding.searchSeason.setAdapter(
-                ArrayAdapter(
-                    binding.root.context,
-                    R.layout.item_dropdown,
-                    Anilist.seasons.toTypedArray()
-                )
+            setupDnsDropdown(
+                binding.searchSeason,
+                R.string.season,
+                Anilist.seasons.toTypedArray(),
+                activity.aniMangaResult.season
             )
         }
 

@@ -80,9 +80,15 @@ class SearchActivity : AppCompatActivity() {
                         TvKeyboardUtil.hideCompactKeyboard(focused)
                     }
                     focused.clearFocus()
-                    binding.searchRecyclerView.findViewById<View>(R.id.searchByImage)?.let {
-                        it.post { it.requestFocus() }
-                    }
+                    val header = binding.searchHeader
+                    val target = listOf(
+                        header.searchByImage,
+                        header.searchFilter,
+                        header.clearHistory,
+                        header.searchList,
+                        header.searchAdultCheck
+                    ).firstOrNull { it.visibility == View.VISIBLE }
+                    target?.post { target.requestFocus() }
                     return
                 }
                 isEnabled = false
@@ -92,8 +98,8 @@ class SearchActivity : AppCompatActivity() {
         initActivity(this)
         screenWidth = resources.displayMetrics.run { widthPixels / density }
 
+        binding.root.updatePaddingRelative(top = statusBarHeight)
         binding.searchRecyclerView.updatePaddingRelative(
-            top = statusBarHeight,
             bottom = navBarHeight + 80f.px
         )
 
@@ -200,17 +206,17 @@ class SearchActivity : AppCompatActivity() {
 
         progressAdapter = ProgressAdapter(searched = model.searched)
         headerAdaptor = if (searchType == SearchType.ANIME || searchType == SearchType.MANGA) {
-            SearchAdapter(this, searchType)
+            SearchAdapter(this, searchType, binding.searchHeader)
         } else {
-            SupportingSearchAdapter(this, searchType)
+            SupportingSearchAdapter(this, searchType, binding.searchHeader)
         }
+        headerAdaptor.bind()
 
-        val gridSize = (screenWidth / 120f).toInt()
+        val gridSize = (screenWidth / 120f).toInt().coerceIn(3, 6)
         val gridLayoutManager = GridLayoutManager(this, gridSize)
         gridLayoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int {
                 return when (position) {
-                    0 -> gridSize
                     concatAdapter.itemCount - 1 -> gridSize
                     else -> when (style) {
                         0 -> 1
@@ -222,23 +228,23 @@ class SearchActivity : AppCompatActivity() {
 
         concatAdapter = when (searchType) {
             SearchType.ANIME, SearchType.MANGA -> {
-                ConcatAdapter(headerAdaptor, mediaAdaptor, progressAdapter)
+                ConcatAdapter(mediaAdaptor, progressAdapter)
             }
 
             SearchType.CHARACTER -> {
-                ConcatAdapter(headerAdaptor, characterAdaptor, progressAdapter)
+                ConcatAdapter(characterAdaptor, progressAdapter)
             }
 
             SearchType.STUDIO -> {
-                ConcatAdapter(headerAdaptor, studioAdaptor, progressAdapter)
+                ConcatAdapter(studioAdaptor, progressAdapter)
             }
 
             SearchType.STAFF -> {
-                ConcatAdapter(headerAdaptor, staffAdaptor, progressAdapter)
+                ConcatAdapter(staffAdaptor, progressAdapter)
             }
 
             SearchType.USER -> {
-                ConcatAdapter(headerAdaptor, usersAdapter, progressAdapter)
+                ConcatAdapter(usersAdapter, progressAdapter)
             }
         }
 

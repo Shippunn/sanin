@@ -13,6 +13,7 @@ import ani.sanin.R
 import ani.sanin.connections.anilist.AnilistSearch.SearchType
 import ani.sanin.connections.anilist.AnilistSearch.SearchType.Companion.toAnilistString
 import ani.sanin.connections.anilist.SearchResults
+import ani.sanin.databinding.ItemSearchHeaderBinding
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
@@ -22,17 +23,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SupportingSearchAdapter(private val activity: SearchActivity, private val type: SearchType) :
-    HeaderInterface() {
+class SupportingSearchAdapter(
+    activity: SearchActivity,
+    private val type: SearchType,
+    binding: ItemSearchHeaderBinding
+) : HeaderInterface(activity, binding) {
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onBindViewHolder(holder: SearchHeaderViewHolder, position: Int) {
-        binding = holder.binding
-
-        searchHistoryAdapter = SearchHistoryAdapter(type) {
+    override fun bind() {
+        searchHistoryAdapter = SearchHistoryAdapter(
+            type,
+            upFocusId = R.id.clearHistory
+        ) {
             binding.searchBarText.setText(it)
             binding.searchBarText.setSelection(it.length)
         }
+        searchHistoryAdapter.onItemCountChanged = { updateClearHistoryVisibility() }
         binding.searchHistoryList.layoutManager = LinearLayoutManager(binding.root.context)
         binding.searchHistoryList.adapter = searchHistoryAdapter
 
@@ -46,7 +52,6 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
         binding.searchFilter.visibility = View.GONE
         binding.searchAdultCheck.visibility = View.GONE
         binding.searchList.visibility = View.GONE
-        binding.searchChipRecycler.visibility = View.GONE
 
         binding.searchBar.hint = activity.searchType.toAnilistString()
         if (PrefManager.getVal(PrefName.Incognito)) {
@@ -77,6 +82,7 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
             else -> throw IllegalArgumentException("Invalid search type")
         }
 
+        binding.searchBarText.nextFocusDownId = R.id.clearHistory
         FocusEffectUtil.applyFocusListener(binding.clearHistory)
         binding.clearHistory.setOnClickListener {
             if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SearchHeaderAnimations)) {
@@ -86,8 +92,10 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
             }
             it.visibility = View.GONE
             searchHistoryAdapter.clearHistory()
+            updateActionRowFocusTargets()
         }
         updateClearHistoryVisibility()
+
         fun searchTitle() {
             val searchText = binding.searchBarText.text.toString().takeIf { it.isNotEmpty() }
 
@@ -148,4 +156,6 @@ class SupportingSearchAdapter(private val activity: SearchActivity, private val 
         search = Runnable { searchTitle() }
         requestFocus = Runnable { binding.searchBarText.requestFocus() }
     }
+
+    override fun imageSearchVisible(): Boolean = false
 }

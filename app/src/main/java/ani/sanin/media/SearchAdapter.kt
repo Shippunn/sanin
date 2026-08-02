@@ -2,43 +2,38 @@ package ani.sanin.media
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.PopupMenu
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.HORIZONTAL
 import ani.sanin.App.Companion.context
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.anilist.AnilistSearch.SearchType
-import ani.sanin.connections.anilist.ChipItem
-import ani.sanin.connections.anilist.toChipList
-import ani.sanin.connections.anilist.removeChip
-import ani.sanin.databinding.ItemChipBinding
+import ani.sanin.databinding.ItemSearchHeaderBinding
 import ani.sanin.openLinkInBrowser
 import ani.sanin.others.imagesearch.ImageSearchActivity
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.TvKeyboardUtil
-import com.google.android.material.checkbox.MaterialCheckBox.STATE_CHECKED
-import com.google.android.material.checkbox.MaterialCheckBox.STATE_INDETERMINATE
-import com.google.android.material.checkbox.MaterialCheckBox.STATE_UNCHECKED
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SearchAdapter(private val activity: SearchActivity, private val type: SearchType) :
-    HeaderInterface() {
+class SearchAdapter(
+    activity: SearchActivity,
+    private val type: SearchType,
+    binding: ItemSearchHeaderBinding
+) : HeaderInterface(activity, binding) {
 
     private fun updateFilterTextViewDrawable() {
         val filterDrawable = when (activity.aniMangaResult.sort) {
@@ -51,17 +46,36 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             Anilist.sortBy[6] -> R.drawable.ic_round_assist_walker_24
             else -> R.drawable.ic_round_filter_alt_24
         }
-        binding.searchFilter.setIconResource(filterDrawable)
+        binding.searchFilter.setChipIconResource(filterDrawable)
+    }
+
+    private fun hasActiveFilters(): Boolean = activity.aniMangaResult.let {
+        it.sort != null || it.status != null || it.source != null || it.format != null ||
+            it.countryOfOrigin != null || it.season != null || it.seasonYear != null ||
+            it.startYear != null || !it.genres.isNullOrEmpty() ||
+            !it.excludedGenres.isNullOrEmpty() || !it.tags.isNullOrEmpty() ||
+            !it.excludedTags.isNullOrEmpty()
+    }
+
+    private fun updateFilterState() {
+        val color = if (hasActiveFilters()) {
+            ColorUtils.setAlphaComponent(FocusEffectUtil.getPrimaryColor(activity), 0x38)
+        } else {
+            ContextCompat.getColor(activity, R.color.nav_bg)
+        }
+        binding.searchFilter.chipBackgroundColor = ColorStateList.valueOf(color)
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onBindViewHolder(holder: SearchHeaderViewHolder, position: Int) {
-        binding = holder.binding
-
-        searchHistoryAdapter = SearchHistoryAdapter(type) {
+    override fun bind() {
+        searchHistoryAdapter = SearchHistoryAdapter(
+            type,
+            upFocusId = R.id.searchFilter
+        ) {
             binding.searchBarText.setText(it)
             binding.searchBarText.setSelection(it.length)
         }
+        searchHistoryAdapter.onItemCountChanged = { updateClearHistoryVisibility() }
         binding.searchHistoryList.layoutManager = LinearLayoutManager(binding.root.context)
         binding.searchHistoryList.adapter = searchHistoryAdapter
 
@@ -95,15 +109,8 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
         binding.searchBarText.removeTextChangedListener(textWatcher)
         binding.searchBarText.setText(activity.aniMangaResult.search)
 
-        binding.searchAdultCheck.isChecked = adult
         binding.searchList.isChecked = listOnly == true
-
-        binding.searchChipRecycler.adapter = SearchChipAdapter(activity, this).also {
-            activity.updateChips = { it.update() }
-        }
-
-        binding.searchChipRecycler.layoutManager =
-            LinearLayoutManager(binding.root.context, HORIZONTAL, false)
+        binding.searchAdultCheck.isChecked = adult
 
         FocusEffectUtil.applyFocusListener(
             binding.searchList,
@@ -114,8 +121,19 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             binding.searchResultGrid,
             binding.searchResultList
         )
-        binding.clearHistory.nextFocusRightId = R.id.searchFilter
-        binding.searchFilter.nextFocusLeftId = R.id.clearHistory
+
+        binding.searchBarText.nextFocusDownId = R.id.searchFilter
+        binding.searchFilter.nextFocusLeftId = R.id.searchByImage
+        binding.searchFilter.nextFocusRightId = R.id.clearHistory
+        binding.clearHistory.nextFocusLeftId = R.id.searchFilter
+        binding.clearHistory.nextFocusRightId = R.id.searchList
+        binding.searchList.nextFocusLeftId = R.id.clearHistory
+        binding.searchList.nextFocusRightId = R.id.searchAdultCheck
+        binding.searchAdultCheck.nextFocusLeftId = R.id.searchList
+        binding.searchAdultCheck.nextFocusRightId = R.id.searchByImage
+        binding.searchByImage.nextFocusLeftId = R.id.searchAdultCheck
+        binding.searchByImage.nextFocusRightId = R.id.searchFilter
+
         binding.searchFilter.setOnClickListener {
             SearchFilterBottomDialog.newInstance().show(activity.supportFragmentManager, "dialog")
         }
@@ -178,6 +196,9 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             popupMenu.show()
             true
         }
+        updateFilterState()
+        activity.updateChips = { updateFilterState() }
+
         if (activity.aniMangaResult.type != "ANIME") {
             binding.searchByImage.visibility = View.GONE
         }
@@ -192,8 +213,10 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             }
             it.visibility = View.GONE
             searchHistoryAdapter.clearHistory()
+            updateActionRowFocusTargets()
         }
         updateClearHistoryVisibility()
+
         fun searchTitle() {
             activity.aniMangaResult.apply {
                 search =
@@ -257,37 +280,24 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
             activity.recycler()
         }
 
-        if (Anilist.adult) {
-            binding.searchAdultCheck.visibility = View.VISIBLE
-            binding.searchAdultCheck.isChecked = adult
-            binding.searchAdultCheck.setOnCheckedChangeListener { _, b ->
-                adult = b
-                searchTitle()
-            }
-        } else binding.searchAdultCheck.visibility = View.GONE
+        binding.searchAdultCheck.apply {
+            if (Anilist.adult) {
+                visibility = View.VISIBLE
+                isChecked = adult
+                setOnCheckedChangeListener { _, b ->
+                    adult = b
+                    searchTitle()
+                }
+            } else visibility = View.GONE
+        }
+
         binding.searchList.apply {
             if (Anilist.userid != null) {
                 visibility = View.VISIBLE
-                checkedState = when (listOnly) {
-                    null -> STATE_UNCHECKED
-                    true -> STATE_CHECKED
-                    false -> STATE_INDETERMINATE
-                }
-
-                addOnCheckedStateChangedListener { _, state ->
-                    listOnly = when (state) {
-                        STATE_CHECKED -> true
-                        STATE_INDETERMINATE -> false
-                        STATE_UNCHECKED -> null
-                        else -> null
-                    }
-                }
-
-                setOnTouchListener { _, event ->
-                    (event.actionMasked == MotionEvent.ACTION_DOWN).also {
-                        if (it) checkedState = (checkedState + 1) % 3
-                        searchTitle()
-                    }
+                isChecked = listOnly == true
+                setOnCheckedChangeListener { _, b ->
+                    listOnly = if (b) true else null
+                    searchTitle()
                 }
             } else visibility = View.GONE
         }
@@ -303,43 +313,5 @@ class SearchAdapter(private val activity: SearchActivity, private val type: Sear
         requestFocus = Runnable { binding.searchBarText.requestFocus() }
     }
 
-    class SearchChipAdapter(
-        val activity: SearchActivity,
-        private val searchAdapter: SearchAdapter
-    ) :
-        RecyclerView.Adapter<SearchChipAdapter.SearchChipViewHolder>() {
-        private var chips: MutableList<ChipItem> = activity.aniMangaResult.toChipList()
-
-        inner class SearchChipViewHolder(val binding: ItemChipBinding) :
-            RecyclerView.ViewHolder(binding.root)
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchChipViewHolder {
-            val binding =
-                ItemChipBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            return SearchChipViewHolder(binding)
-        }
-
-
-        override fun onBindViewHolder(holder: SearchChipViewHolder, position: Int) {
-            val chip = chips[position]
-            holder.binding.root.apply {
-                text = chip.text.replace("_", " ")
-                setOnClickListener {
-                    activity.aniMangaResult.removeChip(chip)
-                    update()
-                    activity.search()
-                    searchAdapter.updateFilterTextViewDrawable()
-                }
-            }
-        }
-
-        @SuppressLint("NotifyDataSetChanged")
-        fun update() {
-            chips = activity.aniMangaResult.toChipList()
-            notifyDataSetChanged()
-            searchAdapter.updateFilterTextViewDrawable()
-        }
-
-        override fun getItemCount(): Int = chips.size
-    }
+    override fun imageSearchVisible(): Boolean = activity.aniMangaResult.type == "ANIME"
 }
