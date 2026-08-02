@@ -27,9 +27,10 @@ class ProvidersActivity : AppCompatActivity() {
 
         val enabled = PrefManager.getVal<Set<String>>(PrefName.EnabledProviders)
 
+        val maintenanceProviders = setOf("Senshi")
         val items = allProviders.map { parser ->
             ProviderItem(
-                name = parser.name,
+                name = if (parser.saveName in maintenanceProviders) "${parser.name} (under maintenance)" else parser.name,
                 saveName = parser.saveName,
                 isEnabled = parser.saveName in enabled
             )
