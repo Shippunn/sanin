@@ -80,11 +80,8 @@ class SearchActivity : AppCompatActivity() {
                         TvKeyboardUtil.hideCompactKeyboard(focused)
                     }
                     focused.clearFocus()
-                    binding.searchRecyclerView.post {
-                        val target = binding.searchRecyclerView.findViewById<View>(R.id.searchByImage)
-                        if (target == null || !target.requestFocus()) {
-                            binding.searchRecyclerView.findViewById<View>(R.id.searchFilter)?.requestFocus()
-                        }
+                    binding.searchRecyclerView.findViewById<View>(R.id.searchByImage)?.let {
+                        it.post { it.requestFocus() }
                     }
                     return
                 }
