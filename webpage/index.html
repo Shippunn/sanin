@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sanin — Anime, on the big screen</title>
+  <meta name="description" content="Sanin is a free, open-source anime client for Android TV and phones. Stream via community extensions, track on AniList and MyAnimeList, built for the couch.">
+  <meta name="theme-color" content="#060b18">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#">
+        <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="" width="32" height="32">
+        <span>Sanin</span>
+      </a>
+      <nav class="links">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#sources">Sources</a>
+        <a href="#community">Community</a>
+      </nav>
+      <button class="btn btn-primary nav-download" data-download>Download</button>
+      <button class="nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+    </div>
+    <div class="mobile-menu">
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="#sources">Sources</a>
+      <a href="#community">Community</a>
+      <button class="btn btn-primary" data-download>Download</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="orb orb-a"></div>
+      <div class="orb orb-b"></div>
+      <div class="orb orb-c"></div>
+      <div class="hero-inner">
+        <span class="badge">Open Source &nbsp;·&nbsp; Android TV</span>
+        <h1>Anime. On the <span class="accent">big screen.</span></h1>
+        <p class="sub">
+          Track your anime, shows &amp; movie progress across <strong>AniList</strong> and
+          <strong>MyAnimeList</strong>, beautifully and effortlessly — built for the couch,
+          fully usable on your phone.
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-lg" data-download>Download APK</button>
+          <a class="btn btn-ghost btn-lg" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">View Source</a>
+        </div>
+        <p class="status">
+          <span id="release-tag">loading...</span> Latest stable &nbsp;·&nbsp; Apache-2.0 Licensed
+        </p>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-head">
+        <h2>Built for the couch</h2>
+        <p>Every feature designed for your TV — and tuned for your phone.</p>
+      </div>
+      <div class="cards">
+        <div class="card reveal">
+          <h3>🎮 Player</h3>
+          <p>ExoPlayer engine with swipe seek, brightness and volume gestures, double-tap to skip, OP/ED auto-skip, PiP, resize modes and playback up to 50x.</p>
+        </div>
+        <div class="card reveal">
+          <h3>📺 Remote-first UI</h3>
+          <p>Full D-pad navigation with visible focus borders on every element, auto-focus on first item and logical focus chains — no mouse required.</p>
+        </div>
+        <div class="card reveal">
+          <h3>📊 Tracking</h3>
+          <p>AniList and MyAnimeList OAuth with auto-updating progress, Rescue Mode when a server is down, and list status notifications.</p>
+        </div>
+        <div class="card reveal">
+          <h3>🔌 Community extensions</h3>
+          <p>Tachiyomi-compatible extension system: add repositories, install from 100+ community-maintained anime sources with language and NSFW filters.</p>
+        </div>
+        <div class="card reveal">
+          <h3>🎨 Themes &amp; OLED</h3>
+          <p>9 accent colors, swap-color pairs, light / dark / OLED variants, frosted glass effect and pixel-tunable NavPill.</p>
+        </div>
+        <div class="card reveal">
+          <h3>📝 Subtitles</h3>
+          <p>Full styling control — font, color, outline, background, size, alpha — with online subs from Wyzie &amp; Stremio and tap-a-cue sync.</p>
+        </div>
+        <div class="card reveal">
+          <h3>🔔 Notifications</h3>
+          <p>Airing anime alerts, show subscriptions, AniList replies and activity mentions, with configurable check frequencies.</p>
+        </div>
+        <div class="card reveal">
+          <h3>🛠️ Backup &amp; Logs</h3>
+          <p>Backup and restore in plain <code>.ani</code> or encrypted <code>.sani</code>, cache cleaner, and a live 50K-line logcat viewer.</p>
+        </div>
+      </div>
+      <div class="showcase reveal">
+        <img src="https://raw.githubusercontent.com/Shippun/sanin/main/github_assets/preview.gif" alt="Sanin preview" width="100%">
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="section-head">
+        <h2>Two steps — Install</h2>
+        <p>Install the app, add your extensions, and you're watching.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal">
+          <span class="step-num">Step 01</span>
+          <h3>Download</h3>
+          <p>Tap <strong>Download APK</strong> and pick <strong>arm64-v8a</strong> — it fits nearly every TV and phone from the last few years. Once it downloads, tap the file to install. An .apk is how Android apps install outside the Play Store.</p>
+          <button class="btn btn-primary" data-download>Download APK</button>
+        </div>
+        <div class="step reveal">
+          <span class="step-num">Step 02</span>
+          <h3>Add extensions</h3>
+          <p>Open Sanin and go to <strong>Settings → Extensions</strong>. Tap <strong>+</strong> and paste the repository URL below — Sanin fetches the extension list and every source installs in seconds.</p>
+          <a class="btn btn-ghost" href="#sources">Browse sources ↓</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sources">
+      <div class="section-head">
+        <h2>Optional · for even more — Add more sources</h2>
+        <p>Sanin streams through <strong>Aniyomi extensions</strong> — separate APK packages you install from a repository. Tap copy, paste into <strong>Settings → Extensions → +</strong>.</p>
+      </div>
+      <div class="cards single">
+        <div class="card source reveal">
+          <h3>🐉 Aniyomi — Anime extensions</h3>
+          <p class="src-desc">The official Aniyomi extension repo. Paste the base URL — Sanin adds the index and lists every source for you.</p>
+          <p class="src-repo" id="copy-aniyomi">yuzono/anime-repo</p>
+          <div class="src-actions">
+            <button class="btn btn-ghost copy-btn" data-copy="copy-aniyomi">Copy</button>
+            <a class="btn btn-ghost" href="https://github.com/yuzono/anime-repo" target="_blank" rel="noopener">Open ↗</a>
+          </div>
+        </div>
+      </div>
+      <div class="note reveal">
+        <strong>Pro tip:</strong> use the language filter in the Available tab to narrow sources, and enable NSFW extensions in Settings if needed.
+      </div>
+    </section>
+
+    <section class="section" id="watch">
+      <div class="section-head">
+        <h2>Once you're in — How to watch</h2>
+      </div>
+      <div class="steps four">
+        <div class="step reveal">
+          <span class="step-num">01</span>
+          <h3>Find something</h3>
+          <p>Scroll the rows on Home, or hit Search for a specific title.</p>
+        </div>
+        <div class="step reveal">
+          <span class="step-num">02</span>
+          <h3>Watch it</h3>
+          <p>Open a title and tap Play. For a series, pick an episode first.</p>
+        </div>
+        <div class="step reveal">
+          <span class="step-num">03</span>
+          <h3>If it won't load</h3>
+          <p>Tap the source name at the top and switch — some go down temporarily.</p>
+        </div>
+        <div class="step reveal">
+          <span class="step-num">04</span>
+          <h3>Track it</h3>
+          <p>Progress updates on AniList / MAL automatically as you watch.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="platforms">
+      <div class="section-head">
+        <h2>Compatibility</h2>
+        <p>If it runs Android TV, Sanin runs on it. From flagship Google TV devices to budget Fire TV sticks.</p>
+      </div>
+      <div class="chips">
+        <span class="chip">📺 Android TV</span>
+        <span class="chip">📱 Google TV</span>
+        <span class="chip">🔥 Amazon Fire TV</span>
+        <span class="chip">🛡️ Nvidia Shield</span>
+        <span class="chip">📦 Mi Box</span>
+        <span class="chip">📲 Phones &amp; Tablets</span>
+      </div>
+      <div class="note reveal">
+        <strong>Samsung TVs?</strong> They run Tizen, not Android TV — no Android APK can install on them.
+      </div>
+    </section>
+
+    <section class="section" id="troubleshooting">
+      <div class="section-head">
+        <h2>Troubleshooting — Quick fixes</h2>
+      </div>
+      <div class="faq">
+        <details class="reveal">
+          <summary>“App not installed”</summary>
+          <p>Usually an old copy is in the way, or the download was incomplete. Uninstall any old Sanin, re-download fully, and pick <strong>arm64-v8a</strong> (or the universal APK if unsure).</p>
+        </details>
+        <details class="reveal">
+          <summary>A title won't play</summary>
+          <p>Tap the source name at the top and switch, or pick a different episode server. If a whole source looks dead, install another extension.</p>
+        </details>
+        <details class="reveal">
+          <summary>Sources won't load</summary>
+          <p>Check your internet and try again. Some ISPs throttle streaming — try a different DNS (Settings → Common → DNS) or a VPN.</p>
+        </details>
+        <details class="reveal">
+          <summary>Do I need an account?</summary>
+          <p>No. Everything works without one. Sign in to AniList or MyAnimeList only to sync your list and history across devices.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section" id="roadmap">
+      <div class="section-head">
+        <h2>Roadmap</h2>
+        <p>Actively developed and community-driven. Track what's in progress and what's planned.</p>
+      </div>
+      <div class="cards two">
+        <div class="card reveal">
+          <h3>🐞 Bugs &amp; Requests</h3>
+          <p>Found an issue or want a feature? Report it on GitHub — every report helps.</p>
+          <a class="btn btn-ghost" href="https://github.com/Shippun/sanin/issues" target="_blank" rel="noopener">Open Issues ↗</a>
+        </div>
+        <div class="card reveal">
+          <h3>💬 Development</h3>
+          <p>Development discussion happens on the Discord server. Come say hi.</p>
+          <a class="btn btn-ghost" href="https://discord.gg/QCc5xbgbsA" target="_blank" rel="noopener">Join Discord ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="oss">
+      <div class="oss reveal">
+        <h2>Free and Open Source</h2>
+        <p>Sanin is a fork of Dantotsu, rebuilt from the ground up for Android TV — Apache-2.0 licensed. Read the code, contribute features, report issues, or fork it. Your improvements help everyone.</p>
+        <div class="oss-actions">
+          <button class="btn btn-primary" data-download>Download Now</button>
+          <a class="btn btn-ghost" href="https://github.com/Shippun/sanin/wiki" target="_blank" rel="noopener">Read the Wiki</a>
+          <a class="btn btn-ghost" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">Contribute on GitHub</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="community">
+      <div class="section-head">
+        <h2>Community</h2>
+        <p>Join the conversation — get help, share feedback, and stay updated.</p>
+      </div>
+      <div class="cards two">
+        <a class="card link reveal" href="https://discord.gg/QCc5xbgbsA" target="_blank" rel="noopener">
+          <h3>💬 Discord</h3>
+          <p>Chat and support server</p>
+        </a>
+        <a class="card link reveal" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">
+          <h3>🐙 GitHub</h3>
+          <p>Source code and issues</p>
+        </a>
+        <a class="card link reveal" href="https://github.com/Shippun/sanin/releases/latest" target="_blank" rel="noopener">
+          <h3>⬇️ Releases</h3>
+          <p>Latest APK downloads</p>
+        </a>
+        <a class="card link reveal" href="https://github.com/Shippun/sanin/wiki" target="_blank" rel="noopener">
+          <h3>📖 Wiki</h3>
+          <p>Setup guides and docs</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="" width="28" height="28">
+        <span>Sanin &nbsp;·&nbsp; Apache-2.0 License</span>
+      </div>
+      <nav class="footer-links">
+        <a href="https://github.com/Shippun/sanin/releases" target="_blank" rel="noopener">Releases</a>
+        <a href="https://github.com/Shippun/sanin/wiki" target="_blank" rel="noopener">Wiki</a>
+        <a href="https://github.com/Shippun/sanin/blob/main/LICENSE.md" target="_blank" rel="noopener">License</a>
+        <a href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">Contribute</a>
+      </nav>
+    </div>
+    <p class="disclaimer">
+      Free and open. Sanin isn't affiliated with any streaming service — it plays third-party sources you choose.
+      Sanin does not host, provide, or link to any copyrighted content.
+    </p>
+  </footer>
+
+  <div class="modal" id="download-modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-box">
+      <button class="modal-close" data-close aria-label="Close">✕</button>
+      <h3>⭐</h3>
+      <h4>Your download is starting…</h4>
+      <p>If you enjoy Sanin, please consider leaving a ⭐ star on GitHub — it helps a lot!</p>
+      <div class="modal-actions">
+        <a class="btn btn-primary" id="modal-github" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">Leave a Star</a>
+      </div>
+      <p class="modal-note">Download was opened in a new tab · <a id="modal-reopen" href="https://github.com/Shippun/sanin/releases/latest" target="_blank" rel="noopener">open again ↗</a></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@ package ani.sanin.media
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
@@ -33,6 +34,7 @@ import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
+import ani.sanin.util.Logger
 import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,21 +76,14 @@ class SearchActivity : AppCompatActivity() {
         setContentView(binding.root)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val focused = currentFocus
-                if (focused != null && focused.id == R.id.searchBarText) {
-                    if (TvKeyboardUtil.isCompactKeyboardVisible(focused)) {
-                        TvKeyboardUtil.hideCompactKeyboard(focused)
-                    }
-                    focused.clearFocus()
-                    val header = binding.searchHeader
-                    val target = listOf(
-                        header.searchByImage,
-                        header.searchFilter,
-                        header.clearHistory,
-                        header.searchList,
-                        header.searchAdultCheck
-                    ).firstOrNull { it.visibility == View.VISIBLE }
-                    target?.post { target.requestFocus() }
+                val header = binding.searchHeader
+                val searchBarText = header.searchBarText
+                val keyboardVisible = TvKeyboardUtil.isCompactKeyboardVisible(searchBarText)
+                Logger.log(Log.INFO, "SearchActivity BACK: keyboardVisible=$keyboardVisible focused=${currentFocus?.let { it.javaClass.simpleName + "#" + it.id }}", "TvKeyboard")
+                if (keyboardVisible) {
+                    searchBarText.clearFocus()
+                    header.searchFilter.post { header.searchFilter.requestFocus() }
+                    TvKeyboardUtil.hideCompactKeyboard(searchBarText)
                     return
                 }
                 isEnabled = false

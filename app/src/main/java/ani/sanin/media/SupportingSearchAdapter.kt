@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.content.res.AppCompatResources
@@ -17,6 +18,7 @@ import ani.sanin.databinding.ItemSearchHeaderBinding
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.FocusEffectUtil
+import ani.sanin.util.Logger
 import ani.sanin.util.TvKeyboardUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -147,7 +149,9 @@ class SupportingSearchAdapter(
         binding.searchBar.setEndIconOnClickListener { searchTitle() }
 
         binding.searchBarText.post {
-            when (TvKeyboardUtil.keyboardMode()) {
+            val mode = TvKeyboardUtil.keyboardMode()
+            Logger.log(Log.INFO, "SupportingSearchAdapter: applying keyboard setup mode=$mode to searchBarText", "TvKeyboard")
+            when (mode) {
                 0 -> TvKeyboardUtil.setupSystemKeyboard(binding.searchBarText)
                 1 -> TvKeyboardUtil.setupEditTextWithToggle(binding.searchBarText, binding.searchKeyboardToggle)
                 2 -> TvKeyboardUtil.setupEditTextForAlwaysVisible(binding.searchBarText)

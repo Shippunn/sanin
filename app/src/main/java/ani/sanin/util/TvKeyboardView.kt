@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -27,9 +28,14 @@ class TvKeyboardView(
     private val surfaceVariant: Int
     private val surfaceVariantDim: Int
 
+    private fun tvkLog(message: String) {
+        Logger.log(Log.INFO, message, "TvKeyboard")
+    }
+
     var target: EditText? = null
         set(value) {
             if (field != value) {
+                tvkLog("target ${field?.let { it.id }} -> ${value?.let { it.id }} (compact=$compact, visible=$isVisible)")
                 field = value
                 if (value != null && !compact && !isVisible) show()
                 if (compact && value != null) syncFromTarget()
@@ -169,6 +175,7 @@ class TvKeyboardView(
                 src.setSelection(minPos + 1)
             }
             R.id.keyHide -> {
+                tvkLog("keyHide pressed, hiding keyboard (compact=$compact)")
                 hide()
                 target?.let { t ->
                     t.clearFocus()
@@ -252,16 +259,19 @@ class TvKeyboardView(
         isShifted = true
         updateLetterCase()
         if (compact) {
+            tvkLog("show() compact visible=$isVisible target=${target?.let { it.id }}")
             syncFromTarget()
             visibility = VISIBLE
             requestFocus()
             post {
+                tvkLog("compact keyboard post: requesting focus firstKey=${firstKey?.id} currentFocus=${findFocus()?.let { it.javaClass.simpleName + "#" + it.id }}")
                 firstKey?.requestFocus()
             }
             return
         }
         animate().cancel()
         if (isVisible) return
+        tvkLog("show() full visible=$isVisible target=${target?.let { it.id }}")
         visibility = VISIBLE
         requestLayout()
         post {
@@ -273,6 +283,7 @@ class TvKeyboardView(
 
     fun hide() {
         if (compact) {
+            tvkLog("hide() compact visible=$isVisible target=${target?.let { it.id }}")
             syncToTarget()
             clearFocus()
             visibility = GONE
@@ -280,6 +291,7 @@ class TvKeyboardView(
         }
         animate().cancel()
         if (!isVisible) return
+        tvkLog("hide() full visible=$isVisible target=${target?.let { it.id }}")
         val h = if (keyboardHeight > 0) keyboardHeight else height
         animate().translationY(h.toFloat()).setDuration(200).withEndAction {
             visibility = GONE
@@ -292,6 +304,7 @@ class TvKeyboardView(
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (compact && event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BACK) {
             if (isVisible) {
+                tvkLog("dispatchKeyEvent BACK consumed, hiding compact keyboard")
                 hide()
                 target?.clearFocus()
                 return true

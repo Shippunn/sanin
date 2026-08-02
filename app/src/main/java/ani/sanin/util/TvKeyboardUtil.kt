@@ -7,6 +7,7 @@ import android.app.UiModeManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -37,8 +38,16 @@ object TvKeyboardUtil {
 
     fun keyboardMode(): Int = PrefManager.getVal(PrefName.KeyboardMode)
 
+    private fun tvkLog(message: String) {
+        Logger.log(Log.INFO, message, "TvKeyboard")
+    }
+
+    private fun describe(view: View): String =
+        view.javaClass.simpleName + "#" + view.id + "(" + view.isAttachedToWindow + ")"
+
     /** For mode 0 (System keyboard): show system keyboard on focus */
     fun setupSystemKeyboard(view: View) {
+        tvkLog("setupSystemKeyboard(mode0) ${describe(view)}")
         retainWindowFocus(view)
         view.setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
@@ -56,6 +65,7 @@ object TvKeyboardUtil {
 
     /** For mode 1 (Toggle button): attach toggle button, show/hide custom keyboard on click */
     fun setupEditTextWithToggle(editText: EditText, toggleButton: View) {
+        tvkLog("setupEditTextWithToggle(mode1) ${describe(editText)}")
         retainWindowFocus(editText)
         editText.showSoftInputOnFocus = false
         attachKeyboardToWindow(editText)
@@ -63,6 +73,7 @@ object TvKeyboardUtil {
         toggleButton.visibility = View.VISIBLE
         toggleButton.setOnClickListener {
             val keyboard = getOrCreateKeyboard(activity)
+            tvkLog("toggle clicked, keyboardVisible=${keyboard.isKeyboardVisible()}")
             if (keyboard.isKeyboardVisible()) {
                 keyboard.hide()
                 editText.clearFocus()
@@ -83,10 +94,12 @@ object TvKeyboardUtil {
 
     /** For mode 2 (Always visible): show compact keyboard at bottom-left, set target on focus */
     fun setupEditTextForAlwaysVisible(editText: EditText) {
+        tvkLog("setupEditTextForAlwaysVisible(mode2) ${describe(editText)}")
         retainWindowFocus(editText)
         editText.showSoftInputOnFocus = false
         ensureCompactKeyboardVisible(editText)
         editText.setOnFocusChangeListener { v, hasFocus ->
+            tvkLog("mode2 focus change ${describe(v)} hasFocus=$hasFocus")
             if (hasFocus) {
                 getCompactKeyboard(editText)?.apply {
                     target = editText
@@ -108,6 +121,7 @@ object TvKeyboardUtil {
 
     /** Unified setup that delegates based on keyboard mode */
     fun setupTvInput(view: View) {
+        tvkLog("setupTvInput mode=${keyboardMode()} ${describe(view)}")
         when (keyboardMode()) {
             0 -> setupSystemKeyboard(view)
             1 -> {
@@ -193,6 +207,7 @@ object TvKeyboardUtil {
     }
 
     fun hideKeyboard(view: View) {
+        tvkLog("hideKeyboard ${describe(view)}")
         view.clearFocus()
         if (keyboardMode() != 0) {
             hideCustomKeyboard(view)
@@ -301,6 +316,7 @@ object TvKeyboardUtil {
                 this.tag = TAG_KEYBOARD_COMPACT
                 visibility = View.GONE
             }
+            tvkLog("getCompactKeyboard: created new compact keyboard (root=${decorView.javaClass.simpleName})")
             val landscape = view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val params = FrameLayout.LayoutParams(
                 if (landscape) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -333,10 +349,13 @@ object TvKeyboardUtil {
     }
 
     fun isCompactKeyboardVisible(view: View): Boolean {
-        return getCompactKeyboard(view)?.isKeyboardVisible() == true
+        val visible = getCompactKeyboard(view)?.isKeyboardVisible() == true
+        tvkLog("isCompactKeyboardVisible ${describe(view)} -> $visible")
+        return visible
     }
 
     fun hideCompactKeyboard(view: View) {
+        tvkLog("hideCompactKeyboard ${describe(view)}")
         getCompactKeyboard(view)?.hide()
     }
 
@@ -345,6 +364,7 @@ object TvKeyboardUtil {
         val activity = editText.context as? Activity ?: return
         val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(editText.windowToken, 0)
+        tvkLog("showCustomKeyboard ${describe(editText)}")
         getOrCreateKeyboard(activity).apply {
             target = editText
             show()
@@ -354,6 +374,7 @@ object TvKeyboardUtil {
     private fun showCompactKeyboard(editText: EditText) {
         val imm = editText.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(editText.windowToken, 0)
+        tvkLog("showCompactKeyboard ${describe(editText)}")
         getCompactKeyboard(editText)?.apply {
             target = editText
             show()
@@ -362,6 +383,7 @@ object TvKeyboardUtil {
 
     private fun hideCustomKeyboard(view: View) {
         val activity = view.context as? Activity ?: return
+        tvkLog("hideCustomKeyboard ${describe(view)}")
         getOrCreateKeyboard(activity).hide()
     }
 }
