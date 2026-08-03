@@ -531,12 +531,14 @@ class SelectorDialogFragment : DialogFragment() {
             init {
                 itemView.isFocusable = true
                 FocusEffectUtil.applyFocusListener(itemView)
-                itemView.setOnFocusChangeListener { _, hasFocus ->
+                val borderListener = itemView.onFocusChangeListener
+                itemView.setOnFocusChangeListener { v, hasFocus ->
+                    borderListener?.onFocusChange(v, hasFocus)
                     if (hasFocus) {
-                        var p: android.view.ViewParent? = itemView.parent
+                        var p: android.view.ViewParent? = v.parent
                         while (p != null) {
                             if (p is RecyclerView && p.id == R.id.selectorRecyclerView) {
-                                val outerChild = itemView.parent?.parent?.parent as? View
+                                val outerChild = v.parent?.parent?.parent as? View
                                 if (outerChild != null) {
                                     val outerPos = p.getChildAdapterPosition(outerChild)
                                     if (outerPos != RecyclerView.NO_POSITION) {
