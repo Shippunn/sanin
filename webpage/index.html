@@ -255,33 +255,35 @@
               Sanin uses a Tachiyomi-compatible extension system. Extensions are separate APK packages that add
               streaming sources. Start with the recommended repo — or add any other from the community.
             </p>
-            <div class="lbl">Recommended — one tap in-app, or copy</div>
+            <div class="lbl">Tap Install to add the repo directly, or copy the URL</div>
             <div class="repo">
               <code>yuzono/anime-repo &middot; index.min.json</code>
-              <button data-copy="https://raw.githubusercontent.com/yuzono/anime-repo/repo/index.min.json">Copy</button>
+              <div class="repo-actions">
+                <a class="repo-install" href="aniyomi://add-repo?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyuzono%2Fanime-repo%2Frepo%2Findex.min.json">Install</a>
+                <button data-copy="https://raw.githubusercontent.com/yuzono/anime-repo/repo/index.min.json">Copy</button>
+              </div>
             </div>
             <div class="repo">
               <code>Confused-Creature-180/aniyomi-extensions &middot; index.min.json</code>
-              <button data-copy="https://raw.githubusercontent.com/Confused-Creature-180/aniyomi-extensions/repo/index.min.json">Copy</button>
+              <div class="repo-actions">
+                <a class="repo-install" href="aniyomi://add-repo?url=https%3A%2F%2Fraw.githubusercontent.com%2FConfused-Creature-180%2Faniyomi-extensions%2Frepo%2Findex.min.json">Install</a>
+                <button data-copy="https://raw.githubusercontent.com/Confused-Creature-180/aniyomi-extensions/repo/index.min.json">Copy</button>
+              </div>
             </div>
-            <p class="foot-note">Android only &middot; repos are how sources are installed</p>
+            <p class="foot-note">Android only &middot; Install opens Sanin to add the repo</p>
           </div>
 
           <div class="extensions-steps">
             <div class="ext-step">
               <span class="ext-step-k">Step 1</span>
-              <p>In Sanin go to <b>Settings &rarr; Extensions</b> and tap the <b>+</b> button.</p>
+              <p>Tap <b>Install</b> above — Sanin opens and adds the repo automatically. Or copy the URL and paste it in <b>Settings &rarr; Extensions &rarr; +</b>.</p>
             </div>
             <div class="ext-step">
               <span class="ext-step-k">Step 2</span>
-              <p>Paste the repo URL above (short form works too — <code>username/repo/branch</code>).</p>
-            </div>
-            <div class="ext-step">
-              <span class="ext-step-k">Step 3</span>
               <p>Available extensions appear in the <b>Available</b> tab. Tap <b>Install</b> on any source you want.</p>
             </div>
             <div class="ext-step">
-              <span class="ext-step-k">Step 4</span>
+              <span class="ext-step-k">Step 3</span>
               <p>Search or browse for an anime, tap an episode, pick a source — playback starts instantly with full
                 gesture and D-pad controls.</p>
             </div>

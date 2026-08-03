@@ -748,6 +748,33 @@ nav {
   white-space: nowrap;
 }
 
+.repo-actions {
+  display: flex;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.repo-install {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--ice);
+  border: 1px solid var(--ice);
+  color: #000;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: 0.18s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.repo-install:hover {
+  background: var(--ice-bright);
+  border-color: var(--ice-bright);
+}
+
 .repo button {
   font-family: var(--font);
   font-size: 0.72rem;
