@@ -231,6 +231,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:dividerHeight="0dp"
+        android:descendantFocusability="afterDescendants"
         tools:listitem="@layout/item_search_history" />
 
 </LinearLayout>

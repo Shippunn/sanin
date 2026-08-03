@@ -531,6 +531,23 @@ class SelectorDialogFragment : DialogFragment() {
             init {
                 itemView.isFocusable = true
                 FocusEffectUtil.applyFocusListener(itemView)
+                itemView.setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus) {
+                        var p: android.view.ViewParent? = itemView.parent
+                        while (p != null) {
+                            if (p is RecyclerView && p.id == R.id.selectorRecyclerView) {
+                                val streamViewHolder = itemView.parent?.parent?.parent?.parent as? StreamViewHolder
+                                val outerPos = streamViewHolder?.bindingAdapterPosition
+                                if (outerPos != null && outerPos != RecyclerView.NO_POSITION) {
+                                    (p.layoutManager as? LinearLayoutManager)
+                                        ?.scrollToPositionWithOffset(outerPos, 0)
+                                }
+                                break
+                            }
+                            p = (p as? View)?.parent
+                        }
+                    }
+                }
                 itemView.setSafeOnClickListener {
                     if (isDownloadMenu == true) {
                         binding.urlDownload.performClick()
