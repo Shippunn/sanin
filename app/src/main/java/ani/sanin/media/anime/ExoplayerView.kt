@@ -845,8 +845,17 @@ class ExoplayerView :
 
         playerView.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener { visibility ->
-                if (visibility == View.VISIBLE && currentFocus == null) {
-                    exoPlay.requestFocus()
+                if (visibility == View.VISIBLE) {
+                    val controllerButtonIds = setOf(
+                        androidx.media3.ui.R.id.exo_play, R.id.exo_source, R.id.exo_settings, R.id.exo_sub,
+                        R.id.exo_audio, R.id.exo_screen, R.id.exo_rotate, R.id.exo_skip_op_ed,
+                        R.id.exo_back, R.id.exo_skip, R.id.exo_next_ep, R.id.exo_prev_ep,
+                        R.id.exo_fast_forward_button, R.id.exo_fast_rewind_button,
+                        R.id.exo_skip_timestamp, R.id.exo_ep_sel_btn
+                    )
+                    if (currentFocus?.id !in controllerButtonIds) {
+                        exoPlay.requestFocus()
+                    }
                 }
                 if (visibility == View.GONE) {
                     playerView.findViewById<View>(R.id.exo_controller).clearFocus()
