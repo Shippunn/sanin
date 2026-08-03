@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sanin — Anime app built for TV, works on phone</title>
+  <meta name="description"
+    content="Sanin is a free, open-source anime app rebuilt for Android TV / Fire TV with full D-pad navigation. Stream via aniyomi extensions, sync AniList and MyAnimeList, and watch on the big screen." />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Sanin - Anime app built for TV" />
+  <meta property="og:description"
+    content="Free, open-source anime app optimized for Android TV and Fire TV. Stream via extensions, sync AniList and MyAnimeList." />
+  <meta property="og:url" content="https://github.com/Shippun/sanin" />
+  <meta property="og:image"
+    content="https://raw.githubusercontent.com/Shippun/sanin/main/github_assets/preview.gif" />
+  <link rel="icon" type="image/png"
+    href="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
+  <script type="application/json" id="features-data">
+  [
+    {
+      "icon": "remote",
+      "title": "Full D-Pad Integration",
+      "description": "Navigate everything with your remote. Every screen, dialog, and list is fully responsive to the directional pad with visible focus borders on every element.",
+      "tag": "TV-native"
+    },
+    {
+      "icon": "play",
+      "title": "ExoPlayer with gestures",
+      "description": "Swipe to seek, adjust brightness and volume, double-tap sides to skip. Full subtitle control — font, color, outline, position, size, and alpha.",
+      "tag": "Player"
+    },
+    {
+      "icon": "sync",
+      "title": "AniList & MyAnimeList Sync",
+      "description": "OAuth with auto-update episode progress. MAL Rescue Mode caches updates when AniList is down.",
+      "tag": "Tracking"
+    },
+    {
+      "icon": "skip",
+      "title": "Skip buttons",
+      "description": "OP/ED, auto-skip fillers and recaps. Subtitle sync — tap a cue to calculate the offset, applied instantly.",
+      "tag": "Player"
+    },
+    {
+      "icon": "plugin",
+      "title": "Aniyomi-compatible extensions",
+      "description": "Add repositories from GitHub, install 100+ community-maintained sources, with language filter and NSFW toggle.",
+      "tag": "Streaming"
+    },
+    {
+      "icon": "palette",
+      "title": "Deep customization",
+      "description": "9 accent colors, light / dark / OLED themes, glass blur effects, and a master animation switch with per-category toggles.",
+      "tag": "Quality of Life"
+    }
+  ]
+  </script>
+</head>
+
+<body>
+
+  <nav id="nav">
+    <a class="nav-logo" data-section="hero">
+      <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+        alt="Sanin" style="height: 30px; width: auto; border-radius: 7px;">
+      <span class="nav-logo-text">Sanin</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a data-section="features">Features</a></li>
+      <li><a data-section="install">Install</a></li>
+      <li><a data-section="extensions">Extensions</a></li>
+      <li><a data-section="community">Community</a></li>
+      <li class="nav-cta-wrap">
+        <a class="nav-cta" href="https://github.com/Shippun/sanin/releases/latest" target="_blank" rel="noopener">Download</a>
+      </li>
+    </ul>
+
+    <button class="mobile-menu-toggle" id="menuToggle" aria-label="Open Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+  </nav>
+
+  <div class="mobile-menu-overlay" id="menuOverlay"></div>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="mobile-menu-close" id="menuClose" aria-label="Close Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <ul class="mobile-menu-links">
+      <li><a data-section="features" class="mobile-link">Features</a></li>
+      <li><a data-section="install" class="mobile-link">Install</a></li>
+      <li><a data-section="extensions" class="mobile-link">Extensions</a></li>
+      <li><a data-section="community" class="mobile-link">Community</a></li>
+      <li><a href="https://github.com/Shippun/sanin/releases/latest" target="_blank" rel="noopener"
+          class="mobile-cta"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.3">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>Download APK</a></li>
+    </ul>
+  </div>
+
+  <main>
+    <section id="hero" class="section visible">
+      <div class="hero-bg-glow" aria-hidden="true"></div>
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <div class="hero-badge">
+          <div class="badge-dot"></div>
+          Open Source &nbsp;&#xB7;&nbsp; Android TV
+        </div>
+        <h1>Your anime.<br><span class="accent">On the big screen.</span></h1>
+        <p class="hero-sub">
+          Sanin is a fork of Dantotsu, rebuilt from the ground up for Android TV and Fire TV with full D-pad navigation —
+          while remaining fully functional on phones and tablets.
+        </p>
+        <div class="hero-stats">
+          <div class="stat-chip">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Stream via aniyomi extensions
+          </div>
+        </div>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://github.com/Shippun/sanin/releases/latest" target="_blank"
+            rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download APK
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            View Source
+          </a>
+        </div>
+        <div class="hero-meta">
+          <span class="version-pill" id="version-pill">loading...</span>
+          Latest stable &nbsp;&#xB7;&nbsp; Android 5.0+ (API 21)
+        </div>
+      </div>
+      <div class="hero-screenshot">
+        <div class="hero-screenshot-glow" aria-hidden="true"></div>
+        <div class="hero-screenshot-frame">
+          <img data-src="https://raw.githubusercontent.com/Shippun/sanin/main/github_assets/preview.gif"
+            alt="Sanin app preview on Android TV"
+            style="width: 100%; height: 100%; object-fit: cover; display: block;">
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="splash" class="section">
+      <div class="splash-inner">
+        <div class="splash-copy">
+          <span class="section-label">Instant boot</span>
+          <h2 class="section-title">A splash screen worth the wait</h2>
+          <p class="section-body">
+            Sanin boots straight into a clean, amoled-black splash — no flash of white, no jank. Just your library,
+            seconds later.
+          </p>
+        </div>
+        <div class="splash-frame">
+          <div class="splash-glow" aria-hidden="true"></div>
+          <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/drawable-nodpi/splash_logo.png"
+            alt="Sanin splash screen in landscape">
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="features" class="section">
+      <div class="features-inner">
+        <div class="features-head">
+          <div>
+            <span class="section-label">Built for the couch</span>
+            <h2 class="section-title">Every feature designed for your TV</h2>
+          </div>
+          <p class="section-body">
+            Sanin is purpose-built for Android TV. Every interaction, from navigation to syncing, is optimized for the
+            remote — and it works great on phones too.
+          </p>
+        </div>
+        <div class="features-grid" id="features-grid"></div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="install" class="section">
+      <div class="install-inner">
+        <span class="section-label">Get started in minutes</span>
+        <h2 class="section-title">Install Sanin</h2>
+        <p class="section-body install-lede">
+          From APK to your first episode — here's everything you need to know.
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <h3>Download the APK</h3>
+            <p>Grab <b>app-google-arm64-v8a-release.apk</b> from the latest release. On your TV, open the browser, go to
+              the releases page, and download it — or send it from your phone with <b>LocalSend</b> or <b>ADB</b>.</p>
+            <a class="step-link" href="https://github.com/Shippun/sanin/releases/latest" target="_blank"
+              rel="noopener">Releases &rarr;</a>
+          </div>
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <h3>Install &amp; open</h3>
+            <p>Open the downloaded file — the system package installer handles the rest. If it says <b>"Install
+                blocked"</b>, allow <b>unknown apps</b> for your browser in TV Settings &rarr; Security.</p>
+            <p class="step-note">Android 5.0+ (API 21) &middot; no Samsung TVs (Tizen)</p>
+          </div>
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <h3>Sign in to track</h3>
+            <p>Connect your <b>AniList</b> or <b>MyAnimeList</b> account to sync your watchlist, track progress, and get
+              recommendations. Works fully offline without an account too.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="extensions" class="section">
+      <div class="extensions-inner">
+        <div class="extensions-split">
+          <div class="extensions-copy">
+            <span class="section-label">Add sources</span>
+            <h2 class="section-title">Install extensions</h2>
+            <p class="section-body">
+              Sanin uses a Tachiyomi-compatible extension system. Extensions are separate APK packages that add
+              streaming sources. Start with the recommended repo — or add any other from the community.
+            </p>
+            <div class="lbl">Recommended — one tap in-app, or copy</div>
+            <div class="repo">
+              <code>yuzono/anime-repo &middot; index.min.json</code>
+              <button data-copy="https://raw.githubusercontent.com/yuzono/anime-repo/repo/index.min.json">Copy</button>
+            </div>
+            <div class="repo">
+              <code>phisher98/&hellip;/repo.json</code>
+              <button data-copy="https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/refs/heads/builds/repo.json">Copy</button>
+            </div>
+            <p class="foot-note">Android only &middot; repos are how sources are installed</p>
+          </div>
+
+          <div class="extensions-steps">
+            <div class="ext-step">
+              <span class="ext-step-k">Step 1</span>
+              <p>In Sanin go to <b>Settings &rarr; Extensions</b> and tap the <b>+</b> button.</p>
+            </div>
+            <div class="ext-step">
+              <span class="ext-step-k">Step 2</span>
+              <p>Paste the repo URL above (short form works too — <code>username/repo/branch</code>).</p>
+            </div>
+            <div class="ext-step">
+              <span class="ext-step-k">Step 3</span>
+              <p>Available extensions appear in the <b>Available</b> tab. Tap <b>Install</b> on any source you want.</p>
+            </div>
+            <div class="ext-step">
+              <span class="ext-step-k">Step 4</span>
+              <p>Search or browse for an anime, tap an episode, pick a source — playback starts instantly with full
+                gesture and D-pad controls.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="star" class="section">
+      <div class="star-glow" aria-hidden="true"></div>
+      <div class="star-inner">
+        <div class="star-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.897l-7.334 3.868 1.4-8.168L.132 9.21l8.2-1.192z" />
+          </svg>
+        </div>
+        <h2>Enjoying Sanin?</h2>
+        <p>Sanin is free and open source. A <b>&#9733; star on GitHub</b> helps more people find it — it only takes a
+          second and means a lot.</p>
+        <div class="star-actions">
+          <a class="btn btn-primary" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.897l-7.334 3.868 1.4-8.168L.132 9.21l8.2-1.192z" />
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <section id="community" class="section">
+      <div class="community-inner">
+        <span class="section-label">Community</span>
+        <h2 class="section-title">Join the conversation</h2>
+        <p class="section-body">Get help, share feedback, and stay updated with the Sanin community.</p>
+        <div class="community-grid">
+          <a class="community-card" href="https://discord.gg/QCc5xbgbsA" target="_blank" rel="noopener">
+            <div class="community-icon discord">
+              <svg width="21" height="21" viewBox="-1 -3 34 38" preserveAspectRatio="xMidYMid meet" fill="#5865F2">
+                <path
+                  d="M23.278 6.615C21.58 5.827 19.78 5.25 17.9 4.9c-.216.39-.472.915-.647 1.32-2.105-.316-4.2-.316-6.267 0-.175-.405-.44-.93-.656-1.32a14.68 14.68 0 0 0-3.386 1.716C4.13 10.22 3.467 13.7 3.797 17.13c1.422 1.04 2.8 1.672 4.154 2.09.334-.454.633-.938.889-1.444a9.5 9.5 0 0 1-1.4-.67c.118-.086.233-.176.344-.27 2.705 1.245 5.645 1.245 8.307 0 .113.094.228.184.344.27-.444.26-.915.487-1.403.672.256.506.554.99.889 1.443 1.355-.418 2.742-1.05 4.165-2.09.385-3.983-.66-7.434-2.787-10.514M10.16 15.02c-.81 0-1.475-.742-1.475-1.654 0-.912.656-1.654 1.475-1.654s1.484.742 1.475 1.654c0 .912-.656 1.654-1.475 1.654m4.636 0c-.81 0-1.476-.742-1.476-1.654 0-.912.657-1.654 1.476-1.654s1.484.742 1.475 1.654c0 .912-.656 1.654-1.475 1.654" />
+              </svg>
+            </div>
+            <div class="community-card-text">
+              <strong>Discord</strong>
+              <span>Dev discussion &amp; support</span>
+            </div>
+          </a>
+          <a class="community-card" href="https://t.me/ani.sanin" target="_blank" rel="noopener">
+            <div class="community-icon telegram">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="#26A5E4">
+                <path
+                  d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+              </svg>
+            </div>
+            <div class="community-card-text">
+              <strong>Telegram</strong>
+              <span>Announcements &amp; updates</span>
+            </div>
+          </a>
+          <a class="community-card" href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">
+            <div class="community-icon github">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+              </svg>
+            </div>
+            <div class="community-card-text">
+              <strong>GitHub</strong>
+              <span>Source code &amp; issues</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">
+      <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+        alt="Sanin" style="height: 24px; width: auto; border-radius: 6px;">
+      <span class="footer-copy">&copy; Sanin &middot; Free and open source</span>
+    </div>
+    <div class="footer-links">
+      <a href="https://github.com/Shippun/sanin" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/QCc5xbgbsA" target="_blank" rel="noopener">Discord</a>
+      <a href="https://t.me/ani.sanin" target="_blank" rel="noopener">Telegram</a>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+
+</html>
