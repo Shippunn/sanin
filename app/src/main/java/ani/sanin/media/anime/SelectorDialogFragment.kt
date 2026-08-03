@@ -536,11 +536,13 @@ class SelectorDialogFragment : DialogFragment() {
                         var p: android.view.ViewParent? = itemView.parent
                         while (p != null) {
                             if (p is RecyclerView && p.id == R.id.selectorRecyclerView) {
-                                val streamViewHolder = itemView.parent?.parent?.parent?.parent as? StreamViewHolder
-                                val outerPos = streamViewHolder?.bindingAdapterPosition
-                                if (outerPos != null && outerPos != RecyclerView.NO_POSITION) {
-                                    (p.layoutManager as? LinearLayoutManager)
-                                        ?.scrollToPositionWithOffset(outerPos, 0)
+                                val outerChild = itemView.parent?.parent?.parent as? View
+                                if (outerChild != null) {
+                                    val outerPos = p.getChildAdapterPosition(outerChild)
+                                    if (outerPos != RecyclerView.NO_POSITION) {
+                                        (p.layoutManager as? LinearLayoutManager)
+                                            ?.scrollToPositionWithOffset(outerPos, 0)
+                                    }
                                 }
                                 break
                             }
