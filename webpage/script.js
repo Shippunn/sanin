@@ -55,7 +55,10 @@ var icons = {
   sync: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v3.5h-3.5"/><path d="M4 12a8 8 0 0 1 14.34-5.66"/></svg>',
   skip: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4v16l11-8z" fill="currentColor" stroke="none"/><path d="M18 4v16"/></svg>',
   plugin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 22v-2M12 4V2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>',
-  palette: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 0 0 0 18c1.5 0 2-1 1.5-2S13 17 13.5 16.5 15 17 16.5 17a4 4 0 0 0 4-4c0-5.5-4.5-8-8.5-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="15" cy="7.5" r="1"/><circle cx="17.5" cy="11" r="1"/></svg>'
+  palette: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3a9 9 0 0 0 0 18c1.5 0 2-1 1.5-2S13 17 13.5 16.5 15 17 16.5 17a4 4 0 0 0 4-4c0-5.5-4.5-8-8.5-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="15" cy="7.5" r="1"/><circle cx="17.5" cy="11" r="1"/></svg>',
+  subtitles: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h4M13 15h4M7 11h10"/></svg>',
+  focus: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2l2.4 4.8 5.3.8-3.8 3.7.9 5.2L12 13.9l-4.8 2.6.9-5.2L4.3 7.6l5.3-.8z" fill="currentColor" stroke="none"/></svg>',
+  cache: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h18M8 6V4h8v2M5 6v14a2 2 0 002 2h10a2 2 0 002-2V6"/><path d="M10 11v6M14 11v6"/></svg>'
 };
 
 (function renderFeatures() {
