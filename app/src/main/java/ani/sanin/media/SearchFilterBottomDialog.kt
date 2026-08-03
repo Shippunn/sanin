@@ -42,7 +42,11 @@ class SearchFilterBottomDialog : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = BottomSheetSearchFilterBinding.inflate(inflater, container, false)
-        FocusEffectUtil.applyFocusListener(binding.root)
+        FocusEffectUtil.applyFocusListener(
+            binding.resetSearchFilter,
+            binding.countryFilter,
+            binding.sortByFilter
+        )
         return binding.root
     }
 
