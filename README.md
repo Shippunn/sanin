@@ -6,7 +6,7 @@
   </p>
   <p>
     <a href="https://discord.gg/QCc5xbgbsA"><img src="https://img.shields.io/badge/Join-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://t.me/ani.sanin"><img src="https://img.shields.io/badge/Join-Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"></a>
+    <a href="https://https://t.me/anisanin"><img src="https://img.shields.io/badge/Join-Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"></a>
     <img src="https://img.shields.io/github/v/release/Shippun/sanin?style=for-the-badge&color=2196F3&logo=github" alt="GitHub Release">
     <img src="https://img.shields.io/badge/Api-21+-4CAF50?style=for-the-badge&logo=android&logoColor=white" alt="Android 6+">
     <img src="https://img.shields.io/badge/TV_Optimized-Yes-FF5722?style=for-the-badge&logo=androidtv&logoColor=white" alt="TV Optimized">
