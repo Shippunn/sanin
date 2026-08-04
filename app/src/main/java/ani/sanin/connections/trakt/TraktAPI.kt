@@ -50,6 +50,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                Logger.log("Trakt search failed: HTTP ${response.code}")
+                return@withContext null
+            }
             val body = response.body?.string() ?: return@withContext null
             val results = json.decodeFromString<List<TraktSearchResult>>(body)
             results.firstOrNull()
@@ -73,6 +77,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                Logger.log("Trakt comments failed: HTTP ${response.code}")
+                return@withContext emptyList()
+            }
             val body = response.body?.string() ?: return@withContext emptyList()
             json.decodeFromString<List<TraktComment>>(body)
         } catch (e: Exception) {
@@ -90,6 +98,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                Logger.log("Trakt replies failed: HTTP ${response.code}")
+                return@withContext emptyList()
+            }
             val body = response.body?.string() ?: return@withContext emptyList()
             json.decodeFromString<List<TraktComment>>(body)
         } catch (e: Exception) {
