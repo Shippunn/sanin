@@ -476,6 +476,7 @@ class AnimeWatchFragment : Fragment() {
             ep?.selectedVideo = 0
             ep?.selectedSubtitle = -1
             ep?.extractors = null
+            ep?.allStreams = false
         }
         media.anime?.episodes = null
         pendingEpisodeClick = null
