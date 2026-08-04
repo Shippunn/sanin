@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Shippun/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="Sanin" width="128">
+  <img src="https://raw.githubusercontent.com/Shippunn/sanin/main/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="Sanin" width="128">
   <h1 align="center">Sanin</h1>
   <p align="center">
     <strong>Anime app; — built for TV, works on phone</strong>
