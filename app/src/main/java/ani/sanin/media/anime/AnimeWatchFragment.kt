@@ -470,6 +470,13 @@ class AnimeWatchFragment : Fragment() {
     fun onSourceChange(i: Int): AnimeParser {
         cancelLoadEpisodesJob("onSourceChange")
         val oldIdx = media.selected?.sourceIndex ?: -1
+        // Clear stale extractor/server state from all episodes before switching
+        media.anime?.episodes?.values?.forEach { ep ->
+            ep?.selectedExtractor = null
+            ep?.selectedVideo = 0
+            ep?.selectedSubtitle = -1
+            ep?.extractors = null
+        }
         media.anime?.episodes = null
         pendingEpisodeClick = null
         if (::episodeAdapter.isInitialized) {

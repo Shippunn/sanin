@@ -845,6 +845,8 @@ class MediaDetailsViewModel : ViewModel() {
                 }
                 Logger.log("Watch: opening selector for episode(s) ${episodes.joinToString(",")} source='${watchSources?.get(media.selected?.sourceIndex ?: 0)?.name}' (idx ${media.selected?.sourceIndex})")
                 media.selected = this.loadSelected(media)
+                // Always force server=null for fresh episode clicks to avoid stale server from previous source
+                media.selected!!.server = null
                 val selector =
                     SelectorDialogFragment.newInstance(
                         media.selected!!.server,
