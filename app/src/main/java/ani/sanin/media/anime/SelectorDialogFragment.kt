@@ -175,6 +175,9 @@ class SelectorDialogFragment : DialogFragment() {
                         )
                     val adapter = ExtractorAdapter(onEpisodeDownloadHandler)
                     binding.selectorRecyclerView.adapter = adapter
+                    // NyanTV approach: always force fresh fetch from source
+                    ep.allStreams = false
+                    ep.extractors = null
                     if (!ep.allStreams) {
                         scope.launch(Dispatchers.IO) {
                             model.loadEpisodeVideos(ep, media!!.selected!!.sourceIndex)
