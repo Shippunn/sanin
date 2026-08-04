@@ -158,7 +158,7 @@ class SettingsAnimeActivity : AppCompatActivity() {
                         type = 1,
                         name = "Subtitle Render Mode",
                         desc = "Canvas=CPU (better for TV), OpenGL=GPU (better for phone)",
-                        icon = R.drawable.ic_round_text_fields_24,
+                        icon = R.drawable.ic_round_subtitles_24,
                         onClick = {
                             context.customAlertDialog().apply {
                                 setTitle("Subtitle Render Mode")
