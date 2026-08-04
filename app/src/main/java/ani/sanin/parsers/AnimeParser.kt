@@ -115,12 +115,13 @@ abstract class AnimeParser : BaseParser() {
         episodeUrl: String,
         extra: Map<String, String>?,
         sEpisode: SEpisode,
-        callback: (VideoExtractor) -> Unit
+        callback: (VideoExtractor) -> Unit,
+        servers: List<VideoServer>? = null
     ) {
         tryWithSuspend(true) {
             val timeoutMs =
                 PrefManager.getVal<Int>(PrefName.ServerLoadTimeoutSeconds).coerceIn(10, 25) * 1000L
-            loadVideoServers(episodeUrl, extra, sEpisode).limitedAsyncMap(concurrency = 4) {
+            (servers ?: loadVideoServers(episodeUrl, extra, sEpisode)).limitedAsyncMap(concurrency = 4) {
                 withTimeoutOrNull(timeoutMs) {
                     getVideoExtractor(it)?.apply {
                         tryWithSuspend(true) {

@@ -21,6 +21,7 @@ import ani.sanin.others.Kitsu
 import ani.sanin.parsers.AnimeSources
 import ani.sanin.parsers.ShowResponse
 import ani.sanin.parsers.VideoExtractor
+import ani.sanin.parsers.VideoServer
 import ani.sanin.parsers.WatchSources
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
@@ -663,7 +664,19 @@ class MediaDetailsViewModel : ViewModel() {
     private var episode = MutableLiveData<Episode?>(null)
     fun getEpisode(): LiveData<Episode?> = episode
 
-    suspend fun loadEpisodeVideos(ep: Episode, i: Int, post: Boolean = true) {
+    suspend fun loadEpisodeVideoServers(ep: Episode, i: Int): List<VideoServer>? {
+        val link = ep.link ?: return null
+        val source = watchSources?.get(i) ?: return null
+        val sEpisode = ep.sEpisode ?: return null
+        return try {
+            source.loadVideoServers(link, ep.extra, sEpisode)
+        } catch (e: Exception) {
+            Logger.log(e)
+            null
+        }
+    }
+
+    suspend fun loadEpisodeVideos(ep: Episode, i: Int, post: Boolean = true, servers: List<VideoServer>? = null) {
         val link = ep.link ?: return
         if (!ep.allStreams || ep.extractors.isNullOrEmpty()) {
             val existingExtractors = ep.extractors?.filterNotNull().orEmpty().toMutableList()
@@ -679,7 +692,7 @@ class MediaDetailsViewModel : ViewModel() {
                 if (!post && !allowsPreloading) return@apply
                 val sourceName = this.name
                 ep.sEpisode?.let {
-                    loadByVideoServers(link, ep.extra, it) { extractor ->
+                    loadByVideoServers(link, ep.extra, it, servers = servers) { extractor ->
                         try {
                             if (extractor.videos.isNotEmpty()) {
                                 list.add(extractor)

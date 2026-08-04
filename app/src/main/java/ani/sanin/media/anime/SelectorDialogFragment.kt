@@ -183,23 +183,40 @@ class SelectorDialogFragment : DialogFragment() {
                         scope.launch(Dispatchers.Main) {
                             if (_binding == null || !isAdded) return@launch
                             adapter.add(extractor)
-                            binding.selectorProgressBar.visibility = View.GONE
                         }
                     }
                     if (!ep.allStreams) {
                         scope.launch(Dispatchers.IO) {
-                            model.loadEpisodeVideos(ep, media!!.selected!!.sourceIndex)
+                            // Phase 1: fetch server names and show them immediately
+                            val servers = model.loadEpisodeVideoServers(ep, media!!.selected!!.sourceIndex)
+                            if (servers.isNullOrEmpty()) {
                                 withContext(Dispatchers.Main) {
                                     if (_binding == null || !isAdded) return@withContext
                                     binding.selectorProgressBar.visibility = View.GONE
-                                    if (adapter.itemCount == 0) {
-                                        fail(R.string.stream_selection_empty)
-                                    }
-                                    if (model.watchSources!!.isDownloadedSource(media?.selected!!.sourceIndex)) {
-                                        adapter.performClick(0)
-                                    }
-                                    binding.selectorMakeDefault.post { binding.selectorMakeDefault.requestFocus() }
+                                    fail(R.string.stream_selection_empty)
                                 }
+                                return@launch
+                            }
+                            withContext(Dispatchers.Main) {
+                                if (_binding == null || !isAdded) return@withContext
+                                servers.forEach { adapter.addServer(it.name) }
+                                binding.selectorProgressBar.visibility = View.GONE
+                                binding.selectorMakeDefault.post { binding.selectorMakeDefault.requestFocus() }
+                            }
+                            // Phase 2: fill each server's videos progressively
+                            model.loadEpisodeVideos(ep, media!!.selected!!.sourceIndex, servers = servers)
+                            withContext(Dispatchers.Main) {
+                                if (_binding == null || !isAdded) return@withContext
+                                // Remove placeholders for servers that failed or timed out
+                                adapter.removePendingPlaceholders()
+                                if (adapter.itemCount == 0) {
+                                    fail(R.string.stream_selection_empty)
+                                }
+                                if (model.watchSources!!.isDownloadedSource(media?.selected!!.sourceIndex)) {
+                                    adapter.performClick(0)
+                                }
+                                binding.selectorMakeDefault.post { binding.selectorMakeDefault.requestFocus() }
+                            }
                         }
                     } else {
                         media!!.anime?.episodes?.set(media!!.anime?.selectedEpisode!!, ep)
@@ -409,9 +426,15 @@ class SelectorDialogFragment : DialogFragment() {
         }
     }
 
+    private inner class ServerPlaceholder(val name: String)
+
     private inner class ExtractorAdapter(private val onEpisodeDownloadHandler: EpisodeDownloadHandler? = null) :
         RecyclerView.Adapter<ExtractorAdapter.StreamViewHolder>() {
-        val links = mutableListOf<VideoExtractor>()
+        val links = mutableListOf<Any>()
+
+        override fun getItemViewType(position: Int): Int =
+            if (links[position] is ServerPlaceholder) 0 else 1
+
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StreamViewHolder =
             StreamViewHolder(
                 ItemStreamBinding.inflate(
@@ -422,20 +445,50 @@ class SelectorDialogFragment : DialogFragment() {
             )
 
         override fun onBindViewHolder(holder: StreamViewHolder, position: Int) {
-            val extractor = links.getOrNull(position) ?: return
-            holder.binding.streamName.text = ""//extractor.server.name
-            holder.binding.streamName.visibility = View.GONE
-
-            holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-            holder.binding.streamRecyclerView.adapter = VideoAdapter(extractor, onEpisodeDownloadHandler)
+            when (val item = links.getOrNull(position)) {
+                is ServerPlaceholder -> {
+                    holder.binding.streamName.text = item.name
+                    holder.binding.streamName.visibility = View.VISIBLE
+                    holder.binding.streamLoading.visibility = View.VISIBLE
+                    holder.binding.streamRecyclerView.visibility = View.GONE
+                }
+                is VideoExtractor -> {
+                    holder.binding.streamName.text = ""//extractor.server.name
+                    holder.binding.streamName.visibility = View.GONE
+                    holder.binding.streamLoading.visibility = View.GONE
+                    holder.binding.streamRecyclerView.visibility = View.VISIBLE
+                    holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+                    holder.binding.streamRecyclerView.adapter = VideoAdapter(item, onEpisodeDownloadHandler)
+                }
+                null -> {}
+            }
         }
 
         override fun getItemCount(): Int = links.size
 
+        fun addServer(name: String) {
+            links.add(ServerPlaceholder(name))
+            notifyItemInserted(links.size - 1)
+        }
+
         fun add(videoExtractor: VideoExtractor) {
             if (videoExtractor.videos.isNotEmpty()) {
-                links.add(videoExtractor)
-                notifyItemInserted(links.size - 1)
+                val idx = links.indexOfFirst { it is ServerPlaceholder && it.name == videoExtractor.server.name }
+                if (idx >= 0) {
+                    links[idx] = videoExtractor
+                    notifyItemChanged(idx)
+                } else {
+                    links.add(videoExtractor)
+                    notifyItemInserted(links.size - 1)
+                }
+            }
+        }
+
+        fun removePendingPlaceholders() {
+            val placeholders = links.filterIsInstance<ServerPlaceholder>()
+            if (placeholders.isNotEmpty()) {
+                links.removeAll(placeholders)
+                notifyDataSetChanged()
             }
         }
 
@@ -448,7 +501,7 @@ class SelectorDialogFragment : DialogFragment() {
 
         fun performClick(position: Int) {
             try {
-                val extractor = links[position] ?: return
+                val extractor = links.getOrNull(position) as? VideoExtractor ?: return
                 media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedExtractor =
                     extractor.server.name
                 media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedVideo = 0

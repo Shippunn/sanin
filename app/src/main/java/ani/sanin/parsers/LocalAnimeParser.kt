@@ -101,9 +101,10 @@ class LocalAnimeParser : AnimeParser() {
         episodeUrl: String,
         extra: Map<String, String>?,
         sEpisode: SEpisode,
-        callback: (VideoExtractor) -> Unit
+        callback: (VideoExtractor) -> Unit,
+        servers: List<VideoServer>? = null
     ) {
-        val server = loadVideoServers(episodeUrl, extra, sEpisode).first()
+        val server = (servers ?: loadVideoServers(episodeUrl, extra, sEpisode)).first()
         LocalVideoExtractor(server, localSource).apply {
             tryWithSuspend {
                 load()
