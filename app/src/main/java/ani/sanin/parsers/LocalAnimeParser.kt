@@ -102,7 +102,7 @@ class LocalAnimeParser : AnimeParser() {
         extra: Map<String, String>?,
         sEpisode: SEpisode,
         callback: (VideoExtractor) -> Unit,
-        servers: List<VideoServer>? = null
+        servers: List<VideoServer>?
     ) {
         val server = (servers ?: loadVideoServers(episodeUrl, extra, sEpisode)).first()
         LocalVideoExtractor(server, localSource).apply {

@@ -692,7 +692,7 @@ class MediaDetailsViewModel : ViewModel() {
                 if (!post && !allowsPreloading) return@apply
                 val sourceName = this.name
                 ep.sEpisode?.let {
-                    loadByVideoServers(link, ep.extra, it, servers = servers) { extractor ->
+                    loadByVideoServers(link, ep.extra, it, { extractor ->
                         try {
                             if (extractor.videos.isNotEmpty()) {
                                 list.add(extractor)
@@ -704,7 +704,7 @@ class MediaDetailsViewModel : ViewModel() {
                                 "Watch: bad extractor from '$sourceName' for episode '${ep.number}': ${e.message}"
                             )
                         }
-                    }
+                    }, servers = servers)
                 }
                 ep.extractorCallback = null
                 if (list.isNotEmpty())
