@@ -769,8 +769,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         val pills = listOf(binding.homeNavHome, binding.homeNavAnime, binding.homeNavDiscovery, binding.homeNavLibrary)
+        val isMonochrome = PrefManager.getVal<String>(PrefName.Theme).contains("MONOCHROME", ignoreCase = true)
         val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
-        val navFocusColor = if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK
+        val navFocusColor = if (isMonochrome && isDarkMode) android.graphics.Color.WHITE else if (isMonochrome) android.graphics.Color.BLACK else null
         pills.forEachIndexed { index, pill ->
             pill.setOnClickListener {
                 navPillsViewModel.setTab(index)
