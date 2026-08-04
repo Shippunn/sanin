@@ -10,6 +10,7 @@ import ani.sanin.settings.saving.PrefManager
 import ani.sanin.tryWithSuspend
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * An abstract class for creating a new Source
@@ -116,13 +117,16 @@ abstract class AnimeParser : BaseParser() {
         callback: (VideoExtractor) -> Unit
     ) {
         tryWithSuspend(true) {
-            loadVideoServers(episodeUrl, extra, sEpisode).limitedAsyncMap(concurrency = 2) {
-                getVideoExtractor(it)?.apply {
-                    tryWithSuspend(true) {
-                        load()
+            val timeoutMs =
+                PrefManager.getVal<Int>(PrefName.ServerLoadTimeoutSeconds).coerceIn(10, 25) * 1000L
+            loadVideoServers(episodeUrl, extra, sEpisode).limitedAsyncMap(concurrency = 4) {
+                withTimeoutOrNull(timeoutMs) {
+                    getVideoExtractor(it)?.apply {
+                        tryWithSuspend(true) {
+                            load()
+                        }
                     }
-                    callback.invoke(this)
-                }
+                }?.let { extractor -> callback.invoke(extractor) }
             }
         }
     }

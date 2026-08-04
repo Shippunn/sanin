@@ -73,6 +73,7 @@ enum class PrefName(val data: Pref) {
     AutoUpdateExtensions(Pref(Location.General, Boolean::class, true)),
     ConfirmPlayerExit(Pref(Location.General, Boolean::class, false)),
     TraktClientId(Pref(Location.General, String::class, "")),
+    ServerLoadTimeoutSeconds(Pref(Location.General, Int::class, 12)),
     TraktCommentsEnabled(Pref(Location.General, Int::class, 0)),
     TraktAccessToken(Pref(Location.Protected, String::class, "")),
     TraktUsername(Pref(Location.Protected, String::class, "")),

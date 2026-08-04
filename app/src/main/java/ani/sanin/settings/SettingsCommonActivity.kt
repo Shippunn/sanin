@@ -10,6 +10,9 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -148,6 +151,49 @@ class SettingsCommonActivity : AppCompatActivity() {
             settingsRecyclerView.adapter =
                 SettingsAdapter(
                     arrayListOf(
+                        Settings(
+                            type = 1,
+                            name = "Server Load Timeout",
+                            desc = "Max wait per video server (10-25 seconds)",
+                            icon = R.drawable.ic_round_history_24,
+                            onClick = {
+                                val min = 10
+                                val max = 25
+                                val current = PrefManager.getVal<Int>(PrefName.ServerLoadTimeoutSeconds).coerceIn(min, max)
+                                val label = TextView(context).apply {
+                                    text = "$current seconds"
+                                    textSize = 16f
+                                }
+                                val seekBar = SeekBar(context).apply {
+                                    max = max - min
+                                    progress = current - min
+                                    setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                                        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                                            label.text = "${progress + min} seconds"
+                                        }
+                                        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+                                        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+                                    })
+                                }
+                                val container = LinearLayout(context).apply {
+                                    orientation = LinearLayout.VERTICAL
+                                    setPadding(64, 32, 64, 32)
+                                    addView(label)
+                                    addView(seekBar)
+                                }
+                                customAlertDialog().apply {
+                                    setTitle("Server Load Timeout (seconds)")
+                                    setMessage("Maximum time to wait for each video server before skipping it.")
+                                    setCustomView(container)
+                                    setPosButton(R.string.ok) {
+                                        val value = seekBar.progress + min
+                                        PrefManager.setVal(PrefName.ServerLoadTimeoutSeconds, value)
+                                    }
+                                    setNegButton(R.string.cancel)
+                                    show()
+                                }
+                            },
+                        ),
                         Settings(
                             type = 1,
                             name = "Startup Tab",

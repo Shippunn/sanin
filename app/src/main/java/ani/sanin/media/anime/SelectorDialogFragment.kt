@@ -178,12 +178,19 @@ class SelectorDialogFragment : DialogFragment() {
                     // NyanTV approach: always force fresh fetch from source
                     ep.allStreams = false
                     ep.extractors = null
+                    // Show servers progressively as each one finishes loading
+                    ep.extractorCallback = { extractor ->
+                        scope.launch(Dispatchers.Main) {
+                            if (_binding == null || !isAdded) return@launch
+                            adapter.add(extractor)
+                            binding.selectorProgressBar.visibility = View.GONE
+                        }
+                    }
                     if (!ep.allStreams) {
                         scope.launch(Dispatchers.IO) {
                             model.loadEpisodeVideos(ep, media!!.selected!!.sourceIndex)
                                 withContext(Dispatchers.Main) {
                                     if (_binding == null || !isAdded) return@withContext
-                                    adapter.addAll(ep.extractors)
                                     binding.selectorProgressBar.visibility = View.GONE
                                     if (adapter.itemCount == 0) {
                                         fail(R.string.stream_selection_empty)
