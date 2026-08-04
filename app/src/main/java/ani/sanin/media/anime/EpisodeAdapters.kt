@@ -157,7 +157,7 @@ class EpisodeAdapter(
                     val glideRequest = Glide.with(binding.itemMediaImage).load(thumb ?: media.cover)
                         .override(400, 0).diskCacheStrategy(DiskCacheStrategy.ALL)
                     if (blurEnabled) {
-                        glideRequest.transform(BlurTransformation(25, 3)).into(binding.itemMediaImage)
+                        glideRequest.transform(BlurTransformation(15, 3)).into(binding.itemMediaImage)
                     } else {
                         glideRequest.into(binding.itemMediaImage)
                     }
@@ -289,7 +289,7 @@ class EpisodeAdapter(
                     val glideRequest = Glide.with(binding.itemMediaImage).load(thumb ?: media.cover)
                         .override(400, 0).diskCacheStrategy(DiskCacheStrategy.ALL)
                     if (blurEnabled) {
-                        glideRequest.transform(BlurTransformation(25, 3)).into(binding.itemMediaImage)
+                        glideRequest.transform(BlurTransformation(15, 3)).into(binding.itemMediaImage)
                     } else {
                         glideRequest.into(binding.itemMediaImage)
                     }

@@ -769,12 +769,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         val pills = listOf(binding.homeNavHome, binding.homeNavAnime, binding.homeNavDiscovery, binding.homeNavLibrary)
+        val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val navFocusColor = if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK
         pills.forEachIndexed { index, pill ->
             pill.setOnClickListener {
                 navPillsViewModel.setTab(index)
                 hideHomeNavRail()
             }
-            FocusEffectUtil.applyFocusListener(pill)
+            FocusEffectUtil.applyFocusListener(pill, borderColor = navFocusColor)
         }
 
         updateNavPillFocusChains()

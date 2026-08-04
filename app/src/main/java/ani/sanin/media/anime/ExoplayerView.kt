@@ -649,9 +649,11 @@ class ExoplayerView :
                 if (isPlayerPlaying) {
                     Glide.with(this).load(R.drawable.anim_play_to_pause).into(exoPlay)
                     exoPlayer.pause()
+                    userPaused = true
                 } else {
                     Glide.with(this).load(R.drawable.anim_pause_to_play).into(exoPlay)
                     exoPlayer.play()
+                    userPaused = false
                 }
             }
         }
@@ -1333,7 +1335,9 @@ class ExoplayerView :
                     theme.resolveAttribute(com.google.android.material.R.attr.colorPrimary, it, true)
                 }.data)
                 chipStrokeWidth = resources.displayMetrics.density
-                setTextColor(android.graphics.Color.WHITE)
+                setTextColor(TypedValue().also {
+                    theme.resolveAttribute(com.google.android.material.R.attr.colorOnSurface, it, true)
+                }.data)
                 textSize = 12f
             }
             pauseGenres.addView(chip)
@@ -3453,12 +3457,13 @@ class ExoplayerView :
     }
 
     private var isBuffering = true
+    private var userPaused = false
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         val epLabel = media.anime?.selectedEpisode ?: "?"
         if (playbackState == ExoPlayer.STATE_READY) {
             Logger.log("Player: READY on ep '$epLabel' duration=${exoPlayer.duration} pos=${exoPlayer.currentPosition}")
-            exoPlayer.play()
+            if (!userPaused) exoPlayer.play()
             if (episodeLength == 0f) {
                 episodeLength = exoPlayer.duration.toFloat()
             }

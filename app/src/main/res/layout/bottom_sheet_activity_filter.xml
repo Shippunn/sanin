@@ -88,7 +88,7 @@
         android:fontFamily="@font/poppins_semi_bold"
         android:text="@string/apply_filters"
         android:textAllCaps="false"
-        android:textColor="#FFFFFF"
+        android:textColor="?attr/colorOnPrimary"
         android:textSize="14sp" />
 
 </LinearLayout>

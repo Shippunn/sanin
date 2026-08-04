@@ -169,11 +169,13 @@ class MediaDetailsActivity : AppCompatActivity() {
         }
         val primaryColor = getThemeColor(com.google.android.material.R.attr.colorPrimary)
         val onBgColor = getThemeColor(com.google.android.material.R.attr.colorOnBackground)
+        val isDarkMode = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        val navFocusColor = if (isDarkMode) android.graphics.Color.WHITE else android.graphics.Color.BLACK
         val navInfo = binding.navPillInfo
         val navWatch = binding.navPillWatch
         val navComments = binding.navPillComments
         val allNav = listOfNotNull(navInfo, navWatch, navComments)
-        allNav.forEach { FocusEffectUtil.applyFocusListener(it) }
+        allNav.forEach { FocusEffectUtil.applyFocusListener(it, borderColor = navFocusColor) }
 
         binding.navPillBg?.live = PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.LiveSideRail)
         binding.navPillBg?.setGlassEnabled(

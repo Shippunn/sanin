@@ -19,7 +19,7 @@ object FocusEffectUtil {
     private val savedForegrounds = mutableMapOf<View, Drawable?>()
     private val savedBackgrounds = mutableMapOf<View, Drawable?>()
 
-    fun applyFocusListener(vararg views: View, fade: Boolean = false, borderDp: Float = 3f) {
+    fun applyFocusListener(vararg views: View, fade: Boolean = false, borderDp: Float = 3f, borderColor: Int? = null) {
         for (view in views) {
             removeBorder(view)
             view.onFocusChangeListener = null
@@ -29,7 +29,7 @@ object FocusEffectUtil {
                         resetView(lastFocusedView)
                         lastFocusedView = v
                     }
-                    applyBorder(v, v is ImageButton, borderDp)
+                    applyBorder(v, v is ImageButton, borderDp, borderColor)
                     applyFocusGain(v)
                     if (fade) {
                         if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.FocusAnimations)) {
@@ -121,8 +121,8 @@ object FocusEffectUtil {
         return color
     }
 
-    private fun applyBorder(v: View, isCircular: Boolean = false, borderDp: Float = 3f) {
-        val primaryColor = getPrimaryColor(v)
+    private fun applyBorder(v: View, isCircular: Boolean = false, borderDp: Float = 3f, borderColor: Int? = null) {
+        val primaryColor = borderColor ?: getPrimaryColor(v)
         val borderWidthPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP, borderDp, v.resources.displayMetrics
         ).toInt()
