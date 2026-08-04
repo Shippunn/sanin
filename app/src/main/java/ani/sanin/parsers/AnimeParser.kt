@@ -7,6 +7,7 @@ import ani.sanin.limitedAsyncMap
 import ani.sanin.currContext
 import ani.sanin.others.MalSyncBackup
 import ani.sanin.settings.saving.PrefManager
+import ani.sanin.settings.saving.PrefName
 import ani.sanin.tryWithSuspend
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode

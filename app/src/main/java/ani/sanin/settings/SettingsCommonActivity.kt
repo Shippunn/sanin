@@ -165,7 +165,7 @@ class SettingsCommonActivity : AppCompatActivity() {
                                     textSize = 16f
                                 }
                                 val seekBar = SeekBar(context).apply {
-                                    max = max - min
+                                    setMax(max - min)
                                     progress = current - min
                                     setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                                         override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
