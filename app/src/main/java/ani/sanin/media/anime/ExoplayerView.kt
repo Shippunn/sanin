@@ -584,7 +584,7 @@ class ExoplayerView :
         audioManager.requestAudioFocus({ focus ->
             when (focus) {
                 AUDIOFOCUS_LOSS_TRANSIENT, AUDIOFOCUS_LOSS -> if (isInitialized) exoPlayer.pause()
-                AUDIOFOCUS_GAIN -> if (isInitialized && isPlayerPlaying) exoPlayer.play()
+                AUDIOFOCUS_GAIN -> if (isInitialized && !userPaused) exoPlayer.play()
             }
         }, AUDIO_CONTENT_TYPE_MOVIE, AUDIOFOCUS_GAIN)
 
@@ -644,9 +644,9 @@ class ExoplayerView :
         // Play Pause
         exoPlay.setOnClickListener {
             if (isInitialized) {
-                isPlayerPlaying = exoPlayer.isPlaying
+                val wasPlaying = exoPlayer.playWhenReady
                 if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.AnimatedVectorDrawables)) (exoPlay.drawable as Animatable?)?.start()
-                if (isPlayerPlaying) {
+                if (wasPlaying) {
                     Glide.with(this).load(R.drawable.anim_play_to_pause).into(exoPlay)
                     exoPlayer.pause()
                     userPaused = true
@@ -3094,12 +3094,7 @@ class ExoplayerView :
     ) {
         super.onPositionDiscontinuity(oldPosition, newPosition, reason)
         if (reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT) {
-            // Proactively ensure playback resumes after seek when the player was playing.
-            // Seeking to an unbuffered position transitions to STATE_BUFFERING; setting
-            // playWhenReady = true here (before buffering begins) ensures ExoPlayer will
-            // auto-play as soon as STATE_READY is reached, preventing the player from
-            // silently staying paused after the buffer fills.
-            if (isPlayerPlaying) {
+            if (!userPaused) {
                 exoPlayer.play()
             }
         }
