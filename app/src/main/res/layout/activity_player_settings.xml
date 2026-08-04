@@ -1475,7 +1475,7 @@
                 android:textAllCaps="false"
                 android:textColor="@color/bg_opp"
                 app:cornerRadius="0dp"
-                app:icon="@drawable/ic_round_text_fields_24"
+                app:icon="@drawable/ic_round_subtitles_24"
                 app:iconPadding="16dp"
                 app:iconSize="24dp" />
 
