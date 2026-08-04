@@ -268,7 +268,7 @@ class ExoplayerView :
 
         private const val DEFAULT_MIN_BUFFER_MS = 30000
         private const val DEFAULT_MAX_BUFFER_MS = 60000
-        private const val BUFFER_FOR_PLAYBACK_MS = 2000   // 2s: faster start, still safe on 4G
+        private const val BUFFER_FOR_PLAYBACK_MS = 8000   // 8s: safer start on TV Wi-Fi
         private const val BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS = 5000
         private const val BACK_BUFFER_DURATION_MS = 1000 * 60 * 2
         private const val MAX_PLAYER_ERROR_RETRIES = 1
@@ -1936,13 +1936,12 @@ class ExoplayerView :
             }
 
         // Set up libass for ASS/SSA subtitle rendering.
-        // We use OVERLAY_OPEN_GL to render subtitles in a dedicated hardware-accelerated
-        // TextureView via a background HandlerThread.
+        // Render mode: 0=Canvas (CPU, better for TV), 1=OpenGL (GPU, better for phone)
+        val subtitleRenderMode = PrefManager.getVal<Int>(PrefName.SubtitleRenderMode)
+        val assRenderType = if (subtitleRenderMode == 1) AssRenderType.OVERLAY_OPEN_GL else AssRenderType.OVERLAY_CANVAS
         if (assHandler == null) {
-            Logger.log("Libass: Creating AssHandler with OVERLAY_OPEN_GL")
-            assHandler = AssHandler(
-                AssRenderType.OVERLAY_OPEN_GL,
-            )
+            Logger.log("Libass: Creating AssHandler with $assRenderType")
+            assHandler = AssHandler(assRenderType)
             // Inject the dedicated AssSubtitleTextureView into the video frame hierarchy.
             Logger.log("Libass: Injecting AssSubtitleView into exo_content_frame")
             val contentFrame = playerView.findViewById<androidx.media3.ui.AspectRatioFrameLayout>(androidx.media3.ui.R.id.exo_content_frame)
@@ -2049,7 +2048,7 @@ class ExoplayerView :
                 .setRendererDisabled(TRACK_TYPE_VIDEO, false)
                 .setRendererDisabled(TRACK_TYPE_AUDIO, false)
                 .setRendererDisabled(TRACK_TYPE_TEXT, false)
-                .setMaxVideoSize(1, 1)
+                .setMaxVideoSize(3840, 2160)
         // .setOverrideForType(TrackSelectionOverride(trackSelector, TRACK_TYPE_VIDEO))
         if (PrefManager.getVal(PrefName.PreferDub)) {
             parameters.setPreferredAudioLanguage(Locale.getDefault().language)
@@ -2119,18 +2118,14 @@ class ExoplayerView :
 
         hideSystemBars()
 
-        val useAdditionalCodec = PrefManager.getVal<Boolean>(PrefName.UseAdditionalCodec)
-        val useHardwareDecoding = PrefManager.getVal<Boolean>(PrefName.HardwareDecoding)
-        val useExtensionDecoder = useAdditionalCodec || useHardwareDecoding
-        val decoder =
-            if (useExtensionDecoder) {
-                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-            } else {
-                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
-            }
+        val decodingMode = PrefManager.getVal<Int>(PrefName.DecodingMode) // 0=Hardware, 1=Software
+        val decoderMode = when (decodingMode) {
+            1 -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON   // Software only (FFmpeg)
+            else -> DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF // Hardware only (MediaCodec)
+        }
         val nextRenderersFactory = NextRenderersFactory(this)
-            .setEnableDecoderFallback(true)
-            .setExtensionRendererMode(decoder)
+            .setEnableDecoderFallback(false)
+            .setExtensionRendererMode(decoderMode)
         val handler = assHandler!!
         Logger.log("Libass: Calling nextRenderersFactory.withAssSupport()")
         val renderersFactory = nextRenderersFactory.withAssSupport(handler)

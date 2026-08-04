@@ -1,0 +1,6 @@
+tree 85d91e1c0319768e06d8c44f17d3d09245325fa6
+parent c953ca5b0cc9caa72d808429249275de8f7dde8e
+author Midnight Builder <builder@midnight.app> 1783274159 +0300
+committer Midnight Builder <builder@midnight.app> 1783274159 +0300
+
+fix: nullable navPillBg and !PrefManager type inference

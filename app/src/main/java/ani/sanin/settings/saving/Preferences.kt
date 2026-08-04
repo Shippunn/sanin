@@ -267,8 +267,9 @@ enum class PrefName(val data: Pref) {
     PreferDub(Pref(Location.General, Boolean::class, false)),
 
     AutoHideTimeout(Pref(Location.Player, Int::class, 5)),
-    BufferSize(Pref(Location.Player, Int::class, 32)),
-    HardwareDecoding(Pref(Location.Player, Boolean::class, true)),
+    BufferSize(Pref(Location.Player, Int::class, 64)),
+    DecodingMode(Pref(Location.Player, Int::class, 0)), // 0=Hardware, 1=Software
+    SubtitleRenderMode(Pref(Location.Player, Int::class, 0)), // 0=Canvas (TV), 1=OpenGL (Phone)
 
     GestureSliders(Pref(Location.Player, Boolean::class, true)),
     DpadEpisodeSkip(Pref(Location.Player, Boolean::class, true)),

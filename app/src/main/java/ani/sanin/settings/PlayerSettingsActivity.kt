@@ -145,7 +145,8 @@ class PlayerSettingsActivity :
             binding.playerSettingsFastForward,
             binding.playerSettingsDpadEpisodeSkip,
             binding.playerSettingsPiP,
-            binding.playerSettingsAdditionalCodec,
+            binding.playerDecodingMode,
+            binding.playerSubtitleRenderMode,
             binding.playerBlurUnwatched,
             binding.playerGreyWatched,
             binding.exoSkip,
@@ -359,10 +360,34 @@ class PlayerSettingsActivity :
             }
         }
 
-        binding.playerSettingsAdditionalCodec.isChecked =
-            PrefManager.getVal(PrefName.UseAdditionalCodec)
-        binding.playerSettingsAdditionalCodec.setOnCheckedChangeListener { _, isChecked ->
-            PrefManager.setVal(PrefName.UseAdditionalCodec, isChecked)
+        // Decoding Mode
+        binding.playerDecodingMode.setOnClickListener {
+            customAlertDialog().apply {
+                setTitle("Decoding Mode")
+                val values = arrayOf("Hardware (MediaCodec)", "Software (FFmpeg)")
+                singleChoiceItems(
+                    values,
+                    PrefManager.getVal<Int>(PrefName.DecodingMode)
+                ) { index ->
+                    PrefManager.setVal(PrefName.DecodingMode, index)
+                }
+                show()
+            }
+        }
+
+        // Subtitle Render Mode
+        binding.playerSubtitleRenderMode.setOnClickListener {
+            customAlertDialog().apply {
+                setTitle("Subtitle Render Mode")
+                val values = arrayOf("Canvas (TV default)", "OpenGL (Phone default)")
+                singleChoiceItems(
+                    values,
+                    PrefManager.getVal<Int>(PrefName.SubtitleRenderMode)
+                ) { index ->
+                    PrefManager.setVal(PrefName.SubtitleRenderMode, index)
+                }
+                show()
+            }
         }
 
         val resizeModes = arrayOf("Original", "Zoom", "Stretch")

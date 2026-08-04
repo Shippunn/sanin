@@ -136,13 +136,41 @@ class SettingsAnimeActivity : AppCompatActivity() {
                         }
                     ),
                     Settings(
-                        type = 2,
-                        name = "Hardware Decoding",
-                        desc = "Use hardware video decoder",
+                        type = 1,
+                        name = "Decoding Mode",
+                        desc = "Choose video decoder (restart player to apply)",
                         icon = R.drawable.ic_round_brightness_high_24,
-                        isChecked = PrefManager.getVal(PrefName.HardwareDecoding),
-                        switch = { isChecked, _ ->
-                            PrefManager.setVal(PrefName.HardwareDecoding, isChecked)
+                        onClick = {
+                            context.customAlertDialog().apply {
+                                setTitle("Decoding Mode")
+                                val values = arrayOf("Hardware (MediaCodec)", "Software (FFmpeg)")
+                                singleChoiceItems(
+                                    values,
+                                    PrefManager.getVal<Int>(PrefName.DecodingMode)
+                                ) { index ->
+                                    PrefManager.setVal(PrefName.DecodingMode, index)
+                                }
+                                show()
+                            }
+                        }
+                    ),
+                    Settings(
+                        type = 1,
+                        name = "Subtitle Render Mode",
+                        desc = "Canvas=CPU (better for TV), OpenGL=GPU (better for phone)",
+                        icon = R.drawable.ic_round_text_fields_24,
+                        onClick = {
+                            context.customAlertDialog().apply {
+                                setTitle("Subtitle Render Mode")
+                                val values = arrayOf("Canvas (TV default)", "OpenGL (Phone default)")
+                                singleChoiceItems(
+                                    values,
+                                    PrefManager.getVal<Int>(PrefName.SubtitleRenderMode)
+                                ) { index ->
+                                    PrefManager.setVal(PrefName.SubtitleRenderMode, index)
+                                }
+                                show()
+                            }
                         }
                     ),
                     Settings(
