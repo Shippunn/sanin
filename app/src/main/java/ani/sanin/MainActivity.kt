@@ -356,42 +356,13 @@ class MainActivity : AppCompatActivity() {
                 )
             }
             // Focus: each icon gets its own border
-            FocusEffectUtil.applyFocusListener(binding.mainRandomContainer)
             FocusEffectUtil.applyFocusListener(binding.mainCalendarContainer)
             FocusEffectUtil.applyFocusListener(binding.mainUserAvatarContainer)
-            // Random button: pick a random popular anime
-            binding.mainRandomContainer.setOnClickListener {
-                lifecycleScope.launch {
-                    withContext(Dispatchers.IO) {
-                        try {
-                            val page = (1..5).random()
-                            val query = """{ Page(page: $page, perPage: 50, sort: SCORE_DESC) { media(type: ANIME, sort: SCORE_DESC) { id title { english romaji userPreferred } format episodes nextAiringEpisode { episode } meanScore isFavourite } } }"""
-                            val response = Anilist.executeQuery<ani.sanin.connections.anilist.api.Query.Page>(query, show = true)
-                            val mediaList = response?.data?.page?.media ?: emptyList()
-                            if (mediaList.isNotEmpty()) {
-                                val random = mediaList.random()
-                                withContext(Dispatchers.Main) {
-                                    val intent = Intent(this@MainActivity, ani.sanin.media.MediaDetailsActivity::class.java)
-                                    intent.putExtra("mediaId", random.id)
-                                    intent.putExtra("title", random.title?.userPreferred ?: random.title?.romaji ?: "")
-                                    startActivity(intent)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                snackString("Something went wrong")
-                            }
-                        }
-                    }
-                }
-            }
-            // Focus chain: random ↔ calendar ↔ avatar
-            binding.mainRandomContainer.nextFocusLeftId = R.id.mainUserAvatarContainer
-            binding.mainRandomContainer.nextFocusRightId = R.id.mainCalendarContainer
-            binding.mainCalendarContainer.nextFocusLeftId = R.id.mainRandomContainer
+            // Focus chain: calendar ↔ avatar
+            binding.mainCalendarContainer.nextFocusLeftId = R.id.mainUserAvatarContainer
             binding.mainCalendarContainer.nextFocusRightId = R.id.mainUserAvatarContainer
             binding.mainUserAvatarContainer.nextFocusLeftId = R.id.mainCalendarContainer
-            binding.mainUserAvatarContainer.nextFocusRightId = R.id.mainRandomContainer
+            binding.mainUserAvatarContainer.nextFocusRightId = R.id.mainCalendarContainer
 
             // Observe tab changes
             lifecycleScope.launch {

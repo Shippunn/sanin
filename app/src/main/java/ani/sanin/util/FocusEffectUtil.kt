@@ -172,8 +172,7 @@ object FocusEffectUtil {
         if (v is ImageButton) return true
         val id = v.id
         return id == R.id.mainCalendarContainer ||
-                id == R.id.mainUserAvatarContainer ||
-                id == R.id.mainRandomContainer
+                id == R.id.mainUserAvatarContainer
     }
 
     private fun applyFocusGain(v: View) {

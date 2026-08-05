@@ -31,9 +31,6 @@
         android:layout_height="48dp"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="16dp"
-        android:focusable="true"
-        android:focusableInTouchMode="false"
-        android:nextFocusDown="@id/animePageScrollTop"
         app:cardBackgroundColor="?android:colorBackground"
         app:cardCornerRadius="24dp"
         app:contentPadding="12dp">

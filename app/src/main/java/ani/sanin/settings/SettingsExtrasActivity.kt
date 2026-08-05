@@ -114,11 +114,7 @@ class SettingsExtrasActivity : AppCompatActivity() {
                     setPadding(0, 32, 0, 0)
                     clipToPadding = false
                 }
-                val adapter = HomeLayoutAdapter(displayList, views, currentVisibility) { fromPos, toPos ->
-                    val item = displayList.removeAt(fromPos)
-                    displayList.add(toPos, item)
-                    recyclerView.adapter?.notifyItemMoved(fromPos, toPos)
-                }
+                val adapter = HomeLayoutAdapter(displayList, views, currentVisibility)
                 recyclerView.adapter = adapter
 
                 val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
@@ -188,8 +184,7 @@ class SettingsExtrasActivity : AppCompatActivity() {
     inner class HomeLayoutAdapter(
         private val displayList: MutableList<Int>,
         private val views: Array<String>,
-        private val currentVisibility: MutableList<Boolean>,
-        private val onMove: (Int, Int) -> Unit
+        private val currentVisibility: MutableList<Boolean>
     ) : RecyclerView.Adapter<HomeLayoutAdapter.ViewHolder>() {
 
         inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -218,30 +213,6 @@ class SettingsExtrasActivity : AppCompatActivity() {
             } else {
                 holder.dragHandle.visibility = View.VISIBLE
             }
-
-            holder.itemView.setOnKeyListener { _, keyCode, event ->
-                if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                    when (keyCode) {
-                        android.view.KeyEvent.KEYCODE_DPAD_UP -> {
-                            val pos = holder.bindingAdapterPosition
-                            if (pos > 0) {
-                                onMove(pos, pos - 1)
-                                true
-                            } else false
-                        }
-                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                            val pos = holder.bindingAdapterPosition
-                            if (pos < displayList.size - 1) {
-                                onMove(pos, pos + 1)
-                                true
-                            } else false
-                        }
-                        else -> false
-                    }
-                } else false
-            }
-            holder.itemView.isFocusable = true
-            holder.itemView.isFocusableInTouchMode = true
         }
 
         override fun getItemCount(): Int = displayList.size
