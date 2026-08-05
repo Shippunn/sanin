@@ -50,6 +50,19 @@
             app:icon="@drawable/ic_anilist"
             app:iconTint="?attr/colorOnPrimaryContainer" />
 
+        <Button
+            android:id="@+id/loginQrButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="200dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/poppins_bold"
+            android:text="QR Code (Recommended for TV)"
+            android:textSize="11sp"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_qr_code_24"
+            app:iconGravity="textStart" />
+
         <LinearLayout
             android:id="@+id/loginTokenInput"
             android:layout_width="280dp"

@@ -1,5 +1,6 @@
 package ani.sanin.home
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -12,6 +13,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
+import ani.sanin.databinding.DialogQrLoginBinding
 import ani.sanin.databinding.DialogUserAgentBinding
 import ani.sanin.databinding.FragmentLoginBinding
 import ani.sanin.loadImage
@@ -21,6 +23,7 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.settings.saving.internal.PreferenceKeystore
 import ani.sanin.settings.saving.internal.PreferencePackager
 import ani.sanin.toast
+import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.Logger
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
@@ -51,6 +54,10 @@ class LoginFragment : Fragment() {
         binding.loginDiscord.setOnClickListener { openLinkInBrowser(getString(R.string.discord)) }
         binding.loginGithub.setOnClickListener { openLinkInBrowser(getString(R.string.github)) }
         binding.loginTelegram.setOnClickListener { openLinkInBrowser(getString(R.string.telegram)) }
+
+        binding.loginQrButton.setOnClickListener {
+            showQrLoginDialog()
+        }
 
         binding.loginTokenSubmit.setOnClickListener {
             val token = binding.loginTokenEditText.text?.toString()?.trim()
@@ -154,6 +161,45 @@ class LoginFragment : Fragment() {
         val intent = Intent(requireActivity(), requireActivity().javaClass)
         requireActivity().finish()
         startActivity(intent)
+    }
+
+    private fun showQrLoginDialog() {
+        val dialogBinding = DialogQrLoginBinding.inflate(layoutInflater)
+
+        val dialog = requireContext().customAlertDialog().apply {
+            setTitle("Sign in with AniList")
+            setCustomView(dialogBinding.root)
+            setCancelable(true)
+            setOnCancelListener { }
+            attach { alertDialog ->
+                alertDialog.window?.apply {
+                    setDimAmount(0.8f)
+                }
+            }
+        }
+
+        dialogBinding.qrRefreshButton.setOnClickListener {
+            // Phase 2: Refresh QR code
+        }
+
+        dialogBinding.qrCancelButton.setOnClickListener {
+            // Dialog closes automatically via setNegButton
+        }
+
+        dialog.setNegButton(R.string.cancel)
+        dialog.show()
+
+        // Set up D-pad focus chain
+        dialogBinding.qrCodePlaceholder.requestFocus()
+        FocusEffectUtil.applyFocusListener(dialogBinding.qrCodePlaceholder)
+        FocusEffectUtil.applyFocusListener(dialogBinding.qrRefreshButton)
+        FocusEffectUtil.applyFocusListener(dialogBinding.qrCancelButton)
+
+        // Focus chain for QR dialog
+        dialogBinding.qrCodePlaceholder.nextFocusDownId = R.id.qrRefreshButton
+        dialogBinding.qrRefreshButton.nextFocusUpId = R.id.qrCodePlaceholder
+        dialogBinding.qrRefreshButton.nextFocusDownId = R.id.qrCancelButton
+        dialogBinding.qrCancelButton.nextFocusUpId = R.id.qrRefreshButton
     }
 
     override fun onDestroyView() {
