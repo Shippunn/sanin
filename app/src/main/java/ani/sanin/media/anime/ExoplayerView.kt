@@ -164,7 +164,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.google.android.material.slider.Slider
 import com.lagradost.nicehttp.ignoreAllSSLErrors
 import io.github.peerless2012.ass.media.AssHandler
@@ -3971,7 +3970,6 @@ private class EpisodeRailViewHolder(val card: CardView) : ViewHolder(card) {
         val url = ep.thumb?.url?.takeIf { it.isNotEmpty() }
         if (url != null) {
             Glide.with(card).load(url)
-                .transition(DrawableTransitionOptions.withCrossFade())
                 .into(thumb)
         } else {
             thumb.setImageResource(android.R.color.transparent)

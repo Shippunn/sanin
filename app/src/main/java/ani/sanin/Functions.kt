@@ -113,7 +113,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
@@ -719,11 +718,11 @@ fun ImageView.loadImage(file: FileUrl?, size: Int = 0) {
     if (file?.url?.isNotEmpty() == true) {
         tryWith {
             if (file.url.startsWith("content://")) {
-                Glide.with(this.context).load(file.url.toUri()).transition(withCrossFade())
+                Glide.with(this.context).load(file.url.toUri())
                     .override(size).into(this)
             } else {
                 val glideUrl = GlideUrl(file.url) { file.headers }
-                Glide.with(this.context).load(glideUrl).transition(withCrossFade()).override(size)
+                Glide.with(this.context).load(glideUrl).override(size)
                     .error(R.drawable.ic_round_person_24).into(this)
             }
         }
@@ -735,11 +734,11 @@ fun ImageView.loadImage(file: FileUrl?, width: Int = 0, height: Int = 0) {
     if (file?.url?.isNotEmpty() == true) {
         tryWith {
             if (file.url.startsWith("content://")) {
-                Glide.with(this.context).load(file.url.toUri()).transition(withCrossFade())
+                Glide.with(this.context).load(file.url.toUri())
                     .override(width, height).into(this)
             } else {
                 val glideUrl = GlideUrl(file.url) { file.headers }
-                Glide.with(this.context).load(glideUrl).transition(withCrossFade())
+                Glide.with(this.context).load(glideUrl)
                     .override(width, height)
                     .into(this)
             }
@@ -751,7 +750,7 @@ fun ImageView.loadImage(file: FileUrl?, width: Int = 0, height: Int = 0) {
 fun ImageView.loadLocalImage(file: File?, size: Int = 0) {
     if (file?.exists() == true) {
         tryWith {
-            Glide.with(this.context).load(file).transition(withCrossFade()).override(size)
+            Glide.with(this.context).load(file).override(size)
                 .into(this)
         }
     }
