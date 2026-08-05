@@ -361,6 +361,10 @@ class MainActivity : AppCompatActivity() {
             FocusEffectUtil.applyFocusListener(binding.mainUserAvatarContainer)
             // Random button: pick a random recommended anime
             binding.mainRandomContainer.setOnClickListener {
+                if (Anilist.token == null) {
+                    snackString("Login to AniList to use random")
+                    return@setOnClickListener
+                }
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
                         try {
