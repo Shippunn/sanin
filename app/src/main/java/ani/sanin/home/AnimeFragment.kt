@@ -135,10 +135,6 @@ class AnimeFragment : Fragment() {
             binding.animePageRecyclerView.smoothScrollToPosition(0)
         }
 
-        binding.animeExtensionBtn.setOnClickListener {
-            ani.sanin.parsers.ExtensionToggleBottomSheet().show(childFragmentManager, "extension_toggle")
-        }
-
         var oldIncludeList = true
 
         animePageAdapter.onIncludeListClick = { checked ->

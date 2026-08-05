@@ -359,20 +359,17 @@ class MainActivity : AppCompatActivity() {
             FocusEffectUtil.applyFocusListener(binding.mainRandomContainer)
             FocusEffectUtil.applyFocusListener(binding.mainCalendarContainer)
             FocusEffectUtil.applyFocusListener(binding.mainUserAvatarContainer)
-            // Random button: pick a random recommended anime
+            // Random button: pick a random popular anime
             binding.mainRandomContainer.setOnClickListener {
-                if (Anilist.token == null) {
-                    snackString("Login to AniList to use random")
-                    return@setOnClickListener
-                }
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
                         try {
-                            val query = """{ Page(page: 1, perPage: 50) { recommendations(sort: RATING_DESC, onList: true) { rating mediaRecommendation { id title { english romaji userPreferred } format episodes nextAiringEpisode { episode } meanScore isFavourite } } } }"""
-                            val response = Anilist.executeQuery<ani.sanin.connections.anilist.api.Query.HomePageMedia>(query, show = true)
-                            val recommendations = response?.data?.recommendationQuery?.recommendations?.mapNotNull { it.mediaRecommendation } ?: emptyList()
-                            if (recommendations.isNotEmpty()) {
-                                val random = recommendations.random()
+                            val page = (1..5).random()
+                            val query = """{ Page(page: $page, perPage: 50, sort: SCORE_DESC) { media(type: ANIME, sort: SCORE_DESC) { id title { english romaji userPreferred } format episodes nextAiringEpisode { episode } meanScore isFavourite } } }"""
+                            val response = Anilist.executeQuery<ani.sanin.connections.anilist.api.Query.Page>(query, show = true)
+                            val mediaList = response?.data?.page?.media ?: emptyList()
+                            if (mediaList.isNotEmpty()) {
+                                val random = mediaList.random()
                                 withContext(Dispatchers.Main) {
                                     val intent = Intent(this@MainActivity, ani.sanin.media.MediaDetailsActivity::class.java)
                                     intent.putExtra("mediaId", random.id)
@@ -382,7 +379,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                snackString("No recommendations available")
+                                snackString("Something went wrong")
                             }
                         }
                     }
