@@ -31,7 +31,9 @@ object AnimeSources : WatchSources() {
 
     override val displayNames: List<String> get() {
         val all = list
+        val enabledExtensions = PrefManager.getVal<Set<String>>(PrefName.EnabledExtensions)
         val extNames = all.filter { it.name !in nativeNames && it.name != "Local" }
+            .filter { enabledExtensions.isEmpty() || it.name in enabledExtensions }
             .map { it.name }
         return buildList {
             if (nativeNames.isNotEmpty()) add("─── Built-in ───")

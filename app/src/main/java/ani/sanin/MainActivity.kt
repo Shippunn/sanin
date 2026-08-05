@@ -356,13 +356,41 @@ class MainActivity : AppCompatActivity() {
                 )
             }
             // Focus: each icon gets its own border
+            FocusEffectUtil.applyFocusListener(binding.mainRandomContainer)
             FocusEffectUtil.applyFocusListener(binding.mainCalendarContainer)
             FocusEffectUtil.applyFocusListener(binding.mainUserAvatarContainer)
-            // Focus chain: calendar ↔ avatar
-            binding.mainCalendarContainer.nextFocusLeftId = R.id.mainUserAvatarContainer
+            // Random button: pick a random recommended anime
+            binding.mainRandomContainer.setOnClickListener {
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            val query = """{ Page(page: 1, perPage: 50) { recommendations(sort: RATING_DESC, onList: true) { rating mediaRecommendation { id title { english romaji userPreferred } format episodes nextAiringEpisode { episode } meanScore isFavourite } } } }"""
+                            val response = Anilist.query.executeQuery<ani.sanin.connections.anilist.api.Query.HomePageMedia>(query, show = true)
+                            val recommendations = response?.data?.recommendationQuery?.recommendations?.mapNotNull { it.mediaRecommendation } ?: emptyList()
+                            if (recommendations.isNotEmpty()) {
+                                val random = recommendations.random()
+                                withContext(Dispatchers.Main) {
+                                    val intent = Intent(this@MainActivity, ani.sanin.media.MediaDetailsActivity::class.java)
+                                    intent.putExtra("mediaId", random.id)
+                                    intent.putExtra("title", random.title?.userPreferred ?: random.title?.romaji ?: "")
+                                    startActivity(intent)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                snackString("No recommendations available")
+                            }
+                        }
+                    }
+                }
+            }
+            // Focus chain: random ↔ calendar ↔ avatar
+            binding.mainRandomContainer.nextFocusLeftId = R.id.mainUserAvatarContainer
+            binding.mainRandomContainer.nextFocusRightId = R.id.mainCalendarContainer
+            binding.mainCalendarContainer.nextFocusLeftId = R.id.mainRandomContainer
             binding.mainCalendarContainer.nextFocusRightId = R.id.mainUserAvatarContainer
             binding.mainUserAvatarContainer.nextFocusLeftId = R.id.mainCalendarContainer
-            binding.mainUserAvatarContainer.nextFocusRightId = R.id.mainCalendarContainer
+            binding.mainUserAvatarContainer.nextFocusRightId = R.id.mainRandomContainer
 
             // Observe tab changes
             lifecycleScope.launch {
