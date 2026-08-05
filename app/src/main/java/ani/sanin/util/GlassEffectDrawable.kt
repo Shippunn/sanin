@@ -126,17 +126,13 @@ class GlassEffectDrawable(
     }
 
     private fun invalidateEffects() {
-        effectsCache?.recycle()
         effectsCache = null
         invalidateSelf()
     }
 
     fun invalidateCache() {
-        backdropCache?.recycle()
         backdropCache = null
-        blurCache?.recycle()
         blurCache = null
-        effectsCache?.recycle()
         effectsCache = null
     }
 
@@ -320,7 +316,6 @@ class GlassEffectDrawable(
             root.draw(c)
         } catch (e: Exception) {
             isCapturing = false
-            bitmap.recycle()
             return
         }
         isCapturing = false
