@@ -90,7 +90,6 @@ class SettingsExtrasActivity : AppCompatActivity() {
                 val currentVisibility = PrefManager.getVal<List<Boolean>>(PrefName.HomeLayout).toMutableList()
                 var currentOrder = PrefManager.getVal<List<Int>>(PrefName.HomeLayoutOrder).toMutableList()
                 val views = resources.getStringArray(R.array.home_layouts)
-                val fixedIndex = 7
 
                 if (currentVisibility.size < views.size) {
                     repeat(views.size - currentVisibility.size) { currentVisibility.add(true) }
@@ -98,18 +97,17 @@ class SettingsExtrasActivity : AppCompatActivity() {
                     currentVisibility.subList(views.size, currentVisibility.size).clear()
                 }
 
-                val reorderable = views.indices.filter { it != fixedIndex }
+                val allIndices = views.indices.toList()
                 if (currentOrder.isEmpty()) {
-                    currentOrder = reorderable.toMutableList()
+                    currentOrder = allIndices.toMutableList()
                 } else {
-                    val sanitizedOrder = currentOrder.filter { it in reorderable }.distinct().toMutableList()
-                    val missing = reorderable.filterNot { it in sanitizedOrder }
+                    val sanitizedOrder = currentOrder.filter { it in allIndices }.distinct().toMutableList()
+                    val missing = allIndices.filterNot { it in sanitizedOrder }
                     sanitizedOrder.addAll(missing)
                     currentOrder = sanitizedOrder
                 }
 
-                val displayList = mutableListOf(fixedIndex)
-                displayList.addAll(currentOrder.filter { it != fixedIndex })
+                val displayList = currentOrder.toMutableList()
 
                 val recyclerView = RecyclerView(this@SettingsExtrasActivity).apply {
                     layoutManager = LinearLayoutManager(this@SettingsExtrasActivity)
@@ -129,8 +127,6 @@ class SettingsExtrasActivity : AppCompatActivity() {
                     ): Boolean {
                         val fromPos = viewHolder.bindingAdapterPosition
                         val toPos = target.bindingAdapterPosition
-
-                        if (fromPos == 0 || toPos == 0) return false
 
                         val item = displayList.removeAt(fromPos)
                         displayList.add(toPos, item)
