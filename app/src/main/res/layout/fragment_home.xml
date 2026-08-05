@@ -93,6 +93,13 @@
                         android:contentDescription="@null"
                         android:scaleType="centerCrop" />
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="80dp"
+                        android:layout_gravity="top"
+                        android:background="@drawable/gradient_top_banner"
+                        android:importantForAccessibility="no" />
+
                     <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="120dp"
