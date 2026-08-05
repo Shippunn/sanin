@@ -192,7 +192,7 @@ class SettingsCommonActivity : AppCompatActivity() {
                                 val adapter = HomeLayoutAdapter(displayList, views, currentVisibility) { fromPos, toPos ->
                                     val item = displayList.removeAt(fromPos)
                                     displayList.add(toPos, item)
-                                    adapter.notifyItemMoved(fromPos, toPos)
+                                    recyclerView.adapter?.notifyItemMoved(fromPos, toPos)
                                 }
                                 recyclerView.adapter = adapter
 
