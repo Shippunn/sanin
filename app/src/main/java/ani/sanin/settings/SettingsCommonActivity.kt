@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -18,7 +19,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.documentfile.provider.DocumentFile
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.materialswitch.MaterialSwitch
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
 import ani.sanin.databinding.ActivitySettingsCommonBinding
@@ -151,6 +155,92 @@ class SettingsCommonActivity : AppCompatActivity() {
             settingsRecyclerView.adapter =
                 SettingsAdapter(
                     arrayListOf(
+                        Settings(
+                            type = 1,
+                            name = "Home Sections",
+                            desc = "Reorder, show or hide home sections",
+                            icon = R.drawable.ic_round_home_24,
+                            onClick = {
+                                val currentVisibility = PrefManager.getVal<List<Boolean>>(PrefName.HomeLayout).toMutableList()
+                                var currentOrder = PrefManager.getVal<List<Int>>(PrefName.HomeLayoutOrder).toMutableList()
+                                val views = resources.getStringArray(R.array.home_layouts)
+                                val fixedIndex = 7
+
+                                if (currentVisibility.size < views.size) {
+                                    repeat(views.size - currentVisibility.size) { currentVisibility.add(true) }
+                                } else if (currentVisibility.size > views.size) {
+                                    currentVisibility.subList(views.size, currentVisibility.size).clear()
+                                }
+
+                                val reorderable = views.indices.filter { it != fixedIndex }
+                                if (currentOrder.isEmpty()) {
+                                    currentOrder = reorderable.toMutableList()
+                                } else {
+                                    val sanitizedOrder = currentOrder.filter { it in reorderable }.distinct().toMutableList()
+                                    val missing = reorderable.filterNot { it in sanitizedOrder }
+                                    sanitizedOrder.addAll(missing)
+                                    currentOrder = sanitizedOrder
+                                }
+
+                                val displayList = mutableListOf(fixedIndex)
+                                displayList.addAll(currentOrder.filter { it != fixedIndex })
+
+                                val recyclerView = RecyclerView(this@SettingsCommonActivity).apply {
+                                    layoutManager = LinearLayoutManager(this@SettingsCommonActivity)
+                                    setPadding(0, 32, 0, 0)
+                                    clipToPadding = false
+                                }
+                                val adapter = HomeLayoutAdapter(displayList, views, currentVisibility)
+                                recyclerView.adapter = adapter
+
+                                val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+                                    ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
+                                ) {
+                                    override fun onMove(
+                                        recyclerView: RecyclerView,
+                                        viewHolder: RecyclerView.ViewHolder,
+                                        target: RecyclerView.ViewHolder
+                                    ): Boolean {
+                                        val fromPos = viewHolder.bindingAdapterPosition
+                                        val toPos = target.bindingAdapterPosition
+
+                                        if (fromPos == 0 || toPos == 0) return false
+
+                                        val item = displayList.removeAt(fromPos)
+                                        displayList.add(toPos, item)
+                                        adapter.notifyItemMoved(fromPos, toPos)
+                                        return true
+                                    }
+
+                                    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+                                    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                                        super.clearView(recyclerView, viewHolder)
+                                        viewHolder.itemView.elevation = 0f
+                                    }
+
+                                    override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                                        super.onSelectedChanged(viewHolder, actionState)
+                                        if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
+                                            viewHolder?.itemView?.elevation = 8f
+                                        }
+                                    }
+                                })
+                                itemTouchHelper.attachToRecyclerView(recyclerView)
+
+                                customAlertDialog().apply {
+                                    setTitle("Home Sections")
+                                    setCustomView(recyclerView)
+                                    setPosButton(R.string.ok) {
+                                        PrefManager.setVal(PrefName.HomeLayout, currentVisibility)
+                                        PrefManager.setVal(PrefName.HomeLayoutOrder, displayList.drop(1))
+                                        restartApp()
+                                    }
+                                    setNegButton(R.string.cancel, null)
+                                    show()
+                                }
+                            },
+                        ),
                         Settings(
                             type = 1,
                             name = "Server Load Timeout",
@@ -465,5 +555,34 @@ class SettingsCommonActivity : AppCompatActivity() {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             handleOkAction()
         }
+    }
+
+    inner class HomeLayoutAdapter(
+        private val items: MutableList<Int>,
+        private val views: Array<String>,
+        private val visibility: MutableList<Boolean>,
+    ) : RecyclerView.Adapter<HomeLayoutAdapter.ViewHolder>() {
+
+        inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val dragHandle: ImageView = view.findViewById(R.id.itemHomeLayoutDragHandle)
+            val title: TextView = view.findViewById(R.id.itemHomeLayoutTitle)
+            val switch: MaterialSwitch = view.findViewById(R.id.itemHomeLayoutSwitch)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_home_layout, parent, false)
+            return ViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val idx = items[position]
+            holder.title.text = views[idx]
+            holder.switch.isChecked = visibility[idx]
+            holder.switch.setOnCheckedChangeListener { _, isChecked ->
+                visibility[idx] = isChecked
+            }
+        }
+
+        override fun getItemCount(): Int = items.size
     }
 }
