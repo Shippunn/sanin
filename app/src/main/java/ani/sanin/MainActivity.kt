@@ -365,7 +365,7 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.IO) {
                         try {
                             val query = """{ Page(page: 1, perPage: 50) { recommendations(sort: RATING_DESC, onList: true) { rating mediaRecommendation { id title { english romaji userPreferred } format episodes nextAiringEpisode { episode } meanScore isFavourite } } } }"""
-                            val response = Anilist.query.executeQuery<ani.sanin.connections.anilist.api.Query.HomePageMedia>(query, show = true)
+                            val response = Anilist.executeQuery<ani.sanin.connections.anilist.api.Query.HomePageMedia>(query, show = true)
                             val recommendations = response?.data?.recommendationQuery?.recommendations?.mapNotNull { it.mediaRecommendation } ?: emptyList()
                             if (recommendations.isNotEmpty()) {
                                 val random = recommendations.random()

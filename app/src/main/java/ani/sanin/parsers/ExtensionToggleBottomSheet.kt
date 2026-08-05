@@ -1,6 +1,7 @@
 package ani.sanin.parsers
 
 import android.app.Dialog
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -81,10 +82,10 @@ class ExtensionToggleBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return BottomSheetDialog(requireContext(), R.style.ThemeOverlay.Material3.BottomSheetDialog)
+        return BottomSheetDialog(requireContext())
     }
 
-    private data class ExtItem(val id: String, val name: String, val icon: android.graphics.Bitmap?)
+    private data class ExtItem(val id: String, val name: String, val icon: Drawable?)
 
     private class ExtensionAdapter(
         private val items: List<ExtItem>,
@@ -108,7 +109,7 @@ class ExtensionToggleBottomSheet : BottomSheetDialogFragment() {
             holder.name.text = item.name
             holder.switch.isChecked = item.id in enabledNames
             if (item.icon != null) {
-                holder.icon.setImageBitmap(item.icon)
+                holder.icon.setImageDrawable(item.icon)
             }
             holder.switch.setOnCheckedChangeListener { _, isChecked ->
                 onToggle(item.id, isChecked)
