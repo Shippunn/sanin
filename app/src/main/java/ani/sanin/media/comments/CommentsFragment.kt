@@ -346,11 +346,7 @@ class CommentsFragment : Fragment() {
                 Logger.log(Log.ERROR, "Comments: Trakt comments failed: ${e.message}")
             }
         }
-        try {
-            loadSaninComments()
-        } catch (e: Exception) {
-            Logger.log(Log.ERROR, "Comments: Sanin comments failed, showing Trakt only: ${e.message}")
-        }
+        loadSaninComments()
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
@@ -374,6 +370,7 @@ class CommentsFragment : Fragment() {
             Logger.log("Comments: Sanin fetched ${comments?.comments?.size ?: 0} comments (totalPages=${comments?.totalPages})")
         } catch (e: Exception) {
             Logger.log(Log.ERROR, "Comments: Sanin fetch FAILED: ${e.message}")
+            throw e
         }
     }
 
