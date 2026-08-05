@@ -52,7 +52,6 @@ class LoginFragment : Fragment() {
         binding.loginGithub.setOnClickListener { openLinkInBrowser(getString(R.string.github)) }
         binding.loginTelegram.setOnClickListener { openLinkInBrowser(getString(R.string.telegram)) }
 
-        binding.loginQrButton.visibility = View.GONE
         binding.loginTokenSubmit.setOnClickListener {
             val token = binding.loginTokenEditText.text?.toString()?.trim()
             if (!token.isNullOrBlank()) {

@@ -166,7 +166,6 @@ dependencies {
     implementation(libs.dialogs)
     implementation(libs.charts)
     implementation(libs.lottie)
-    implementation(libs.zxing)
 
     implementation(libs.bundles.markwon)
     implementation(libs.bundles.groupie)
