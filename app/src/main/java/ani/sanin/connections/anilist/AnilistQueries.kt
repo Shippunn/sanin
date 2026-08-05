@@ -680,14 +680,14 @@ class AnilistQueries {
                 )
             }"""
         )
-        if (toShow.getOrNull(3) == true) {
+        if (toShow.getOrNull(4) == true) {
             queries.add("""recommendationQuery: ${recommendationQuery()}""")
         }
-        if (toShow.getOrNull(5) == true) {
+        if (toShow.getOrNull(3) == true) {
             queries.add("""missingSequelsCompletedQuery: ${missingSequelsCompletedSourceQuery()}""")
             queries.add("""missingSequelsAllListQuery: ${missingSequelsAllListSourceQuery()}""")
         }
-        if (queries.isEmpty() && toShow.getOrNull(5) != true) {
+        if (queries.isEmpty() && toShow.getOrNull(3) != true) {
             return mutableMapOf("hidden" to arrayListOf())
         }
 
@@ -760,16 +760,6 @@ class AnilistQueries {
             response?.data?.plannedAnime?.lists?.flatMap { it.entries ?: emptyList() }?.reversed(),
             null
         )
-        if (toShow.getOrNull(3) == true) processMedia(
-            "Manga",
-            response?.data?.currentManga?.lists?.flatMap { it.entries ?: emptyList() }?.reversed(),
-            response?.data?.repeatingManga?.lists?.flatMap { it.entries ?: emptyList() }?.reversed()
-        )
-        if (toShow.getOrNull(5) == true) processMedia(
-            "MangaPlanned",
-            response?.data?.plannedManga?.lists?.flatMap { it.entries ?: emptyList() }?.reversed(),
-            null
-        )
 
         fun processFavorites(type: String, favorites: List<MediaEdge>?) {
             val returnArray = arrayListOf<Media>()
@@ -790,12 +780,8 @@ class AnilistQueries {
             "Anime",
             response?.data?.favoriteAnime?.favourites?.anime?.edges
         )
-        if (toShow.getOrNull(4) == true) processFavorites(
-            "Manga",
-            response?.data?.favoriteManga?.favourites?.manga?.edges
-        )
 
-        if (toShow.getOrNull(6) == true) {
+        if (toShow.getOrNull(4) == true) {
             val subMap = mutableMapOf<Int, Media>()
             response?.data?.recommendationQuery?.recommendations?.forEach {
                 it.mediaRecommendation?.let { json ->
@@ -810,7 +796,7 @@ class AnilistQueries {
             returnMap["recommendations"] = list
         }
 
-        if (toShow.getOrNull(8) == true) {
+        if (toShow.getOrNull(3) == true) {
             val completedEntries =
                 response?.data?.missingSequelsCompletedQuery?.lists?.flatMap { it.entries ?: emptyList() }
             val allAnimeEntries =

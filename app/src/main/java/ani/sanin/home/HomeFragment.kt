@@ -414,6 +414,28 @@ class HomeFragment : Fragment() {
             (requireActivity() as? MainActivity)?.navPillsViewModel?.setTab(2)
         }
 
+        initRecyclerView(
+            model.getRecommendation(),
+            binding.homeRecommendedContainer,
+            binding.homeRecommendedRecyclerView,
+            binding.homeRecommendedProgressBar,
+            binding.homeRecommendedEmpty,
+            binding.homeRecommended,
+            binding.homeRecommendedMore,
+            getString(R.string.recommended)
+        )
+
+        initRecyclerView(
+            model.getMissingSequels(),
+            binding.homeMissingSequelsContainer,
+            binding.homeMissingSequelsRecyclerView,
+            binding.homeMissingSequelsProgressBar,
+            binding.homeMissingSequelsEmpty,
+            binding.homeMissingSequels,
+            binding.homeMissingSequelsMore,
+            getString(R.string.missing_sequels)
+        )
+
         binding.homeHiddenItemsContainer.visibility = View.GONE
         model.getHidden().observe(viewLifecycleOwner) {
             if (it != null) {
@@ -479,6 +501,8 @@ class HomeFragment : Fragment() {
             binding.homeContinueWatchingContainer,
             binding.homeFavAnimeContainer,
             binding.homePlannedAnimeContainer,
+            binding.homeMissingSequelsContainer,
+            binding.homeRecommendedContainer,
         )
 
         var running = false

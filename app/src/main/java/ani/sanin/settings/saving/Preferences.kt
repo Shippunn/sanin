@@ -100,14 +100,14 @@ enum class PrefName(val data: Pref) {
         Pref(
             Location.UI,
             List::class,
-            listOf(true, true, true, true, false, true)
+            listOf(true, true, true, true, true)
         )
     ),
     HomeLayoutOrder(
         Pref(
             Location.UI,
             List::class,
-            listOf(0, 1, 2, 3, 4, 5)
+            listOf(0, 1, 2, 3, 4)
         )
     ),
     BannerAnimations(Pref(Location.UI, Boolean::class, true)),

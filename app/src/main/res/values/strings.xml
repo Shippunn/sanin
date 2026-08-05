@@ -327,12 +327,8 @@
         <item>Continue Watching</item>
         <item>Favourite Anime</item>
         <item>Planned Anime</item>
-        <item>Continue Reading</item>
-        <item>Favourite Manga</item>
-        <item>Planned Manga</item>
-        <item>Recommended</item>
-        <item>Social Feeds</item>
         <item>Missed Sequels</item>
+        <item>Recommended</item>
     </string-array>
 
     <string name="startUpTab">Default Start Up Tab</string>
