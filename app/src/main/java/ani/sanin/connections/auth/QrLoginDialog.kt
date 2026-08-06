@@ -210,6 +210,10 @@ class QrLoginDialog(
                         }
                     }
                 } catch (e: Exception) {
+                    // If dialog was dismissed (user pressed back), don't show error
+                    if (dialog == null || e is kotlinx.coroutines.CancellationException) {
+                        return@launch
+                    }
                     // Network error
                     cancelPolling()
                     countdownTimer?.cancel()
