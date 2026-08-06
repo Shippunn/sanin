@@ -59,6 +59,11 @@ class CommentsFragment : Fragment() {
     private var isSpoilerMode = false
 
     private var displayedComments = mutableListOf<Comment>()
+    private val anikotoCommentPool = mutableListOf<Comment>()
+    private val saninComments = mutableListOf<Comment>()
+    private var anikotoLoadDone = false
+    private var saninRevealed = false
+    private var revealInProgress = false
     private lateinit var carouselAdapter: CommentsCarouselAdapter
     private lateinit var markwon: io.noties.markwon.Markwon
 
@@ -205,6 +210,10 @@ class CommentsFragment : Fragment() {
             }
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 carouselAdapter.setFocusedPosition(lm.focusedPosition)
+                val lastVisible = lm.findLastVisibleItemPosition()
+                if (lastVisible >= carouselAdapter.itemCount - 3) {
+                    revealNextBatch()
+                }
             }
         })
 
@@ -316,20 +325,26 @@ class CommentsFragment : Fragment() {
         binding.commentsList.visibility = View.GONE
         binding.commentsOfflineText.visibility = View.GONE
         displayedComments.clear()
+        anikotoCommentPool.clear()
+        saninComments.clear()
+        anikotoLoadDone = false
+        saninRevealed = false
         pagesLoaded = 1
 
         val hasAnikoto = PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1
+        anikotoLoadDone = !hasAnikoto
         Logger.log("Comments: loading comments for media $mediaId (anikoto=$hasAnikoto)")
 
         coroutineScope {
             val jobs = mutableListOf<Job>()
             if (hasAnikoto) {
-                jobs += launch { loadProvider("Anikoto") { loadAnikotoComments() } }
+                jobs += launch { loadAnikotoComments() }
             }
             jobs += launch { loadProvider("Sanin") { loadSaninComments() } }
             jobs.forEach { it.join() }
         }
 
+        revealNextBatch()
         renderComments()
     }
 
@@ -347,15 +362,43 @@ class CommentsFragment : Fragment() {
     }
 
     private fun renderComments() {
-        val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
-        displayedComments.clear()
-        displayedComments.addAll(merged)
         Logger.log("Comments: rendered ${displayedComments.size} comments")
-
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
         binding.commentsList.visibility = View.VISIBLE
         if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
+    }
+
+    /** Reveals up to 15 comments per call so TV rendering stays smooth. */
+    private fun revealNextBatch() {
+        if (revealInProgress) return
+        revealInProgress = true
+        try {
+            var added = false
+            var count = 0
+            while (count < REVEAL_BATCH_SIZE && anikotoCommentPool.isNotEmpty()) {
+                displayedComments.add(anikotoCommentPool.removeAt(0))
+                count++
+                added = true
+            }
+            if (count < REVEAL_BATCH_SIZE && anikotoCommentPool.isEmpty() && anikotoLoadDone &&
+                !saninRevealed && saninComments.isNotEmpty()
+            ) {
+                val batch = saninComments.take(REVEAL_BATCH_SIZE - count)
+                saninComments.removeAll(batch)
+                displayedComments.addAll(batch)
+                added = true
+                if (saninComments.isEmpty()) saninRevealed = true
+            }
+            if (added) {
+                carouselAdapter.submitList(displayedComments.toList())
+                binding.commentsProgressBar.visibility = View.GONE
+                binding.commentsList.visibility = View.VISIBLE
+                if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
+            }
+        } finally {
+            revealInProgress = false
+        }
     }
 
     private suspend fun loadSaninComments() {
@@ -365,9 +408,10 @@ class CommentsFragment : Fragment() {
             val comments = withContext(Dispatchers.IO) {
                 CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
             }
-            displayedComments.addAll(comments?.comments ?: emptyList())
+            saninComments.addAll(comments?.comments ?: emptyList())
+            saninComments.sortByDescending { timestampToMillis(it.timestamp) }
             totalPages = comments?.totalPages ?: 1
-            Logger.log("Comments: Sanin fetched ${comments?.comments?.size ?: 0} comments (totalPages=${comments?.totalPages})")
+            Logger.log("Comments: Sanin fetched ${saninComments.size} comments (totalPages=${comments?.totalPages})")
         } catch (e: Exception) {
             Logger.log(Log.ERROR, "Comments: Sanin fetch FAILED: ${e.message}")
         }
@@ -376,11 +420,19 @@ class CommentsFragment : Fragment() {
     private suspend fun loadAnikotoComments() {
         if (mediaName.isBlank()) return
         Logger.log("Comments: fetching Anikoto comments title=$mediaName progress=$userProgress")
-        val comments = withContext(Dispatchers.IO) {
-            AnikotoAPI.getCommentsForMedia(mediaId, mediaName, userProgress)
+        try {
+            withTimeoutOrNull(ANIKOTO_TOTAL_TIMEOUT_MS) {
+                AnikotoAPI.getCommentsForMedia(mediaId, mediaName, userProgress) { batch ->
+                    anikotoCommentPool.addAll(batch)
+                    revealNextBatch()
+                }
+            }
+        } catch (e: Exception) {
+            Logger.log(Log.ERROR, "Comments: Anikoto comments failed: ${e.message}")
+        } finally {
+            anikotoLoadDone = true
+            revealNextBatch()
         }
-        displayedComments.addAll(comments)
-        Logger.log("Comments: Anikoto fetched ${comments.size} comments")
     }
 
     private suspend fun loadSingleComment(commentId: Int) {
@@ -616,6 +668,8 @@ class CommentsFragment : Fragment() {
 
     companion object {
         private const val PROVIDER_TIMEOUT_MS = 12_000L
+        private const val REVEAL_BATCH_SIZE = 15
+        private const val ANIKOTO_TOTAL_TIMEOUT_MS = 300_000L
 
         fun resolveColorAttr(attr: Int, context: android.content.Context): Int {
             val typedArray = context.obtainStyledAttributes(intArrayOf(attr))

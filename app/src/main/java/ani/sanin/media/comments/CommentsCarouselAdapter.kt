@@ -106,6 +106,14 @@ class CommentsCarouselAdapter(
             }
         }
 
+        if (comment.anikotoEpisode != null) {
+            b.carouselEpisodeTag.visibility = View.VISIBLE
+            b.carouselEpisodeTag.text = "ep ${comment.anikotoEpisode}"
+            b.carouselEpisodeTag.alpha = if (isFocused) 1f else 0.7f
+        } else {
+            b.carouselEpisodeTag.visibility = View.GONE
+        }
+
         val showActions = isFocused
         b.carouselActionRow.visibility = if (showActions) View.VISIBLE else View.INVISIBLE
         b.carouselAvatar.layoutParams.width = if (isFocused) 48 else 32

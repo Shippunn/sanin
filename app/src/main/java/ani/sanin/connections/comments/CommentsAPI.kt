@@ -558,7 +558,9 @@ data class Comment(
     @SerialName("total_votes")
     val totalVotes: Int,
     @Transient
-    val isAnikoto: Boolean = false
+    val isAnikoto: Boolean = false,
+    @Transient
+    val anikotoEpisode: Int? = null
 )
 
 @Serializable

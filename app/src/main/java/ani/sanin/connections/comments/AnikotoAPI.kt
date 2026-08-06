@@ -8,9 +8,11 @@ import ani.sanin.util.Logger
 import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import me.xdrop.fuzzywuzzy.FuzzySearch
@@ -31,28 +33,76 @@ object AnikotoAPI {
     private const val BASE_URL = "https://anikoto.cz"
     private const val USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
+    private const val MAX_EPISODES = 20
+    private const val MAX_PAGES_PER_EPISODE = 10
+    private const val EPISODE_TIMEOUT_MS = 20_000L
 
     private val client: OkHttpClient get() = Injekt.get<NetworkHelper>().client
     private val searchCache = mutableMapOf<String, AnikotoAnime>()
 
     private data class AnikotoAnime(val animeId: String, val slug: String, val title: String)
     private data class AnikotoEpisode(val num: Int, val episodeId: String)
+    private data class AnikotoWidget(val html: String?, val nextPage: Int?)
 
-    suspend fun getCommentsForMedia(mediaId: Int, title: String, episodeProgress: Int?): List<Comment> {
+    suspend fun getCommentsForMedia(
+        mediaId: Int,
+        title: String,
+        episodeProgress: Int?,
+        onBatch: suspend (List<Comment>) -> Unit
+    ) {
         val anime = findAnime(title) ?: run {
             Logger.log(Log.ERROR, "Anikoto: no anime match for '$title'")
-            return emptyList()
+            return
         }
         val episodes = fetchEpisodes(anime.slug, anime.animeId) ?: run {
             Logger.log(Log.ERROR, "Anikoto: no episodes for '${anime.slug}'")
-            return emptyList()
+            return
         }
-        val episode = episodes.firstOrNull { it.num == episodeProgress } ?: episodes.firstOrNull()
-            ?: return emptyList()
-        val widgetHtml = fetchWidgetHtml(anime.animeId, episode.episodeId, resolveSort(), anime.slug)
-            ?: return emptyList()
-        val comments = parseComments(widgetHtml, mediaId)
-        Logger.log("Anikoto: ${comments.size} comments for '$title' ep ${episode.num}")
+        val ordered = orderEpisodes(episodes, episodeProgress)
+        Logger.log("Anikoto: ${ordered.size} episodes queued for '$title' (current=$episodeProgress)")
+        var total = 0
+        for (episode in ordered) {
+            val comments = withTimeoutOrNull(EPISODE_TIMEOUT_MS) {
+                fetchEpisodeComments(anime, episode, mediaId, onBatch)
+            } ?: run {
+                Logger.log(Log.ERROR, "Anikoto: timed out fetching ep ${episode.num}")
+                emptyList()
+            }
+            total += comments.size
+        }
+        Logger.log("Anikoto: $total comments across ${ordered.size} episodes")
+    }
+
+    /** Display order: current episode down to 1, then current+1 up to the last. */
+    private fun orderEpisodes(episodes: List<AnikotoEpisode>, progress: Int?): List<AnikotoEpisode> {
+        val current = progress ?: 0
+        val below = episodes.filter { it.num <= current }.sortedByDescending { it.num }
+        val above = episodes.filter { it.num > current }.sortedBy { it.num }
+        return (below + above).take(MAX_EPISODES)
+    }
+
+    private suspend fun fetchEpisodeComments(
+        anime: AnikotoAnime,
+        episode: AnikotoEpisode,
+        mediaId: Int,
+        onBatch: suspend (List<Comment>) -> Unit
+    ): List<Comment> {
+        val comments = mutableListOf<Comment>()
+        var page = 1
+        while (page <= MAX_PAGES_PER_EPISODE) {
+            val widget = fetchWidgetHtml(anime.animeId, episode.episodeId, resolveSort(), anime.slug, page)
+            val html = widget?.html ?: break
+            val parsed = parseComments(html, mediaId, episode.num)
+            comments.addAll(parsed)
+            onBatch(parsed)
+            val nextPage = widget.nextPage ?: break
+            if (nextPage <= page || parsed.isEmpty()) break
+            page = nextPage
+        }
+        if (page > MAX_PAGES_PER_EPISODE) {
+            Logger.log(Log.ERROR, "Anikoto: capped at $MAX_PAGES_PER_EPISODE pages for ep ${episode.num}")
+        }
+        Logger.log("Anikoto: ep ${episode.num} -> ${comments.size} comments")
         return comments
     }
 
@@ -125,20 +175,23 @@ object AnikotoAPI {
         animeId: String,
         episodeId: String,
         sort: String,
-        slug: String
-    ): String? {
-        val url = "$BASE_URL/ajax/comment/widget/$animeId?episodeId=$episodeId&sort=$sort&type=episode"
+        slug: String,
+        page: Int = 1
+    ): AnikotoWidget? {
+        val pageParam = if (page > 1) "&page=$page" else ""
+        val url = "$BASE_URL/ajax/comment/widget/$animeId?episodeId=$episodeId&sort=$sort&type=episode$pageParam"
         val body = httpGet(url, referer = "$BASE_URL/watch/$slug/ep-1", xhr = true)
             ?: return null
         return try {
             val obj = Json.parseToJsonElement(body).jsonObject
             val html = obj["html"]?.jsonPrimitive?.contentOrNull
             val status = obj["status"]?.jsonPrimitive?.booleanOrNull
+            val nextPage = obj["nextPage"]?.jsonPrimitive?.intOrNull
             if (status == false || html.isNullOrBlank()) {
                 Logger.log(Log.ERROR, "Anikoto: widget returned no comments (status=$status)")
                 null
             } else {
-                html
+                AnikotoWidget(html, nextPage)
             }
         } catch (e: Exception) {
             Logger.log(e)
@@ -195,12 +248,12 @@ object AnikotoAPI {
         }
     }
 
-    private fun parseComments(html: String, mediaId: Int): List<Comment> {
+    private fun parseComments(html: String, mediaId: Int, episode: Int): List<Comment> {
         val doc = Jsoup.parse(html)
-        return doc.select(".cw_l-line").mapNotNull { parseComment(it, mediaId) }
+        return doc.select(".cw_l-line").mapNotNull { parseComment(it, mediaId, episode) }
     }
 
-    private fun parseComment(element: Element, mediaId: Int): Comment? {
+    private fun parseComment(element: Element, mediaId: Int, episode: Int): Comment? {
         val commentId = element.attr("data-comment-id").toLongOrNull()?.toInt() ?: return null
         val userId = element.attr("data-user-id")
         val username = element.selectFirst("a.user-name")?.text()?.trim()
@@ -210,9 +263,11 @@ object AnikotoAPI {
         val timestamp = relativeToIso(element.selectFirst(".time")?.text() ?: "")
         val body = element.selectFirst(".cm-body")
         val raw = body?.attr("data-cm-raw-b64")
-        val content = raw?.let { decodeBase64(it) }?.takeIf { it.isNotBlank() }
-            ?: body?.text()?.trim()
-            ?: return null
+        val content = markdownifyGifs(
+            raw?.let { decodeBase64(it) }?.takeIf { it.isNotBlank() }
+                ?: body?.text()?.trim()
+                ?: return null
+        )
         val upvotes = element.selectFirst(".cm-btn-vote[data-type=\"1\"] .value")
             ?.text()?.toIntOrNull() ?: 0
         val downvotes = element.selectFirst(".cm-btn-vote[data-type=\"0\"] .value")
@@ -234,6 +289,7 @@ object AnikotoAPI {
             profilePictureUrl = avatar,
             totalVotes = upvotes - downvotes,
             isAnikoto = true,
+            anikotoEpisode = episode,
         )
     }
 
@@ -267,25 +323,45 @@ object AnikotoAPI {
         }
     }
 
+    /** Convert bare GIF URLs (Anikoto stores them as plain text) into markdown images. */
+    private fun markdownifyGifs(text: String): String {
+        return GIF_URL_REGEX.replace(text) { "![gif](${it.value})" }
+    }
+
+    private val GIF_URL_REGEX = Regex("""https?://[^\s)"']+\.gif(?:\?[^\s)"']*)?""", RegexOption.IGNORE_CASE)
+
     private fun relativeToIso(relative: String): String {
         val now = System.currentTimeMillis()
-        val match = Regex("(\\d+)\\s+(second|minute|hour|day|week|month|year)s?\\s+ago")
-            .find(relative)
-        val offsetMillis = match?.let {
-            val amount = it.groupValues[1].toLongOrNull() ?: return formatIso(now)
-            val unit = it.groupValues[2]
-            val multiplier = when (unit) {
-                "second" -> 1_000L
-                "minute" -> 60_000L
-                "hour" -> 3_600_000L
-                "day" -> 86_400_000L
-                "week" -> 604_800_000L
-                "month" -> 2_592_000_000L
-                else -> 31_536_000_000L
-            }
-            amount * multiplier
-        } ?: 0L
-        return formatIso(now - offsetMillis)
+        val text = relative.substringBefore("—").trim()
+        if (text.isEmpty()) return formatIso(now)
+        val lower = text.lowercase(Locale.US)
+        if (lower == "just now" || lower == "now") return formatIso(now)
+        if (lower == "yesterday") return formatIso(now - 86_400_000L)
+        val units = mapOf(
+            "second" to 1_000L,
+            "seconds" to 1_000L,
+            "minute" to 60_000L,
+            "minutes" to 60_000L,
+            "hour" to 3_600_000L,
+            "hours" to 3_600_000L,
+            "day" to 86_400_000L,
+            "days" to 86_400_000L,
+            "week" to 604_800_000L,
+            "weeks" to 604_800_000L,
+            "month" to 2_592_000_000L,
+            "months" to 2_592_000_000L,
+            "year" to 31_536_000_000L,
+            "years" to 31_536_000_000L,
+        )
+        var offset = 0L
+        var matched = false
+        for (m in Regex("(\\d+)\\s+([a-zA-Z]+)").findAll(text)) {
+            val amount = m.groupValues[1].toLongOrNull() ?: continue
+            val multiplier = units[m.groupValues[2].lowercase(Locale.US)] ?: continue
+            offset += amount * multiplier
+            matched = true
+        }
+        return formatIso(if (matched) now - offset else now)
     }
 
     private fun formatIso(millis: Long): String {
