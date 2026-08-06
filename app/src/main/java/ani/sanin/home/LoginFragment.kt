@@ -372,7 +372,6 @@ class LoginFragment : Fragment() {
                         .withSize(10)
                         .withColor(android.graphics.Color.BLACK)
                         .build(session.qrUrl)
-                        .render()
                         .toBitmap()
                 }
 
