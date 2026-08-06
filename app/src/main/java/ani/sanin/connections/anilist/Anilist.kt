@@ -270,6 +270,7 @@ object Anilist {
         avatar = PrefManager.getVal(PrefName.AnilistAvatar, null as String?)
         username = PrefManager.getVal(PrefName.AnilistUserName, null as String?)
         userid = PrefManager.getVal(PrefName.AnilistUserId, null as String?)?.toIntOrNull()
+        Logger.log("[QR-DEBUG] getSavedToken: hasToken=${!token.isNullOrEmpty()}, tokenLength=${token?.length ?: 0}, username=$username, userid=$userid")
         return !token.isNullOrEmpty()
     }
 

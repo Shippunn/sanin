@@ -33,8 +33,10 @@ class QrLoginDialog(
     private var countdownTimer: CountDownTimer? = null
     private var currentSessionId: String? = null
     private var isCreatingSession = false
+    private var lastPollStatus: String? = null
 
     fun show() {
+        Logger.log("[QR-DEBUG] QrLoginDialog.show()")
         val binding = DialogQrLoginBinding.inflate(LayoutInflater.from(context))
         dialogBinding = binding
 
@@ -84,6 +86,7 @@ class QrLoginDialog(
     }
 
     fun dismiss() {
+        Logger.log("[QR-DEBUG] QrLoginDialog.dismiss()")
         cancelPolling()
         countdownTimer?.cancel()
         dialog?.dismiss()
@@ -94,8 +97,12 @@ class QrLoginDialog(
 
     private fun createSessionAndStartPolling(binding: DialogQrLoginBinding) {
         // Prevent duplicate session creation
-        if (isCreatingSession) return
+        if (isCreatingSession) {
+            Logger.log("[QR-DEBUG] createSessionAndStartPolling: already creating, returning")
+            return
+        }
         isCreatingSession = true
+        lastPollStatus = null
 
         scope.launch {
             try {
@@ -105,11 +112,14 @@ class QrLoginDialog(
                 binding.qrStatusText.text = "Creating session..."
                 binding.qrRefreshButton.isEnabled = false
 
+                Logger.log("[QR-DEBUG] Calling QrLoginApi.createSession()...")
                 // Create session
                 val session = QrLoginApi.createSession()
                 currentSessionId = session.sessionId
+                Logger.log("[QR-DEBUG] Session created successfully: sessionId=${session.sessionId}")
 
                 // Generate QR code
+                Logger.log("[QR-DEBUG] Generating QR code...")
                 val qrBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     QRCode.ofSquares()
                         .withSize(10)
@@ -118,6 +128,7 @@ class QrLoginDialog(
                         .render()
                         .nativeImage() as android.graphics.Bitmap
                 }
+                Logger.log("[QR-DEBUG] QR code generated")
 
                 // Update UI
                 binding.qrCodeImageView.setImageBitmap(qrBitmap)
@@ -130,10 +141,12 @@ class QrLoginDialog(
                 startCountdown(binding, session.expiresIn)
 
                 // Start polling
+                Logger.log("[QR-DEBUG] Starting polling for sessionId=${session.sessionId}")
                 startPolling(session.sessionId, binding)
 
             } catch (e: Exception) {
-                Logger.log(e)
+                Logger.log("[QR-DEBUG] EXCEPTION in createSessionAndStartPolling: ${e.javaClass.simpleName}: ${e.message}")
+                Logger.log("[QR-DEBUG] Stacktrace: ", e)
                 binding.qrLoadingIndicator.visibility = View.GONE
                 binding.qrCodeImageView.visibility = View.VISIBLE
                 binding.qrStatusText.text = "Failed to create session"
@@ -146,8 +159,12 @@ class QrLoginDialog(
     }
 
     private fun refreshQrSession(binding: DialogQrLoginBinding) {
+        Logger.log("[QR-DEBUG] refreshQrSession called")
         // Prevent duplicate refresh
-        if (isCreatingSession) return
+        if (isCreatingSession) {
+            Logger.log("[QR-DEBUG] refreshQrSession: already creating, returning")
+            return
+        }
 
         cancelPolling()
         countdownTimer?.cancel()
@@ -159,25 +176,38 @@ class QrLoginDialog(
         cancelPolling()
 
         pollingJob = scope.launch {
+            Logger.log("[QR-DEBUG] Polling loop started for sessionId=$sessionId")
             while (isActive) {
                 try {
                     delay(2000) // Poll every 2 seconds
 
+                    Logger.log("[QR-DEBUG] Polling sessionId=$sessionId")
                     val response = QrLoginApi.getSessionStatus(sessionId)
+
+                    // Detect status change
+                    if (lastPollStatus != null && lastPollStatus != response.status) {
+                        Logger.log("[QR-DEBUG] STATUS CHANGE: $lastPollStatus -> ${response.status}")
+                    }
+                    lastPollStatus = response.status
 
                     when (response.status) {
                         "authorized" -> {
+                            Logger.log("[QR-DEBUG] Status is 'authorized' - stopping polling, calling consumeSession...")
                             // Stop polling
                             cancelPolling()
                             countdownTimer?.cancel()
 
                             // Consume the authorization code (one-time retrieval)
                             try {
+                                Logger.log("[QR-DEBUG] Calling consumeSession for sessionId=$sessionId")
                                 val consumeResponse = QrLoginApi.consumeSession(sessionId)
                                 val authCode = consumeResponse.authorizationCode
+                                Logger.log("[QR-DEBUG] consumeSession returned: hasCode=${authCode.isNotEmpty()}, codeLength=${authCode.length}")
+
                                 if (authCode.isNotEmpty()) {
                                     // Exchange authorization code for access token
                                     binding.qrStatusText.text = "Exchanging authorization code..."
+                                    Logger.log("[QR-DEBUG] Starting token exchange with AniList...")
                                     val tokenResponse = QrLoginApi.exchangeAuthorizationCode(
                                         code = authCode,
                                         clientId = "47875",
@@ -185,13 +215,22 @@ class QrLoginDialog(
                                         redirectUri = "https://sanin-auth.shemaus58.workers.dev/callback"
                                     )
                                     val token = tokenResponse.access_token
+                                    Logger.log("[QR-DEBUG] Token exchange result: hasToken=${token.isNotEmpty()}, tokenLength=${token.length}")
+
                                     if (token.isNotEmpty()) {
+                                        Logger.log("[QR-DEBUG] Saving token...")
                                         Anilist.token = token
                                         PrefManager.setVal(PrefName.AnilistToken, token)
+                                        Logger.log("[QR-DEBUG] Token saved successfully")
+                                    } else {
+                                        Logger.log("[QR-DEBUG] WARNING: Token is empty after exchange!")
                                     }
+                                } else {
+                                    Logger.log("[QR-DEBUG] WARNING: Authorization code is empty after consume!")
                                 }
                             } catch (e: Exception) {
-                                Logger.log("Failed to complete login: ${e.message}")
+                                Logger.log("[QR-DEBUG] EXCEPTION in token flow: ${e.javaClass.simpleName}: ${e.message}")
+                                Logger.log("[QR-DEBUG] Stacktrace: ", e)
                                 binding.qrStatusText.text = "Failed to complete login"
                                 binding.qrRefreshButton.isEnabled = true
                                 return@launch
@@ -202,10 +241,18 @@ class QrLoginDialog(
                             binding.qrRefreshButton.isEnabled = false
 
                             // Handle authentication
-                            onAuthenticated()
+                            Logger.log("[QR-DEBUG] Calling onAuthenticated()...")
+                            try {
+                                onAuthenticated()
+                                Logger.log("[QR-DEBUG] onAuthenticated() completed")
+                            } catch (e: Exception) {
+                                Logger.log("[QR-DEBUG] EXCEPTION in onAuthenticated: ${e.javaClass.simpleName}: ${e.message}")
+                                Logger.log("[QR-DEBUG] Stacktrace: ", e)
+                            }
 
                             // Close dialog after a short delay
                             delay(1000)
+                            Logger.log("[QR-DEBUG] Dismissing dialog, login flow complete")
                             dialog?.dismiss()
                             dialog = null
                             dialogBinding = null
@@ -213,6 +260,7 @@ class QrLoginDialog(
                             return@launch
                         }
                         "expired" -> {
+                            Logger.log("[QR-DEBUG] Status is 'expired' - stopping polling")
                             // Stop polling
                             cancelPolling()
                             countdownTimer?.cancel()
@@ -229,8 +277,11 @@ class QrLoginDialog(
                         }
                     }
                 } catch (e: Exception) {
+                    Logger.log("[QR-DEBUG] EXCEPTION in polling loop: ${e.javaClass.simpleName}: ${e.message}")
+                    Logger.log("[QR-DEBUG] Stacktrace: ", e)
                     // If dialog was dismissed (user pressed back), don't show error
                     if (dialog == null || e is kotlinx.coroutines.CancellationException) {
+                        Logger.log("[QR-DEBUG] Dialog dismissed or cancelled, exiting polling loop")
                         return@launch
                     }
                     // Network error
@@ -269,15 +320,18 @@ class QrLoginDialog(
     }
 
     private fun showNetworkErrorDialog(sessionId: String, binding: DialogQrLoginBinding) {
+        Logger.log("[QR-DEBUG] Showing network error dialog for sessionId=$sessionId")
         context.customAlertDialog().apply {
             setTitle("Connection lost")
             setMessage("Retry?")
             setPosButton(R.string.ok) {
+                Logger.log("[QR-DEBUG] User clicked Retry on network error dialog")
                 // Retry polling
                 startPolling(sessionId, binding)
                 startCountdown(binding, 300) // Restart with 5 minutes
             }
             setNegButton(R.string.cancel) {
+                Logger.log("[QR-DEBUG] User clicked Cancel on network error dialog")
                 dismiss()
             }
         }.show()

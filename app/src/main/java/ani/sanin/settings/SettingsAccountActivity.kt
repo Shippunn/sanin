@@ -30,6 +30,7 @@ import ani.sanin.startMainActivity
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
 import ani.sanin.toast
+import ani.sanin.util.Logger
 import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.customAlertDialog
 import io.noties.markwon.Markwon
@@ -173,7 +174,9 @@ class SettingsAccountActivity : AppCompatActivity() {
                                         context,
                                         this@SettingsAccountActivity.lifecycleScope
                                     ) {
+                                        Logger.log("[QR-DEBUG] SettingsAccountActivity: onAuthenticated callback")
                                         if (Anilist.getSavedToken()) {
+                                            Logger.log("[QR-DEBUG] SettingsAccountActivity: calling getUserData()")
                                             Anilist.query.getUserData()
                                             LoginDiagnostics.recordLogin(
                                                 LoginDiagnostics.LoginMethod.QR_CODE
@@ -181,6 +184,7 @@ class SettingsAccountActivity : AppCompatActivity() {
                                             reload()
                                             toast("Successfully signed in")
                                         } else {
+                                            Logger.log("[QR-DEBUG] SettingsAccountActivity: getSavedToken returned false")
                                             toast("Login failed: no token received from relay")
                                         }
                                     }.show()

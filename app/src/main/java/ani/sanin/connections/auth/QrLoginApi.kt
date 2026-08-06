@@ -39,8 +39,11 @@ object QrLoginApi {
 
     suspend fun createSession(): CreateSessionResponse = withContext(Dispatchers.IO) {
         executeWithRetry {
+            Logger.log("[QR-DEBUG] Creating session...")
             val response = client.post("$BASE_URL/api/session/create")
-            response.parsed()
+            val result = response.parsed<CreateSessionResponse>()
+            Logger.log("[QR-DEBUG] Session created: sessionId=${result.sessionId}, expiresIn=${result.expiresIn}")
+            result
         }
     }
 
@@ -48,27 +51,34 @@ object QrLoginApi {
         // Validate UUID format before making request
         val uuidRegex = Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", RegexOption.IGNORE_CASE)
         if (!uuidRegex.matches(sessionId)) {
+            Logger.log("[QR-DEBUG] Invalid session ID format: $sessionId")
             throw IllegalArgumentException("Invalid session ID format")
         }
 
         executeWithRetry {
             val response = client.get("$BASE_URL/api/session/$sessionId")
-            response.parsed()
+            val result = response.parsed<SessionStatusResponse>()
+            Logger.log("[QR-DEBUG] Poll sessionId=$sessionId status=${result.status}")
+            result
         }
     }
 
     suspend fun consumeSession(sessionId: String): ConsumeSessionResponse = withContext(Dispatchers.IO) {
         executeWithRetry {
+            Logger.log("[QR-DEBUG] Calling /api/session/consume sessionId=$sessionId")
             val response = client.post(
                 "$BASE_URL/api/session/consume",
                 data = mapOf("sessionId" to sessionId)
             )
-            response.parsed()
+            val result = response.parsed<ConsumeSessionResponse>()
+            Logger.log("[QR-DEBUG] Consume response: hasCode=${result.authorizationCode.isNotEmpty()}, codeLength=${result.authorizationCode.length}")
+            result
         }
     }
 
     suspend fun exchangeAuthorizationCode(code: String, clientId: String, clientSecret: String, redirectUri: String): TokenExchangeResponse = withContext(Dispatchers.IO) {
         executeWithRetry {
+            Logger.log("[QR-DEBUG] Starting token exchange with AniList...")
             val response = client.post(
                 "https://anilist.co/api/v2/oauth/token",
                 data = mapOf(
@@ -79,7 +89,9 @@ object QrLoginApi {
                     "code" to code
                 )
             )
-            response.parsed()
+            val result = response.parsed<TokenExchangeResponse>()
+            Logger.log("[QR-DEBUG] Token exchange response: hasToken=${result.access_token.isNotEmpty()}, tokenLength=${result.access_token.length}")
+            result
         }
     }
 
@@ -94,7 +106,7 @@ object QrLoginApi {
                 } ?: throw java.net.SocketTimeoutException("Request timed out")
             } catch (e: Exception) {
                 lastException = e
-                Logger.log("QrLoginApi attempt ${attempt + 1} failed: ${e.message}")
+                Logger.log("[QR-DEBUG] attempt ${attempt + 1} failed: ${e.message}")
 
                 // Don't retry on client errors (4xx) - check if it's an HTTP error
                 val errorMessage = e.message ?: ""

@@ -17,6 +17,7 @@ import ani.sanin.connections.anilist.api.ReplyResponse
 import ani.sanin.currContext
 import ani.sanin.isOnline
 import ani.sanin.logError
+import ani.sanin.util.Logger
 import ani.sanin.media.Author
 import ani.sanin.media.Character
 import ani.sanin.media.Media
@@ -59,12 +60,18 @@ class AnilistQueries {
 
     suspend fun getUserData(): Boolean {
         val response: Query.Viewer?
+        Logger.log("[QR-DEBUG] getUserData: executing Viewer query...")
         measureTimeMillis {
             response = executeQuery(
                 """{Viewer{name options{timezone titleLanguage staffNameLanguage activityMergeTime airingNotifications displayAdultContent restrictMessagesToFollowing} avatar{medium} bannerImage id mediaListOptions{scoreFormat rowOrder animeList{customLists} mangaList{customLists}} statistics{anime{episodesWatched} manga{chaptersRead}} unreadNotificationCount}}"""
             )
-        }.also { println("time : $it") }
-        val user = response?.data?.user ?: return false
+        }.also { Logger.log("[QR-DEBUG] getUserData: Viewer query completed in ${it}ms") }
+        val user = response?.data?.user
+        if (user == null) {
+            Logger.log("[QR-DEBUG] getUserData: Viewer query returned null user")
+            return false
+        }
+        Logger.log("[QR-DEBUG] getUserData: username=${user.name}, userId=${user.id}")
 
         PrefManager.setVal(PrefName.AnilistUserName, user.name)
         Anilist.userid = user.id

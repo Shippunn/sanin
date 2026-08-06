@@ -287,8 +287,10 @@ class LoginFragment : Fragment() {
 
     private suspend fun handleAuthenticated() {
         try {
+            Logger.log("[QR-DEBUG] LoginFragment: handleAuthenticated called")
             // Get user data from AniList
             if (Anilist.getSavedToken()) {
+                Logger.log("[QR-DEBUG] LoginFragment: calling getUserData()")
                 Anilist.query.getUserData()
 
                 // Record login diagnostics
@@ -301,10 +303,12 @@ class LoginFragment : Fragment() {
 
                 toast("Successfully signed in")
             } else {
+                Logger.log("[QR-DEBUG] LoginFragment: getSavedToken returned false")
                 toast("Login failed: no token received from relay")
             }
         } catch (e: Exception) {
-            Logger.log(e)
+            Logger.log("[QR-DEBUG] EXCEPTION in LoginFragment.handleAuthenticated: ${e.javaClass.simpleName}: ${e.message}")
+            Logger.log("[QR-DEBUG] Stacktrace: ", e)
             toast("Failed to retrieve user data")
         }
     }
