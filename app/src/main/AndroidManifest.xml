@@ -262,21 +262,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".connections.trakt.TraktLoginActivity"
-            android:configChanges="orientation|screenSize|layoutDirection"
-            android:excludeFromRecents="true"
-            android:exported="true"
-            android:launchMode="singleTask">
-            <intent-filter android:label="Trakt Login">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="psycho-trakt"
-                    android:host="oauth" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".others.webview.CookieCatcher"
             android:configChanges="orientation|screenSize|layoutDirection"
             android:excludeFromRecents="true"

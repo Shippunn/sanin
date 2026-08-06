@@ -20,16 +20,11 @@ import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
 import ani.sanin.connections.comments.AnikotoAPI
 import ani.sanin.connections.comments.CommentsAPI
-import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment
-import ani.sanin.connections.trakt.TraktAuth
-import ani.sanin.connections.trakt.TraktComment
-import ani.sanin.connections.trakt.TraktSearchResult
 import ani.sanin.databinding.FragmentCommentsBinding
 import ani.sanin.loadImage
 import ani.sanin.media.MediaDetailsActivity
 import ani.sanin.media.MediaDetailsViewModel
-import ani.sanin.others.IdMappers
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.snackString
@@ -63,7 +58,6 @@ class CommentsFragment : Fragment() {
     private var isAutoFilterOn = false
     private var isSpoilerMode = false
 
-    private var traktResult: TraktSearchResult? = null
     private var displayedComments = mutableListOf<Comment>()
     private lateinit var carouselAdapter: CommentsCarouselAdapter
     private lateinit var markwon: io.noties.markwon.Markwon
@@ -130,7 +124,6 @@ class CommentsFragment : Fragment() {
                 if (!commentsLoaded || newMedia.id != this.mediaId) {
                     this.mediaId = newMedia.id
                     commentsLoaded = true
-                    traktResult = null
 
                     if (isOfflineOrLocal) {
                         binding.commentsOfflineText.visibility = View.VISIBLE
@@ -143,12 +136,6 @@ class CommentsFragment : Fragment() {
                         binding.commentsList.visibility = View.GONE
                         Logger.log("Comments: starting load media=$mediaId (offline=false)")
                         lifecycleScope.launch {
-                            traktResult = try {
-                                withTimeoutOrNull(10_000) { lookupTraktIds() }
-                            } catch (e: Exception) {
-                                Logger.log(Log.ERROR, "Comments: Trakt lookup failed: ${e.message}")
-                                null
-                            }
                             val commentId = arguments?.getInt("commentId")
                             if (commentId != null && commentId > 0) {
                                 loadSingleComment(commentId)
@@ -157,7 +144,7 @@ class CommentsFragment : Fragment() {
                             }
                         }
                     }
-                    if (CommentsAPI.authToken == null && !TraktAuth.isLoggedIn()) {
+                    if (CommentsAPI.authToken == null) {
                         binding.commentMessageContainer.visibility = View.GONE
                     }
                 }
@@ -324,21 +311,6 @@ class CommentsFragment : Fragment() {
         binding.commentCurrentProgress.visibility = View.VISIBLE
     }
 
-    private suspend fun lookupTraktIds(): TraktSearchResult? {
-        val imdbId = IdMappers.getImdbId(mediaId) ?: run {
-            Logger.log("Comments: no IMDB id for media $mediaId, skipping Trakt")
-            return null
-        }
-        Logger.log("Comments: looking up Trakt for media $mediaId (imdb=$imdbId)")
-        val result = TraktAPI.searchByImdb(imdbId)
-        if (result != null) {
-            Logger.log("Comments: Trakt found '${result.title}' (traktId=${result.traktId} type=${result.mediaType})")
-        } else {
-            Logger.log(Log.ERROR, "Comments: Trakt lookup FAILED for imdb=$imdbId")
-        }
-        return result
-    }
-
     suspend fun loadAndDisplayComments() {
         binding.commentsProgressBar.visibility = View.VISIBLE
         binding.commentsList.visibility = View.GONE
@@ -346,15 +318,11 @@ class CommentsFragment : Fragment() {
         displayedComments.clear()
         pagesLoaded = 1
 
-        val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
         val hasAnikoto = PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1
-        Logger.log("Comments: loading comments for media $mediaId (trakt=$hasTrakt anikoto=$hasAnikoto)")
+        Logger.log("Comments: loading comments for media $mediaId (anikoto=$hasAnikoto)")
 
         coroutineScope {
             val jobs = mutableListOf<Job>()
-            if (hasTrakt && traktResult != null) {
-                jobs += launch { loadProvider("Trakt") { loadTraktComments() } }
-            }
             if (hasAnikoto) {
                 jobs += launch { loadProvider("Anikoto") { loadAnikotoComments() } }
             }
@@ -405,22 +373,6 @@ class CommentsFragment : Fragment() {
         }
     }
 
-    private suspend fun loadTraktComments() {
-        val type = traktResult?.mediaType ?: return
-        val id = traktResult?.traktId ?: return
-        val sort = when (PrefManager.getVal(PrefName.CommentSortOrder, "newest")) {
-            "newest" -> "newest"
-            "oldest" -> "oldest"
-            else -> "likes"
-        }
-        Logger.log("Comments: fetching Trakt comments type=$type id=$id sort=$sort")
-        val traktComments = withContext(Dispatchers.IO) {
-            TraktAPI.getComments(type, id, page = 1, sort = sort)
-        }
-        displayedComments.addAll(traktComments.map { traktToComment(it) })
-        Logger.log("Comments: Trakt fetched ${traktComments.size} comments")
-    }
-
     private suspend fun loadAnikotoComments() {
         if (mediaName.isBlank()) return
         Logger.log("Comments: fetching Anikoto comments title=$mediaName progress=$userProgress")
@@ -429,27 +381,6 @@ class CommentsFragment : Fragment() {
         }
         displayedComments.addAll(comments)
         Logger.log("Comments: Anikoto fetched ${comments.size} comments")
-    }
-
-    private fun traktToComment(tc: TraktComment): Comment {
-        val avatarUrl = tc.user.images?.avatar?.full
-        return Comment(
-            commentId = tc.id,
-            userId = tc.user.username,
-            mediaId = mediaId,
-            parentCommentId = if (tc.parentId > 0) tc.parentId else null,
-            content = tc.comment,
-            timestamp = tc.createdAt,
-            deleted = false,
-            tag = null,
-            upvotes = tc.likes,
-            downvotes = 0,
-            userVoteType = if (tc.userLiked) 1 else 0,
-            username = tc.user.name ?: tc.user.username,
-            profilePictureUrl = avatarUrl,
-            totalVotes = tc.likes,
-            isTrakt = true
-        )
     }
 
     private suspend fun loadSingleComment(commentId: Int) {
@@ -478,10 +409,6 @@ class CommentsFragment : Fragment() {
     }
 
     fun voteComment(comment: Comment, voteType: Int, position: Int) {
-        if (comment.isTrakt) {
-            snackString("Voting on Trakt comments coming soon")
-            return
-        }
         if (comment.isAnikoto) {
             snackString("Voting on Anikoto comments coming soon")
             return
@@ -556,14 +483,13 @@ class CommentsFragment : Fragment() {
             putInt("upvotes", comment.upvotes)
             putInt("downvotes", comment.downvotes)
             putInt("userVoteType", comment.userVoteType ?: 0)
-            putBoolean("isTrakt", comment.isTrakt)
         }
         dialog.arguments = bundle
         dialog.listener = object : CommentZoomDialog.ZoomActionListener {
             override fun onReply(commentId: Int, username: String) {
                 startReply(comment)
             }
-            override fun onVote(commentId: Int, voteType: Int, currentVoteType: Int, isTrakt: Boolean) {
+            override fun onVote(commentId: Int, voteType: Int, currentVoteType: Int) {
                 val idx = displayedComments.indexOfFirst { it.commentId == commentId }
                 if (idx >= 0) voteComment(comment, voteType, idx)
             }
@@ -627,11 +553,6 @@ class CommentsFragment : Fragment() {
             commentWithInteraction?.commentId
         } else null
 
-        if (traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1) {
-            handleTraktNewComment(text, parentId)
-            return
-        }
-
         val result = withContext(Dispatchers.IO) {
             CommentsAPI.comment(mediaId, parentId, text, tag)
         }
@@ -678,21 +599,6 @@ class CommentsFragment : Fragment() {
             Logger.log(Log.ERROR, "Comments: FAILED to edit comment id=${target.commentId}")
             snackString("Failed to edit comment")
         }
-    }
-
-    private suspend fun handleTraktNewComment(text: String, parentId: Int?) {
-        val type = traktResult?.mediaType ?: return
-        val id = traktResult?.traktId ?: return
-        val isSpoiler = isSpoilerMode
-        withContext(Dispatchers.IO) {
-            if (parentId != null) {
-                TraktAPI.replyToComment(parentId, text)
-            } else {
-                TraktAPI.postComment(type, id, text, isSpoiler)
-            }
-        }
-        snackString("Trakt comment posted")
-        loadAndDisplayComments()
     }
 
     private fun showCommentRulesDialog() {

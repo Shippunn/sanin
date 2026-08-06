@@ -17,7 +17,6 @@ import ani.sanin.connections.auth.LoginDiagnostics
 import ani.sanin.connections.auth.QrLoginDialog
 
 import ani.sanin.connections.mal.MAL
-import ani.sanin.connections.trakt.TraktAuth
 import ani.sanin.databinding.ActivitySettingsAccountsBinding
 import ani.sanin.initActivity
 import ani.sanin.loadImage
@@ -235,45 +234,6 @@ class SettingsAccountActivity : AppCompatActivity() {
                 ),
                 Settings(
                     type = 2,
-                    name = "Trakt Reviews",
-                    desc = "Show community reviews from Trakt in the comments tab",
-                    icon = R.drawable.ic_round_comment_24,
-                    isChecked = PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1,
-                    switch = { isChecked, _ ->
-                        PrefManager.setVal(PrefName.TraktCommentsEnabled, if (isChecked) 1 else 0)
-                    },
-                    isVisible = true
-                ),
-                Settings(
-                    type = 0,
-                    name = "Trakt Client ID",
-                    desc = if (PrefManager.getNullableVal(PrefName.TraktClientId, null).isNullOrBlank())
-                        "Set your Trakt API Client ID (required for Trakt comments)"
-                    else
-                        "Trakt Client ID is set",
-                    icon = R.drawable.vpn_key_24,
-                    onClick = {
-                        val input = android.widget.EditText(context).apply {
-                            setText(PrefManager.getNullableVal(PrefName.TraktClientId, ""))
-                            hint = "Enter your Trakt Client ID"
-                        }
-                        context.customAlertDialog().apply {
-                            setTitle("Trakt Client ID")
-                            setView(input)
-                            setPosButton("Save") {
-                                val id = input.text.toString().trim()
-                                PrefManager.setVal(PrefName.TraktClientId, id)
-                                snackString("Trakt Client ID saved")
-                                reload()
-                            }
-                            setNegButton("Cancel", null)
-                            show()
-                        }
-                    },
-                    isVisible = true
-                ),
-                Settings(
-                    type = 2,
                     name = "Anikoto Comments",
                     desc = "Show comments from anikoto.cz in the comments tab",
                     icon = R.drawable.ic_round_comment_24,
@@ -283,23 +243,6 @@ class SettingsAccountActivity : AppCompatActivity() {
                     },
                     isVisible = true
                 ),
-                Settings(
-                    type = 0,
-                    name = if (TraktAuth.isLoggedIn()) "Trakt: ${TraktAuth.username}" else "Login to Trakt",
-                    desc = if (TraktAuth.isLoggedIn()) "Tap to logout" else "Like, reply & post on Trakt",
-                    icon = R.drawable.vpn_key_24,
-                    onClick = {
-                        if (TraktAuth.isLoggedIn()) {
-                            TraktAuth.logout()
-                            snackString("Logged out of Trakt")
-                            reload()
-                        } else {
-                            TraktAuth.loginIntent(context)
-                        }
-                    },
-                    isVisible = true
-                ),
-
             )
         )
         binding.settingsRecyclerView.layoutManager =

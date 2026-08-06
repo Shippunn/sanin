@@ -27,12 +27,11 @@ class CommentZoomDialog : DialogFragment() {
     private var userVoteType: Int = 0
     private var upvotes: Int = 0
     private var downvotes: Int = 0
-    private var isTrakt: Boolean = false
     private lateinit var markwon: io.noties.markwon.Markwon
 
     interface ZoomActionListener {
         fun onReply(commentId: Int, username: String)
-        fun onVote(commentId: Int, voteType: Int, currentVoteType: Int, isTrakt: Boolean)
+        fun onVote(commentId: Int, voteType: Int, currentVoteType: Int)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,7 +58,6 @@ class CommentZoomDialog : DialogFragment() {
         userVoteType = args.getInt("userVoteType", 0)
         upvotes = args.getInt("upvotes", 0)
         downvotes = args.getInt("downvotes", 0)
-        isTrakt = args.getBoolean("isTrakt", false)
         val username = args.getString("username") ?: ""
         val timestamp = args.getString("timestamp") ?: ""
 
@@ -89,7 +87,7 @@ class CommentZoomDialog : DialogFragment() {
 
         binding.zoomUpVote.setOnClickListener {
             val newVoteType = if (userVoteType == 1) 0 else 1
-            listener?.onVote(commentId, newVoteType, userVoteType, isTrakt)
+            listener?.onVote(commentId, newVoteType, userVoteType)
             if (newVoteType != userVoteType) {
                 if (userVoteType == -1) downvotes -= 1
                 upvotes += if (newVoteType == 1) 1 else -1
@@ -101,7 +99,7 @@ class CommentZoomDialog : DialogFragment() {
 
         binding.zoomDownVote.setOnClickListener {
             val newVoteType = if (userVoteType == -1) 0 else -1
-            listener?.onVote(commentId, newVoteType, userVoteType, isTrakt)
+            listener?.onVote(commentId, newVoteType, userVoteType)
             if (newVoteType != userVoteType) {
                 if (userVoteType == 1) upvotes -= 1
                 downvotes += if (newVoteType == -1) 1 else -1
@@ -205,7 +203,6 @@ class CommentZoomDialog : DialogFragment() {
             userVoteType: Int = 0,
             upvotes: Int = 0,
             downvotes: Int = 0,
-            isTrakt: Boolean = false,
         ): CommentZoomDialog {
             val args = Bundle().apply {
                 putInt("commentId", commentId)
@@ -218,7 +215,6 @@ class CommentZoomDialog : DialogFragment() {
                 putInt("userVoteType", userVoteType)
                 putInt("upvotes", upvotes)
                 putInt("downvotes", downvotes)
-                putBoolean("isTrakt", isTrakt)
             }
             val dialog = CommentZoomDialog()
             dialog.arguments = args

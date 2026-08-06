@@ -99,11 +99,6 @@ class CommentsCarouselAdapter(
                 b.carouselSourceBadge.text = "anikoto"
                 b.carouselSourceBadge.setTextColor(0xFF00E5FF.toInt())
             }
-            comment.isTrakt -> {
-                b.carouselSourceBadge.visibility = View.VISIBLE
-                b.carouselSourceBadge.text = "trakt"
-                b.carouselSourceBadge.setTextColor(0xFFFF4444.toInt())
-            }
             else -> {
                 b.carouselSourceBadge.visibility = View.VISIBLE
                 b.carouselSourceBadge.text = "dantotsu"
