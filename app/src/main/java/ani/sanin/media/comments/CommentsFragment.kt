@@ -37,8 +37,11 @@ import ani.sanin.util.Logger
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -140,7 +143,12 @@ class CommentsFragment : Fragment() {
                         binding.commentsList.visibility = View.GONE
                         Logger.log("Comments: starting load media=$mediaId (offline=false)")
                         lifecycleScope.launch {
-                            traktResult = lookupTraktIds()
+                            traktResult = try {
+                                withTimeoutOrNull(10_000) { lookupTraktIds() }
+                            } catch (e: Exception) {
+                                Logger.log(Log.ERROR, "Comments: Trakt lookup failed: ${e.message}")
+                                null
+                            }
                             val commentId = arguments?.getInt("commentId")
                             if (commentId != null && commentId > 0) {
                                 loadSingleComment(commentId)
@@ -339,31 +347,47 @@ class CommentsFragment : Fragment() {
         pagesLoaded = 1
 
         val hasTrakt = traktResult != null && PrefManager.getVal<Int>(PrefName.TraktCommentsEnabled) == 1
-        Logger.log("Comments: loading comments for media $mediaId (trakt=$hasTrakt)")
-        if (hasTrakt && traktResult != null) {
-            try {
-                loadTraktComments()
-            } catch (e: Exception) {
-                Logger.log(Log.ERROR, "Comments: Trakt comments failed: ${e.message}")
-            }
-        }
-        if (PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1) {
-            try {
-                loadAnikotoComments()
-            } catch (e: Exception) {
-                Logger.log(Log.ERROR, "Comments: Anikoto comments failed: ${e.message}")
-            }
-        }
-        loadSaninComments()
+        val hasAnikoto = PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1
+        Logger.log("Comments: loading comments for media $mediaId (trakt=$hasTrakt anikoto=$hasAnikoto)")
 
+        coroutineScope {
+            val jobs = mutableListOf<Job>()
+            if (hasTrakt && traktResult != null) {
+                jobs += launch { loadProvider("Trakt") { loadTraktComments() } }
+            }
+            if (hasAnikoto) {
+                jobs += launch { loadProvider("Anikoto") { loadAnikotoComments() } }
+            }
+            jobs += launch { loadProvider("Sanin") { loadSaninComments() } }
+            jobs.forEach { it.join() }
+        }
+
+        renderComments()
+    }
+
+    /**
+     * Runs one comment provider with a hard timeout and renders whatever is
+     * available immediately, so a slow or failing source never blocks the others.
+     */
+    private suspend fun loadProvider(tag: String, block: suspend () -> Unit) {
+        try {
+            withTimeoutOrNull(PROVIDER_TIMEOUT_MS) { block() }
+        } catch (e: Exception) {
+            Logger.log(Log.ERROR, "Comments: $tag comments failed: ${e.message}")
+        }
+        renderComments()
+    }
+
+    private fun renderComments() {
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
         displayedComments.clear()
         displayedComments.addAll(merged)
-        Logger.log("Comments: displayed ${displayedComments.size} comments (sanin+trakt merged)")
+        Logger.log("Comments: rendered ${displayedComments.size} comments")
 
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
         binding.commentsList.visibility = View.VISIBLE
+        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
     }
 
     private suspend fun loadSaninComments() {
@@ -378,7 +402,6 @@ class CommentsFragment : Fragment() {
             Logger.log("Comments: Sanin fetched ${comments?.comments?.size ?: 0} comments (totalPages=${comments?.totalPages})")
         } catch (e: Exception) {
             Logger.log(Log.ERROR, "Comments: Sanin fetch FAILED: ${e.message}")
-            throw e
         }
     }
 
@@ -686,6 +709,8 @@ class CommentsFragment : Fragment() {
     }
 
     companion object {
+        private const val PROVIDER_TIMEOUT_MS = 12_000L
+
         fun resolveColorAttr(attr: Int, context: android.content.Context): Int {
             val typedArray = context.obtainStyledAttributes(intArrayOf(attr))
             val color = typedArray.getColor(0, 0xFFBB86FC.toInt())

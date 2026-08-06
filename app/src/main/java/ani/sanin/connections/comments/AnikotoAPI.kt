@@ -5,7 +5,7 @@ import android.util.Log
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
-import eu.kanade.tachiyomi.network.NetworkHelper
+import eu.kanade.tachiyomi.network.AndroidCookieJar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -18,20 +18,26 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 
 object AnikotoAPI {
     private const val BASE_URL = "https://anikoto.cz"
     private const val USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
 
-    private val client: OkHttpClient get() = Injekt.get<NetworkHelper>().client
+    private val client: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(8, TimeUnit.SECONDS)
+            .callTimeout(15, TimeUnit.SECONDS)
+            .cookieJar(AndroidCookieJar())
+            .build()
+    }
     private val searchCache = mutableMapOf<String, AnikotoAnime>()
 
     private data class AnikotoAnime(val animeId: String, val slug: String, val title: String)
