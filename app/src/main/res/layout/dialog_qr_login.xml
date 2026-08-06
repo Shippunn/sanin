@@ -7,15 +7,15 @@
     android:gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingHorizontal="24dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="8dp">
+    android:paddingTop="12dp"
+    android:paddingBottom="6dp">
 
     <!-- Browser Login -->
     <Button
         android:id="@+id/qrBrowserButton"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginBottom="8dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="6dp"
         android:backgroundTint="?attr/colorPrimaryContainer"
         android:fontFamily="@font/poppins_bold"
         android:text="Log in with Browser"
@@ -27,7 +27,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         android:fontFamily="@font/poppins"
         android:text="or scan the QR code below"
         android:textAlignment="center"
@@ -37,19 +37,19 @@
     <!-- QR Code -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/qrCodeCard"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_marginBottom="16dp"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginBottom="12dp"
         android:focusable="true"
-        app:cardBackgroundColor="?attr/colorSurfaceVariant"
+        app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="16dp"
         app:strokeColor="?attr/colorOutline"
         app:strokeWidth="1dp">
 
         <ImageView
             android:id="@+id/qrCodeImageView"
-            android:layout_width="260dp"
-            android:layout_height="260dp"
+            android:layout_width="180dp"
+            android:layout_height="180dp"
             android:layout_gravity="center"
             android:contentDescription="QR Code to scan for login"
             android:scaleType="fitCenter" />
@@ -80,7 +80,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:fontFamily="@font/poppins"
         android:text="After signing in, Sanin will automatically detect your login."
         android:textAlignment="center"
@@ -91,7 +91,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="12dp"
         android:gravity="center"
         android:orientation="vertical">
 
