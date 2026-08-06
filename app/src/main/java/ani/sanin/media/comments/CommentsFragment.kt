@@ -525,6 +525,7 @@ class CommentsFragment : Fragment() {
     }
 
     fun openCommentDetail(comment: Comment) {
+        if (childFragmentManager.findFragmentByTag("commentZoom") != null) return
         val dialog = CommentZoomDialog()
         val bundle = Bundle().apply {
             putInt("commentId", comment.commentId)
@@ -547,6 +548,24 @@ class CommentsFragment : Fragment() {
             }
         }
         dialog.show(childFragmentManager, "commentZoom")
+    }
+
+    fun showReplies(comment: Comment, position: Int) {
+        if (comment.replyCount <= 0) return
+        lifecycleScope.launch {
+            val replies = withContext(Dispatchers.IO) {
+                AnikotoAPI.getReplies(comment.commentId, comment.anikotoEpisode ?: 0, mediaId)
+            }
+            if (replies.isEmpty()) {
+                snackString("No replies yet")
+                return@launch
+            }
+            val idx = displayedComments.indexOfFirst { it.commentId == comment.commentId }
+            if (idx >= 0) {
+                displayedComments.addAll(idx + 1, replies)
+                carouselAdapter.submitList(displayedComments.toList())
+            }
+        }
     }
 
     private fun getEffectiveFilter(): Int? = when {

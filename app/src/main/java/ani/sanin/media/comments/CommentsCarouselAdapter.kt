@@ -1,5 +1,6 @@
 package ani.sanin.media.comments
 
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,7 @@ class CommentsCarouselAdapter(
 ) : ListAdapter<Comment, CommentsCarouselAdapter.ViewHolder>(DiffCallback()) {
 
     private var focusedPosition = 0
+    private val replyParentsShown = mutableSetOf<Int>()
 
     fun setFocusedPosition(pos: Int) {
         val old = focusedPosition
@@ -47,6 +49,13 @@ class CommentsCarouselAdapter(
         b.carouselUserName.text = comment.username
         b.carouselTimestamp.text = formatTimestamp(comment.timestamp)
         markwon.setMarkdown(b.carouselCommentText, comment.content)
+        if (comment.content.contains("![")) {
+            b.carouselCommentText.maxLines = Int.MAX_VALUE
+            b.carouselCommentText.ellipsize = null
+        } else {
+            b.carouselCommentText.maxLines = 3
+            b.carouselCommentText.ellipsize = TextUtils.TruncateAt.END
+        }
         b.carouselVoteCount.text = (comment.upvotes - comment.downvotes).toString()
 
         val primaryColor = resolvePrimaryColor(b.root.context)
@@ -89,7 +98,7 @@ class CommentsCarouselAdapter(
             fragment.showCommentMenu(comment, holder.adapterPosition)
         }
 
-        b.carouselCommentText.setOnClickListener {
+        b.root.setOnClickListener {
             fragment.openCommentDetail(comment)
         }
 
@@ -112,6 +121,18 @@ class CommentsCarouselAdapter(
             b.carouselEpisodeTag.alpha = if (isFocused) 1f else 0.7f
         } else {
             b.carouselEpisodeTag.visibility = View.GONE
+        }
+
+        if (comment.replyCount > 0 && comment.commentId !in replyParentsShown) {
+            b.carouselShowReplies.visibility = View.VISIBLE
+            b.carouselShowReplies.text = "Show replies (${comment.replyCount})"
+            b.carouselShowReplies.setOnClickListener {
+                replyParentsShown.add(comment.commentId)
+                b.carouselShowReplies.visibility = View.GONE
+                fragment.showReplies(comment, holder.adapterPosition)
+            }
+        } else {
+            b.carouselShowReplies.visibility = View.GONE
         }
 
         val showActions = isFocused

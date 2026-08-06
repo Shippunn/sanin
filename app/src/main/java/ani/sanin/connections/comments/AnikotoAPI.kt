@@ -73,6 +73,25 @@ object AnikotoAPI {
         Logger.log("Anikoto: $total comments across ${ordered.size} episodes")
     }
 
+    /** Fetches replies for one Anikoto comment (same .cw_l-line format). */
+    suspend fun getReplies(commentId: Int, episode: Int, mediaId: Int): List<Comment> {
+        val body = httpGet(
+            "$BASE_URL/ajax/comment/replies/$commentId",
+            referer = "$BASE_URL/",
+            xhr = true
+        ) ?: return emptyList()
+        return try {
+            val obj = Json.parseToJsonElement(body).jsonObject
+            val html = obj["html"]?.jsonPrimitive?.contentOrNull
+            val status = obj["status"]?.jsonPrimitive?.booleanOrNull
+            if (status == false || html.isNullOrBlank()) emptyList()
+            else parseComments(html, mediaId, episode)
+        } catch (e: Exception) {
+            Logger.log(e)
+            emptyList()
+        }
+    }
+
     /** Display order: current episode down to 1, then current+1 up to the last. */
     private fun orderEpisodes(episodes: List<AnikotoEpisode>, progress: Int?): List<AnikotoEpisode> {
         val current = progress ?: 0
@@ -273,6 +292,8 @@ object AnikotoAPI {
         val downvotes = element.selectFirst(".cm-btn-vote[data-type=\"0\"] .value")
             ?.text()?.toIntOrNull() ?: 0
         val deleted = element.attr("data-comment-hidden") == "1"
+        val replyText = element.selectFirst(".cm-btn-show-rep span")?.text() ?: ""
+        val replyCount = Regex("(\\d+)").find(replyText)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         return Comment(
             commentId = commentId,
             userId = userId,
@@ -290,6 +311,7 @@ object AnikotoAPI {
             totalVotes = upvotes - downvotes,
             isAnikoto = true,
             anikotoEpisode = episode,
+            replyCount = replyCount,
         )
     }
 

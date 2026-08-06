@@ -560,7 +560,9 @@ data class Comment(
     @Transient
     val isAnikoto: Boolean = false,
     @Transient
-    val anikotoEpisode: Int? = null
+    val anikotoEpisode: Int? = null,
+    @Transient
+    val replyCount: Int = 0
 )
 
 @Serializable
