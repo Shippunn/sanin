@@ -166,22 +166,33 @@ class QrLoginDialog(
                     val response = QrLoginApi.getSessionStatus(sessionId)
 
                     when (response.status) {
-                        "authenticated" -> {
+                        "authorized" -> {
                             // Stop polling
                             cancelPolling()
                             countdownTimer?.cancel()
 
-                            // Consume the token (one-time retrieval)
+                            // Consume the authorization code (one-time retrieval)
                             try {
                                 val consumeResponse = QrLoginApi.consumeSession(sessionId)
-                                val token = consumeResponse.accessToken
-                                if (token.isNotEmpty()) {
-                                    Anilist.token = token
-                                    PrefManager.setVal(PrefName.AnilistToken, token)
+                                val authCode = consumeResponse.authorizationCode
+                                if (authCode.isNotEmpty()) {
+                                    // Exchange authorization code for access token
+                                    binding.qrStatusText.text = "Exchanging authorization code..."
+                                    val tokenResponse = QrLoginApi.exchangeAuthorizationCode(
+                                        code = authCode,
+                                        clientId = "47875",
+                                        clientSecret = "rPOWDPFARSGR7CnR08bAz9PX06QQfJKUN9vajdSb",
+                                        redirectUri = "https://sanin-auth.shemaus58.workers.dev/callback"
+                                    )
+                                    val token = tokenResponse.access_token
+                                    if (token.isNotEmpty()) {
+                                        Anilist.token = token
+                                        PrefManager.setVal(PrefName.AnilistToken, token)
+                                    }
                                 }
                             } catch (e: Exception) {
-                                Logger.log("Failed to consume session: ${e.message}")
-                                binding.qrStatusText.text = "Failed to retrieve token"
+                                Logger.log("Failed to complete login: ${e.message}")
+                                binding.qrStatusText.text = "Failed to complete login"
                                 binding.qrRefreshButton.isEnabled = true
                                 return@launch
                             }

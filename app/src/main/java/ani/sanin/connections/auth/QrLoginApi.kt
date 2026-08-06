@@ -21,7 +21,14 @@ data class SessionStatusResponse(
 
 @Serializable
 data class ConsumeSessionResponse(
-    val accessToken: String
+    val authorizationCode: String
+)
+
+@Serializable
+data class TokenExchangeResponse(
+    val access_token: String,
+    val token_type: String? = null,
+    val expires_in: Int? = null
 )
 
 object QrLoginApi {
@@ -55,6 +62,22 @@ object QrLoginApi {
             val response = client.post(
                 "$BASE_URL/api/session/consume",
                 data = mapOf("sessionId" to sessionId)
+            )
+            response.parsed()
+        }
+    }
+
+    suspend fun exchangeAuthorizationCode(code: String, clientId: String, clientSecret: String, redirectUri: String): TokenExchangeResponse = withContext(Dispatchers.IO) {
+        executeWithRetry {
+            val response = client.post(
+                "https://anilist.co/api/v2/oauth/token",
+                data = mapOf(
+                    "grant_type" to "authorization_code",
+                    "client_id" to clientId,
+                    "client_secret" to clientSecret,
+                    "redirect_uri" to redirectUri,
+                    "code" to code
+                )
             )
             response.parsed()
         }
