@@ -10,6 +10,30 @@
     android:paddingTop="16dp"
     android:paddingBottom="8dp">
 
+    <!-- Browser Login -->
+    <Button
+        android:id="@+id/qrBrowserButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="?attr/colorPrimaryContainer"
+        android:fontFamily="@font/poppins_bold"
+        android:text="Log in with Browser"
+        android:textColor="?attr/colorOnPrimaryContainer"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_anilist"
+        app:iconTint="?attr/colorOnPrimaryContainer" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:fontFamily="@font/poppins"
+        android:text="or scan the QR code below"
+        android:textAlignment="center"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:textSize="12sp" />
+
     <!-- QR Code -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/qrCodeCard"

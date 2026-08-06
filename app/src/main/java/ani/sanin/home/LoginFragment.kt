@@ -311,6 +311,16 @@ class LoginFragment : Fragment() {
         }
 
         // Set up button click listeners
+        dialogBinding.qrBrowserButton.setOnClickListener {
+            cancelPolling()
+            countdownTimer?.cancel()
+            currentDialog?.dismiss()
+            currentDialog = null
+            currentDialogBinding = null
+            currentSessionId = null
+            Anilist.loginIntent(requireActivity())
+        }
+
         dialogBinding.qrRefreshButton.setOnClickListener {
             refreshQrSession(dialogBinding)
         }
@@ -334,12 +344,15 @@ class LoginFragment : Fragment() {
         dialog.show()
 
         // Set up D-pad focus chain
-        dialogBinding.qrCodeCard.requestFocus()
+        dialogBinding.qrBrowserButton.requestFocus()
+        FocusEffectUtil.applyFocusListener(dialogBinding.qrBrowserButton)
         FocusEffectUtil.applyFocusListener(dialogBinding.qrCodeCard)
         FocusEffectUtil.applyFocusListener(dialogBinding.qrRefreshButton)
         FocusEffectUtil.applyFocusListener(dialogBinding.qrCancelButton)
 
         // Focus chain for QR dialog
+        dialogBinding.qrBrowserButton.nextFocusDownId = R.id.qrCodeCard
+        dialogBinding.qrCodeCard.nextFocusUpId = R.id.qrBrowserButton
         dialogBinding.qrCodeCard.nextFocusDownId = R.id.qrRefreshButton
         dialogBinding.qrRefreshButton.nextFocusUpId = R.id.qrCodeCard
         dialogBinding.qrRefreshButton.nextFocusDownId = R.id.qrCancelButton
