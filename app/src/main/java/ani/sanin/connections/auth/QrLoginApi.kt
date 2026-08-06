@@ -16,7 +16,8 @@ data class CreateSessionResponse(
 
 @Serializable
 data class SessionStatusResponse(
-    val status: String
+    val status: String,
+    val token: String? = null
 )
 
 object QrLoginApi {

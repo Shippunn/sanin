@@ -368,12 +368,12 @@ class LoginFragment : Fragment() {
 
                 // Generate QR code
                 val qrBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    val qrBytes = qrcode.QRCode.ofSquares()
+                    qrcode.QRCode.ofSquares()
                         .withSize(10)
                         .withColor(android.graphics.Color.BLACK)
                         .build(session.qrUrl)
                         .render()
-                    android.graphics.BitmapFactory.decodeByteArray(qrBytes, 0, qrBytes.size)
+                        .nativeImage() as android.graphics.Bitmap
                 }
 
                 // Update UI
@@ -427,6 +427,13 @@ class LoginFragment : Fragment() {
                             // Stop polling
                             cancelPolling()
                             countdownTimer?.cancel()
+
+                            // Save the token returned by the relay
+                            val token = response.token
+                            if (!token.isNullOrEmpty()) {
+                                Anilist.token = token
+                                PrefManager.setVal(PrefName.AnilistToken, token)
+                            }
 
                             // Update UI
                             dialogBinding.qrStatusText.text = "Successfully signed in!"
@@ -519,17 +526,19 @@ class LoginFragment : Fragment() {
             // Get user data from AniList
             if (Anilist.getSavedToken()) {
                 Anilist.query.getUserData()
+
+                // Record login diagnostics
+                ani.sanin.connections.auth.LoginDiagnostics.recordLogin(
+                    ani.sanin.connections.auth.LoginDiagnostics.LoginMethod.QR_CODE
+                )
+
+                // Update UI
+                updateUIBasedOnLoginState()
+
+                toast("Successfully signed in")
+            } else {
+                toast("Login failed: no token received from relay")
             }
-
-            // Record login diagnostics
-            ani.sanin.connections.auth.LoginDiagnostics.recordLogin(
-                ani.sanin.connections.auth.LoginDiagnostics.LoginMethod.QR_CODE
-            )
-
-            // Update UI
-            updateUIBasedOnLoginState()
-
-            toast("Successfully signed in")
         } catch (e: Exception) {
             Logger.log(e)
             toast("Failed to retrieve user data")
