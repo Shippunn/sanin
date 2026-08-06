@@ -61,7 +61,7 @@ enum class PrefName(val data: Pref) {
     IncludeAnimeList(Pref(Location.General, Boolean::class, true)),
 
     AdultOnly(Pref(Location.General, Boolean::class, false)),
-    CommentsEnabled(Pref(Location.General, Int::class, 0)),
+    CommentsEnabled(Pref(Location.General, Int::class, 1)),
     EnableSocks5Proxy(Pref(Location.General, Boolean::class, false)),
     ProxyAuthEnabled(Pref(Location.General, Boolean::class, false)),
 
