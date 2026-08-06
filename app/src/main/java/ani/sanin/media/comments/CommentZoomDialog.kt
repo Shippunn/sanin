@@ -12,9 +12,15 @@ import android.view.WindowManager
 import androidx.fragment.app.DialogFragment
 import ani.sanin.R
 import ani.sanin.buildMarkwon
+import ani.sanin.connections.comments.AnikotoAPI
+import ani.sanin.connections.comments.Comment
 import ani.sanin.databinding.DialogCommentZoomBinding
 import ani.sanin.loadImage
 import ani.sanin.util.FocusEffectUtil
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -27,6 +33,10 @@ class CommentZoomDialog : DialogFragment() {
     private var userVoteType: Int = 0
     private var upvotes: Int = 0
     private var downvotes: Int = 0
+    private var replyCount: Int = 0
+    private var isAnikoto: Boolean = false
+    private var mediaId: Int = 0
+    private var anikotoEpisode: Int = 0
     private lateinit var markwon: io.noties.markwon.Markwon
 
     interface ZoomActionListener {
@@ -58,6 +68,10 @@ class CommentZoomDialog : DialogFragment() {
         userVoteType = args.getInt("userVoteType", 0)
         upvotes = args.getInt("upvotes", 0)
         downvotes = args.getInt("downvotes", 0)
+        replyCount = args.getInt("replyCount", 0)
+        isAnikoto = args.getBoolean("isAnikoto", false)
+        mediaId = args.getInt("mediaId", 0)
+        anikotoEpisode = args.getInt("anikotoEpisode", 0)
         val username = args.getString("username") ?: ""
         val timestamp = args.getString("timestamp") ?: ""
 
@@ -109,6 +123,10 @@ class CommentZoomDialog : DialogFragment() {
             }
         }
 
+        if (isAnikoto && replyCount > 0) {
+            loadReplies()
+        }
+
         FocusEffectUtil.applyFocusListener(
             binding.zoomReply,
             binding.zoomUpVote,
@@ -117,6 +135,41 @@ class CommentZoomDialog : DialogFragment() {
             binding.zoomClose,
             binding.zoomUserAvatar,
         )
+    }
+
+    private fun loadReplies() {
+        binding.zoomRepliesSection.visibility = View.VISIBLE
+        binding.zoomRepliesTitle.text = "Replies ($replyCount)"
+        lifecycleScope.launch {
+            val replies = withContext(Dispatchers.IO) {
+                AnikotoAPI.getReplies(commentId, anikotoEpisode, mediaId)
+            }
+            if (!isAdded || _binding == null) return@launch
+            if (replies.isEmpty()) {
+                binding.zoomRepliesTitle.text = "Replies ($replyCount) · failed to load"
+                return@launch
+            }
+            binding.zoomRepliesTitle.text = "Replies (${replies.size})"
+            replies.forEach { addReplyRow(it) }
+        }
+    }
+
+    private fun addReplyRow(reply: Comment) {
+        val row = LayoutInflater.from(requireContext())
+            .inflate(R.layout.item_zoom_reply, binding.zoomRepliesList, false)
+        row.findViewById<android.widget.TextView>(R.id.replyUserName).text = reply.username
+        row.findViewById<android.widget.TextView>(R.id.replyUserTime).text = formatTimestamp(reply.timestamp)
+        markwon.setMarkdown(
+            row.findViewById(R.id.replyContent),
+            reply.content
+        )
+        val avatar = row.findViewById<com.google.android.material.imageview.ShapeableImageView>(R.id.replyAvatar)
+        if (reply.profilePictureUrl != null) {
+            avatar.loadImage(reply.profilePictureUrl)
+        } else {
+            avatar.setImageResource(R.drawable.ic_round_add_circle_24)
+        }
+        binding.zoomRepliesList.addView(row)
     }
 
     private fun updateVoteCount() {
@@ -173,7 +226,7 @@ class CommentZoomDialog : DialogFragment() {
 
     private fun formatTimestamp(timestamp: String): String {
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT)
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
             sdf.timeZone = TimeZone.getTimeZone("UTC")
             val parsed = sdf.parse(timestamp)
             val diff = System.currentTimeMillis() - (parsed?.time ?: 0)

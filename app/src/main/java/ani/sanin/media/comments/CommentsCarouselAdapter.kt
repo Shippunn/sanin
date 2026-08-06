@@ -23,7 +23,6 @@ class CommentsCarouselAdapter(
 ) : ListAdapter<Comment, CommentsCarouselAdapter.ViewHolder>(DiffCallback()) {
 
     private var focusedPosition = 0
-    private val replyParentsShown = mutableSetOf<Int>()
 
     fun setFocusedPosition(pos: Int) {
         val old = focusedPosition
@@ -123,13 +122,11 @@ class CommentsCarouselAdapter(
             b.carouselEpisodeTag.visibility = View.GONE
         }
 
-        if ((comment.replyCount ?: 0) > 0 && comment.commentId !in replyParentsShown) {
+        if ((comment.replyCount ?: 0) > 0) {
             b.carouselShowReplies.visibility = View.VISIBLE
             b.carouselShowReplies.text = "Show replies (${comment.replyCount})"
             b.carouselShowReplies.setOnClickListener {
-                replyParentsShown.add(comment.commentId)
-                b.carouselShowReplies.visibility = View.GONE
-                fragment.showReplies(comment, holder.adapterPosition)
+                fragment.openCommentDetail(comment)
             }
         } else {
             b.carouselShowReplies.visibility = View.GONE

@@ -274,7 +274,14 @@ object AnikotoAPI {
     }
 
     private fun parseComment(element: Element, mediaId: Int, episode: Int): Comment? {
-        val commentId = element.attr("data-comment-id").toLongOrNull()?.toInt() ?: return null
+        // Top-level comments use data-comment-id; replies from the replies endpoint
+        // only expose the id via id="cm-…" and their parent via data-parent-id.
+        val rawId = when {
+            element.attr("data-comment-id").isNotEmpty() -> element.attr("data-comment-id")
+            else -> element.id().removePrefix("cm-")
+        }
+        val commentId = rawId.toLongOrNull()?.toInt() ?: return null
+        val parentCommentId = element.attr("data-parent-id").toLongOrNull()?.toInt()
         val userId = element.attr("data-user-id")
         val username = element.selectFirst("a.user-name")?.text()?.trim()
             ?.takeIf { it.isNotEmpty() }
@@ -299,7 +306,7 @@ object AnikotoAPI {
             commentId = commentId,
             userId = userId,
             mediaId = mediaId,
-            parentCommentId = null,
+            parentCommentId = parentCommentId,
             content = content,
             timestamp = timestamp,
             deleted = deleted,
