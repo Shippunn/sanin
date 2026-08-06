@@ -368,11 +368,12 @@ class LoginFragment : Fragment() {
 
                 // Generate QR code
                 val qrBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    qrcode.QRCode.ofSquares()
+                    val qrBytes = qrcode.QRCode.ofSquares()
                         .withSize(10)
                         .withColor(android.graphics.Color.BLACK)
                         .build(session.qrUrl)
-                        .toBitmap()
+                        .render()
+                    android.graphics.BitmapFactory.decodeByteArray(qrBytes, 0, qrBytes.size)
                 }
 
                 // Update UI
