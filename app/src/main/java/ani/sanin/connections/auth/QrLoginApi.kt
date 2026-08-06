@@ -52,12 +52,10 @@ object QrLoginApi {
 
     suspend fun consumeSession(sessionId: String): ConsumeSessionResponse = withContext(Dispatchers.IO) {
         executeWithRetry {
-            val response = client.post("$BASE_URL/api/session/consume") {
-                setBody(kotlinx.serialization.json.buildJsonObject {
-                    put("sessionId", kotlinx.serialization.json.JsonPrimitive(sessionId))
-                }.toString())
-                contentType(io.ktor.http.ContentType.Application.Json)
-            }
+            val response = client.post(
+                "$BASE_URL/api/session/consume",
+                data = mapOf("sessionId" to sessionId)
+            )
             response.parsed()
         }
     }
