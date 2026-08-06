@@ -58,7 +58,13 @@ jobs:
           fi
 
       - name: Build
-        run: ./gradlew assemble${{ steps.config.outputs.variant }} --build-cache --parallel
+        run: |
+          EXCLUDE=""
+          if [ "${{ steps.config.outputs.is_release }}" = "false" ]; then
+            # lintVital is a release-quality gate; skip it for fast debug pushes
+            EXCLUDE="-x lintVital${{ steps.config.outputs.variant }}"
+          fi
+          ./gradlew assemble${{ steps.config.outputs.variant }} --build-cache --parallel $EXCLUDE
 
       - name: Collect APKs
         run: |
