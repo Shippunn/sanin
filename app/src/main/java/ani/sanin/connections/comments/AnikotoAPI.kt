@@ -5,7 +5,7 @@ import android.util.Log
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
-import eu.kanade.tachiyomi.network.AndroidCookieJar
+import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -18,26 +18,20 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import java.util.concurrent.TimeUnit
 
 object AnikotoAPI {
     private const val BASE_URL = "https://anikoto.cz"
     private const val USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
 
-    private val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(8, TimeUnit.SECONDS)
-            .readTimeout(8, TimeUnit.SECONDS)
-            .callTimeout(15, TimeUnit.SECONDS)
-            .cookieJar(AndroidCookieJar())
-            .build()
-    }
+    private val client: OkHttpClient get() = Injekt.get<NetworkHelper>().client
     private val searchCache = mutableMapOf<String, AnikotoAnime>()
 
     private data class AnikotoAnime(val animeId: String, val slug: String, val title: String)
@@ -56,7 +50,9 @@ object AnikotoAPI {
             ?: return emptyList()
         val widgetHtml = fetchWidgetHtml(anime.animeId, episode.episodeId, resolveSort(), anime.slug)
             ?: return emptyList()
-        return parseComments(widgetHtml, mediaId)
+        val comments = parseComments(widgetHtml, mediaId)
+        Logger.log("Anikoto: ${comments.size} comments for '$title' ep ${episode.num}")
+        return comments
     }
 
     private suspend fun findAnime(title: String): AnikotoAnime? {
@@ -96,6 +92,9 @@ object AnikotoAPI {
         }
         if (best != null && bestScore < Int.MAX_VALUE) {
             searchCache[normalized] = best!!
+            Logger.log("Anikoto: matched '${best.title}' -> slug=${best.slug} id=${best.animeId} (score $bestScore)")
+        } else {
+            Logger.log(Log.ERROR, "Anikoto: no match for '$title' among ${doc.select("div.item").size} results")
         }
         return best
     }
@@ -108,6 +107,7 @@ object AnikotoAPI {
             val num = link.attr("data-num").toIntOrNull()
             if (episodeId.isEmpty() || num == null) null else AnikotoEpisode(num, episodeId)
         }
+        if (episodes.isEmpty()) Logger.log(Log.ERROR, "Anikoto: no episodes parsed for slug=$slug")
         return episodes.ifEmpty { null }
     }
 
@@ -124,7 +124,12 @@ object AnikotoAPI {
             val obj = Json.parseToJsonElement(body).jsonObject
             val html = obj["html"]?.jsonPrimitive?.contentOrNull
             val status = obj["status"]?.jsonPrimitive?.booleanOrNull
-            if (status == false || html.isNullOrBlank()) null else html
+            if (status == false || html.isNullOrBlank()) {
+                Logger.log(Log.ERROR, "Anikoto: widget returned no comments (status=$status)")
+                null
+            } else {
+                html
+            }
         } catch (e: Exception) {
             Logger.log(e)
             null

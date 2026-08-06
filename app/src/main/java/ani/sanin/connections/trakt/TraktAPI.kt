@@ -1,5 +1,6 @@
 package ani.sanin.connections.trakt
 
+import android.util.Log
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
@@ -32,6 +33,15 @@ object TraktAPI {
             .build()
     }
 
+    private fun logTraktError(action: String, code: Int) {
+        val message = if (code == 403) {
+            "Trakt $action 403: client ID invalid or revoked. Add your own Client ID in Settings > Trakt Client ID"
+        } else {
+            "Trakt $action failed: HTTP $code"
+        }
+        Logger.log(Log.ERROR, message)
+    }
+
     private fun headers(): Map<String, String> = mapOf(
         "trakt-api-key" to clientId,
         "trakt-api-version" to "2",
@@ -50,6 +60,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                logTraktError("search", response.code)
+                return@withContext null
+            }
             val body = response.body?.string() ?: return@withContext null
             val results = json.decodeFromString<List<TraktSearchResult>>(body)
             results.firstOrNull()
@@ -73,6 +87,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                logTraktError("comments", response.code)
+                return@withContext emptyList()
+            }
             val body = response.body?.string() ?: return@withContext emptyList()
             json.decodeFromString<List<TraktComment>>(body)
         } catch (e: Exception) {
@@ -90,6 +108,10 @@ object TraktAPI {
                 .get()
                 .build()
             val response = client.newCall(request).execute()
+            if (response.code != 200) {
+                logTraktError("replies", response.code)
+                return@withContext emptyList()
+            }
             val body = response.body?.string() ?: return@withContext emptyList()
             json.decodeFromString<List<TraktComment>>(body)
         } catch (e: Exception) {
