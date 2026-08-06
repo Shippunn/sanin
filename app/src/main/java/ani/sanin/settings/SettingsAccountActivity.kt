@@ -245,6 +245,17 @@ class SettingsAccountActivity : AppCompatActivity() {
                     isVisible = true
                 ),
                 Settings(
+                    type = 2,
+                    name = "Anikoto Comments",
+                    desc = "Show comments from anikoto.cz in the comments tab",
+                    icon = R.drawable.ic_round_comment_24,
+                    isChecked = PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1,
+                    switch = { isChecked, _ ->
+                        PrefManager.setVal(PrefName.AnikotoCommentsEnabled, if (isChecked) 1 else 0)
+                    },
+                    isVisible = true
+                ),
+                Settings(
                     type = 0,
                     name = if (TraktAuth.isLoggedIn()) "Trakt: ${TraktAuth.username}" else "Login to Trakt",
                     desc = if (TraktAuth.isLoggedIn()) "Tap to logout" else "Like, reply & post on Trakt",

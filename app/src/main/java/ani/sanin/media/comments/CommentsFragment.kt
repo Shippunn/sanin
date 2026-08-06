@@ -18,6 +18,7 @@ import ani.sanin.connections.anilist.Anilist
 import ani.sanin.connections.comments.Comment
 import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
+import ani.sanin.connections.comments.AnikotoAPI
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.trakt.TraktAPI
 import ani.sanin.media.MediaListDialogFragment
@@ -346,6 +347,13 @@ class CommentsFragment : Fragment() {
                 Logger.log(Log.ERROR, "Comments: Trakt comments failed: ${e.message}")
             }
         }
+        if (PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) == 1) {
+            try {
+                loadAnikotoComments()
+            } catch (e: Exception) {
+                Logger.log(Log.ERROR, "Comments: Anikoto comments failed: ${e.message}")
+            }
+        }
         loadSaninComments()
 
         val merged = displayedComments.sortedByDescending { timestampToMillis(it.timestamp) }
@@ -388,6 +396,16 @@ class CommentsFragment : Fragment() {
         }
         displayedComments.addAll(traktComments.map { traktToComment(it) })
         Logger.log("Comments: Trakt fetched ${traktComments.size} comments")
+    }
+
+    private suspend fun loadAnikotoComments() {
+        if (mediaName.isBlank()) return
+        Logger.log("Comments: fetching Anikoto comments title=$mediaName progress=$userProgress")
+        val comments = withContext(Dispatchers.IO) {
+            AnikotoAPI.getCommentsForMedia(mediaId, mediaName, userProgress)
+        }
+        displayedComments.addAll(comments)
+        Logger.log("Comments: Anikoto fetched ${comments.size} comments")
     }
 
     private fun traktToComment(tc: TraktComment): Comment {
@@ -441,6 +459,10 @@ class CommentsFragment : Fragment() {
             snackString("Voting on Trakt comments coming soon")
             return
         }
+        if (comment.isAnikoto) {
+            snackString("Voting on Anikoto comments coming soon")
+            return
+        }
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 CommentsAPI.vote(comment.commentId, voteType)
@@ -461,6 +483,10 @@ class CommentsFragment : Fragment() {
     }
 
     fun startReply(comment: Comment) {
+        if (comment.isAnikoto) {
+            snackString("Replying on Anikoto comments coming soon")
+            return
+        }
         commentWithInteraction = comment
         binding.commentReplyToContainer.visibility = View.VISIBLE
         binding.commentReplyTo.text = "Replying to ${comment.username}"
@@ -481,9 +507,13 @@ class CommentsFragment : Fragment() {
                         snackString("Copied")
                     }
                     2 -> {
-                        lifecycleScope.launch {
-                            withContext(Dispatchers.IO) { CommentsAPI.reportComment(comment.commentId, comment.username, mediaName, comment.userId) }
-                            snackString("Reported")
+                        if (comment.isAnikoto) {
+                            snackString("Reporting Anikoto comments coming soon")
+                        } else {
+                            lifecycleScope.launch {
+                                withContext(Dispatchers.IO) { CommentsAPI.reportComment(comment.commentId, comment.username, mediaName, comment.userId) }
+                                snackString("Reported")
+                            }
                         }
                     }
                 }
