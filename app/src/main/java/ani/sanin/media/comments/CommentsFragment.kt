@@ -551,7 +551,7 @@ class CommentsFragment : Fragment() {
     }
 
     fun showReplies(comment: Comment, position: Int) {
-        if (comment.replyCount <= 0) return
+        if ((comment.replyCount ?: 0) <= 0) return
         lifecycleScope.launch {
             val replies = withContext(Dispatchers.IO) {
                 AnikotoAPI.getReplies(comment.commentId, comment.anikotoEpisode ?: 0, mediaId)

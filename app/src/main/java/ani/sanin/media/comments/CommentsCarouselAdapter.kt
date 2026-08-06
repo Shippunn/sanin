@@ -123,7 +123,7 @@ class CommentsCarouselAdapter(
             b.carouselEpisodeTag.visibility = View.GONE
         }
 
-        if (comment.replyCount > 0 && comment.commentId !in replyParentsShown) {
+        if ((comment.replyCount ?: 0) > 0 && comment.commentId !in replyParentsShown) {
             b.carouselShowReplies.visibility = View.VISIBLE
             b.carouselShowReplies.text = "Show replies (${comment.replyCount})"
             b.carouselShowReplies.setOnClickListener {
