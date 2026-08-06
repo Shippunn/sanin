@@ -16,8 +16,12 @@ data class CreateSessionResponse(
 
 @Serializable
 data class SessionStatusResponse(
-    val status: String,
-    val token: String? = null
+    val status: String
+)
+
+@Serializable
+data class ConsumeSessionResponse(
+    val accessToken: String
 )
 
 object QrLoginApi {
@@ -42,6 +46,18 @@ object QrLoginApi {
 
         executeWithRetry {
             val response = client.get("$BASE_URL/api/session/$sessionId")
+            response.parsed()
+        }
+    }
+
+    suspend fun consumeSession(sessionId: String): ConsumeSessionResponse = withContext(Dispatchers.IO) {
+        executeWithRetry {
+            val response = client.post("$BASE_URL/api/session/consume") {
+                setBody(kotlinx.serialization.json.buildJsonObject {
+                    put("sessionId", kotlinx.serialization.json.JsonPrimitive(sessionId))
+                }.toString())
+                contentType(io.ktor.http.ContentType.Application.Json)
+            }
             response.parsed()
         }
     }

@@ -171,11 +171,19 @@ class QrLoginDialog(
                             cancelPolling()
                             countdownTimer?.cancel()
 
-                            // Save the token returned by the relay
-                            val token = response.token
-                            if (!token.isNullOrEmpty()) {
-                                Anilist.token = token
-                                PrefManager.setVal(PrefName.AnilistToken, token)
+                            // Consume the token (one-time retrieval)
+                            try {
+                                val consumeResponse = QrLoginApi.consumeSession(sessionId)
+                                val token = consumeResponse.accessToken
+                                if (token.isNotEmpty()) {
+                                    Anilist.token = token
+                                    PrefManager.setVal(PrefName.AnilistToken, token)
+                                }
+                            } catch (e: Exception) {
+                                Logger.log("Failed to consume session: ${e.message}")
+                                binding.qrStatusText.text = "Failed to retrieve token"
+                                binding.qrRefreshButton.isEnabled = true
+                                return@launch
                             }
 
                             // Update UI
