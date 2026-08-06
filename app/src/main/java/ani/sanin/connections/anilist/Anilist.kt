@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import ani.sanin.R
 import ani.sanin.client
+import ani.sanin.connections.anilist.api.Query
 import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.currContext
 import ani.sanin.openLinkInBrowser

@@ -306,9 +306,9 @@ class LoginFragment : Fragment() {
                 alertDialog.window?.apply {
                     setDimAmount(0.8f)
                 }
+                currentDialog = alertDialog
             }
         }
-        currentDialog = dialog
 
         // Set up button click listeners
         dialogBinding.qrRefreshButton.setOnClickListener {
@@ -318,7 +318,7 @@ class LoginFragment : Fragment() {
         dialogBinding.qrCancelButton.setOnClickListener {
             cancelPolling()
             countdownTimer?.cancel()
-            dialog.dismiss()
+            currentDialog?.dismiss()
             currentDialog = null
             currentDialogBinding = null
             currentSessionId = null
@@ -368,13 +368,11 @@ class LoginFragment : Fragment() {
 
                 // Generate QR code
                 val qrBitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-                    QRCode
-                        .encode(session.qrUrl)
-                        .render(
-                            margin = 10,
-                            darkColor = android.graphics.Color.BLACK,
-                            lightColor = android.graphics.Color.TRANSPARENT
-                        )
+                    qrcode.QRCode.ofSquares()
+                        .withSize(10)
+                        .withColor(android.graphics.Color.BLACK)
+                        .build(session.qrUrl)
+                        .render()
                         .toBitmap()
                 }
 
