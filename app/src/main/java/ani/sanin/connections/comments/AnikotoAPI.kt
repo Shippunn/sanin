@@ -25,6 +25,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -359,6 +360,21 @@ object AnikotoAPI {
         val lower = text.lowercase(Locale.US)
         if (lower == "just now" || lower == "now") return formatIso(now)
         if (lower == "yesterday") return formatIso(now - 86_400_000L)
+        // Absolute dates like "on 6/25/26" (site switches to this for older comments)
+        Regex("on (\\d{1,2})/(\\d{1,2})/(\\d{2,4})").find(lower)?.let { m ->
+            val month = m.groupValues[1].toIntOrNull() ?: return@let
+            val day = m.groupValues[2].toIntOrNull() ?: return@let
+            var year = m.groupValues[3].toIntOrNull() ?: return@let
+            if (year < 100) year += 2000
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                clear()
+                set(Calendar.YEAR, year)
+                set(Calendar.MONTH, month - 1)
+                set(Calendar.DAY_OF_MONTH, day)
+                set(Calendar.HOUR_OF_DAY, 12)
+            }
+            return formatIso(cal.timeInMillis)
+        }
         val units = mapOf(
             "second" to 1_000L,
             "seconds" to 1_000L,
