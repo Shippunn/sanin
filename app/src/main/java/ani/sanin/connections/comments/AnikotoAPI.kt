@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import me.xdrop.fuzzywuzzy.FuzzySearch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import uy.kohesive.injekt.Injekt
@@ -42,7 +43,7 @@ object AnikotoAPI {
             Logger.log(Log.ERROR, "Anikoto: no anime match for '$title'")
             return emptyList()
         }
-        val episodes = fetchEpisodes(anime.slug) ?: run {
+        val episodes = fetchEpisodes(anime.slug, anime.animeId) ?: run {
             Logger.log(Log.ERROR, "Anikoto: no episodes for '${anime.slug}'")
             return emptyList()
         }
@@ -99,10 +100,13 @@ object AnikotoAPI {
         return best
     }
 
-    private suspend fun fetchEpisodes(slug: String): List<AnikotoEpisode>? {
-        val html = httpGet("$BASE_URL/watch/$slug/ep-1") ?: return null
+    private suspend fun fetchEpisodes(slug: String, animeId: String): List<AnikotoEpisode>? {
+        // Episode list is loaded via AJAX into #w-episodes; the watch page only
+        // contains a placeholder div.
+        val html = httpPost("$BASE_URL/ajax/episode/list/$animeId", referer = "$BASE_URL/watch/$slug/ep-1")
+            ?: return null
         val doc = Jsoup.parse(html)
-        val episodes = doc.select("#w-episodes ul.ep-range li a[data-id]").mapNotNull { link ->
+        val episodes = doc.select("ul.ep-range li a[data-id]").mapNotNull { link ->
             val episodeId = link.attr("data-id")
             val num = link.attr("data-num").toIntOrNull()
             if (episodeId.isEmpty() || num == null) null else AnikotoEpisode(num, episodeId)
@@ -135,6 +139,29 @@ object AnikotoAPI {
             null
         }
     }
+
+    private suspend fun httpPost(url: String, referer: String? = null): String? =
+        withContext(Dispatchers.IO) {
+            try {
+                val builder = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", USER_AGENT)
+                    .header("Cache-Control", "no-cache")
+                    .header("X-Requested-With", "XMLHttpRequest")
+                if (referer != null) builder.header("Referer", referer)
+                client.newCall(builder.post(ByteArray(0).toRequestBody()).build()).execute().use { response ->
+                    if (response.code == 200) {
+                        response.body?.string()
+                    } else {
+                        Logger.log(Log.ERROR, "Anikoto: HTTP ${response.code} for $url")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                Logger.log(e)
+                null
+            }
+        }
 
     private suspend fun httpGet(
         url: String,
