@@ -13,6 +13,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import ani.sanin.R
 import ani.sanin.connections.anilist.Anilist
+import ani.sanin.connections.auth.LoginDiagnostics
+import ani.sanin.connections.auth.QrLoginDialog
 
 import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.trakt.TraktAuth
@@ -28,6 +30,7 @@ import ani.sanin.snackString
 import ani.sanin.startMainActivity
 import ani.sanin.statusBarHeight
 import ani.sanin.themes.ThemeManager
+import ani.sanin.toast
 import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.customAlertDialog
 import io.noties.markwon.Markwon
@@ -161,11 +164,27 @@ class SettingsAccountActivity : AppCompatActivity() {
                             setTitle(getString(R.string.login_to_anilist))
                             singleChoiceItems(
                                 arrayOf(
-                                    getString(R.string.browser_login)
+                                    getString(R.string.browser_login),
+                                    getString(R.string.qr_code_login)
                                 )
                             ) { choice ->
                                 when (choice) {
                                     0 -> Anilist.loginIntent(context)
+                                    1 -> QrLoginDialog(
+                                        context,
+                                        this@SettingsAccountActivity.lifecycleScope
+                                    ) {
+                                        if (Anilist.getSavedToken()) {
+                                            Anilist.query.getUserData()
+                                            LoginDiagnostics.recordLogin(
+                                                LoginDiagnostics.LoginMethod.QR_CODE
+                                            )
+                                            reload()
+                                            toast("Successfully signed in")
+                                        } else {
+                                            toast("Login failed: no token received from relay")
+                                        }
+                                    }.show()
                                 }
                             }
                             setNegButton(R.string.cancel)

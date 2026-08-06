@@ -452,6 +452,7 @@
 
     <string name="login_to_anilist">Login to Anilist</string>
     <string name="browser_login">Browser</string>
+    <string name="qr_code_login">QR Code</string>
     <string name="retry">Retry</string>
     <string name="use_alarm_manager">Use Alarm Manager</string>
     <string name="use_alarm_manager_reliable">Use Alarm Manager for reliable Notifications</string>
