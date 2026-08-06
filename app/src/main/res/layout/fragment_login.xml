@@ -12,7 +12,9 @@
         android:visibility="gone"
         tools:ignore="ContentDescription" />
 
+    <!-- Logged Out State -->
     <LinearLayout
+        android:id="@+id/loggedOutContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
@@ -166,5 +168,113 @@
 
     </LinearLayout>
 
-</FrameLayout>
+    <!-- Logged In State -->
+    <LinearLayout
+        android:id="@+id/loggedInContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="80dp"
+            android:fontFamily="@font/poppins_thin"
+            android:text="@string/app_name"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="64sp" />
+
+        <TextView
+            android:id="@+id/loggedInStatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:fontFamily="@font/poppins"
+            android:text="Logged in as"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/loggedInUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/poppins_bold"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="24sp" />
+
+        <ImageView
+            android:id="@+id/loggedInAvatar"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="32dp"
+            android:scaleType="centerCrop"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Circle"
+            tools:ignore="ContentDescription" />
+
+        <Button
+            android:id="@+id/switchAccountButton"
+            android:layout_width="200dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="@font/poppins_bold"
+            android:text="Switch Account"
+            android:textColor="?attr/colorOnPrimaryContainer"
+            app:cornerRadius="16dp" />
+
+        <Button
+            android:id="@+id/logoutButton"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="200dp"
+            android:layout_height="48dp"
+            android:layout_marginBottom="32dp"
+            android:fontFamily="@font/poppins_bold"
+            android:text="Logout"
+            app:cornerRadius="16dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.5"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/loggedInDiscord"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:src="@drawable/ic_discord"
+                app:tint="?attr/colorOutline"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:id="@+id/loggedInGithub"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_github"
+                app:tint="?attr/colorOutline"
+                tools:ignore="ContentDescription" />
+
+            <ImageView
+                android:id="@+id/loggedInTelegram"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_telegram"
+                app:tint="?attr/colorOutline"
+                tools:ignore="ContentDescription" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

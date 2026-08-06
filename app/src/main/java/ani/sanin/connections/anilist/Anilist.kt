@@ -267,7 +267,34 @@ object Anilist {
     fun getSavedToken(): Boolean {
         token = PrefManager.getVal(PrefName.AnilistToken, null as String?)
         avatar = PrefManager.getVal(PrefName.AnilistAvatar, null as String?)
+        username = PrefManager.getVal(PrefName.AnilistUserName, null as String?)
+        userid = PrefManager.getVal(PrefName.AnilistUserId, null as String?)?.toIntOrNull()
         return !token.isNullOrEmpty()
+    }
+
+    /**
+     * Validate the current token by making a simple API call.
+     * Returns true if token is valid, false if invalid.
+     * Returns null if network error (cannot determine).
+     */
+    suspend fun validateToken(): Boolean? {
+        return try {
+            val response = executeQuery<Query.Viewer>(
+                """{Viewer{id name}}""",
+                force = true,
+                show = false
+            )
+            response?.data?.user != null
+        } catch (e: Exception) {
+            // Network error - cannot determine validity
+            if (e is java.net.UnknownHostException ||
+                e is java.net.ConnectException ||
+                e is java.net.SocketTimeoutException) {
+                null
+            } else {
+                false
+            }
+        }
     }
 
     fun removeSavedToken() {
@@ -281,6 +308,8 @@ object Anilist {
         chapterRead = null
         PrefManager.removeVal(PrefName.AnilistToken)
         PrefManager.removeVal(PrefName.AnilistAvatar)
+        PrefManager.removeVal(PrefName.AnilistUserName)
+        PrefManager.removeVal(PrefName.AnilistUserId)
         // Reset per-section notification counts
         PrefManager.setVal(PrefName.UnreadUserNotifications, 0)
         PrefManager.setVal(PrefName.UnreadMediaNotifications, 0)

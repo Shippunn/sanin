@@ -95,6 +95,7 @@ ebook = "com.github.VipulOG:ebook-reader:0.1.6"
 dialogs = "com.github.eltos:simpledialogfragments:v3.7"
 charts = "com.github.AAChartModel:AAChartCore-Kotlin:7.2.3"
 lottie = "com.airbnb.android:lottie:6.6.6"
+qrcode-kotlin = "io.github.g0dkar:qrcode-kotlin-android:4.5.0"
 
 # Markwon
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon" }

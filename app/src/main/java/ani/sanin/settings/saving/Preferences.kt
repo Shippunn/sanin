@@ -339,4 +339,9 @@ enum class PrefName(val data: Pref) {
     Socks5ProxyPort(Pref(Location.Protected, String::class, "")),
     Socks5ProxyUsername(Pref(Location.Protected, String::class, "")),
     Socks5ProxyPassword(Pref(Location.Protected, String::class, "")),
+    
+    // Login Diagnostics (local only)
+    LastLoginTimestamp(Pref(Location.Irrelevant, Long::class, 0L)),
+    LoginMethod(Pref(Location.Irrelevant, String::class, "UNKNOWN")),
+    LoginAppVersion(Pref(Location.Irrelevant, String::class, "")),
 }
