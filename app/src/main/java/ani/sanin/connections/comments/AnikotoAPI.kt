@@ -103,8 +103,14 @@ object AnikotoAPI {
     private suspend fun fetchEpisodes(slug: String, animeId: String): List<AnikotoEpisode>? {
         // Episode list is loaded via AJAX into #w-episodes; the watch page only
         // contains a placeholder div.
-        val html = httpPost("$BASE_URL/ajax/episode/list/$animeId", referer = "$BASE_URL/watch/$slug/ep-1")
+        val body = httpPost("$BASE_URL/ajax/episode/list/$animeId", referer = "$BASE_URL/watch/$slug/ep-1")
             ?: return null
+        val html = try {
+            Json.parseToJsonElement(body).jsonObject["result"]?.jsonPrimitive?.contentOrNull
+        } catch (e: Exception) {
+            Logger.log(e)
+            null
+        } ?: return null
         val doc = Jsoup.parse(html)
         val episodes = doc.select("ul.ep-range li a[data-id]").mapNotNull { link ->
             val episodeId = link.attr("data-id")
