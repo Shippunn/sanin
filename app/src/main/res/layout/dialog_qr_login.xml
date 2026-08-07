@@ -116,11 +116,11 @@
 
     </LinearLayout>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons: Refresh (left) and Verify (right), native dialog Cancel handles dismissal -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <Button
@@ -128,30 +128,23 @@
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
-            android:layout_marginEnd="8dp"
             android:enabled="false"
             android:fontFamily="@font/poppins_bold"
             android:text="Refresh QR"
             android:textSize="13sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
 
         <Button
             android:id="@+id/qrVerifyButton"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
-            android:layout_marginEnd="8dp"
             android:fontFamily="@font/poppins_bold"
             android:text="Verify Login"
-            android:textSize="13sp"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/qrCancelButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="wrap_content"
-            android:layout_height="48dp"
-            android:fontFamily="@font/poppins_bold"
-            android:text="@string/cancel"
             android:textSize="13sp" />
 
     </LinearLayout>

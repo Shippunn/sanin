@@ -75,14 +75,12 @@ class QrLoginDialog(
             onVerifyClicked(binding)
         }
 
-        binding.qrCancelButton.setOnClickListener { dismiss() }
-
+        // The native dialog Cancel button (setNegButton) handles dismissal
         builder.setNegButton(R.string.cancel) { dismiss() }
         builder.show()
 
         // Show debug panel
         binding.qrDebugPanel.visibility = View.VISIBLE
-        binding.qrVerifyButton.visibility = View.VISIBLE
 
         // Set up D-pad focus chain
         binding.qrBrowserButton.requestFocus()
@@ -90,7 +88,6 @@ class QrLoginDialog(
         FocusEffectUtil.applyFocusListener(binding.qrCodeCard)
         FocusEffectUtil.applyFocusListener(binding.qrRefreshButton)
         FocusEffectUtil.applyFocusListener(binding.qrVerifyButton)
-        FocusEffectUtil.applyFocusListener(binding.qrCancelButton)
 
         binding.qrBrowserButton.nextFocusDownId = R.id.qrCodeCard
         binding.qrCodeCard.nextFocusUpId = R.id.qrBrowserButton
@@ -98,8 +95,9 @@ class QrLoginDialog(
         binding.qrRefreshButton.nextFocusUpId = R.id.qrCodeCard
         binding.qrRefreshButton.nextFocusDownId = R.id.qrVerifyButton
         binding.qrVerifyButton.nextFocusUpId = R.id.qrRefreshButton
-        binding.qrVerifyButton.nextFocusDownId = R.id.qrCancelButton
-        binding.qrCancelButton.nextFocusUpId = R.id.qrVerifyButton
+        // Native dialog Cancel button (bottom of dialog) closes the chain
+        binding.qrVerifyButton.nextFocusDownId = android.R.id.button2
+        dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.nextFocusUpId = R.id.qrVerifyButton
 
         createSessionAndStartPolling(binding)
     }
