@@ -29,7 +29,7 @@ abstract class NativeAnimeParser : AnimeParser() {
      * provider-specific preferences (call super first).
      */
     open fun setupPreferenceScreen(screen: PreferenceScreen) {
-        val context: Context = currContext ?: return
+        val context: Context = currContext() ?: return
 
         screen.addPreference(SwitchPreferenceCompat(context).apply {
             title = "Prefer Dub"
@@ -95,7 +95,7 @@ abstract class NativeAnimeParser : AnimeParser() {
         values: Array<String>,
         default: String
     ) {
-        val context: Context = currContext ?: return
+        val context: Context = currContext() ?: return
         screen.addPreference(ListPreference(context).apply {
             title = "Scraper source"
             summary = providerSource(saveName) ?: default
