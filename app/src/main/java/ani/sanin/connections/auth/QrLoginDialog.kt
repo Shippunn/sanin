@@ -252,7 +252,7 @@ class QrLoginDialog(
                     Logger.log("[QR-DEBUG] onAuthenticated() completed")
                 } catch (e: Exception) {
                     Logger.log("[QR-DEBUG] EXCEPTION in onAuthenticated: ${e.javaClass.simpleName}: ${e.message}")
-                    Logger.log("[QR-DEBUG] Stacktrace: ", e)
+                    Logger.log(e)
                 }
 
                 delay(1000)
@@ -337,7 +337,7 @@ class QrLoginDialog(
 
             } catch (e: Exception) {
                 Logger.log("[QR-DEBUG] EXCEPTION in createSessionAndStartPolling: ${e.javaClass.simpleName}: ${e.message}")
-                Logger.log("[QR-DEBUG] Stacktrace: ", e)
+                Logger.log(e)
                 setDebugStep(binding, "FAILED: ${e.javaClass.simpleName}: ${e.message}")
                 setDebugHttpCode(binding, "ERR")
                 binding.qrLoadingIndicator.visibility = View.GONE
@@ -422,7 +422,7 @@ class QrLoginDialog(
                     }
                 } catch (e: Exception) {
                     Logger.log("[QR-DEBUG] EXCEPTION in polling loop: ${e.javaClass.simpleName}: ${e.message}")
-                    Logger.log("[QR-DEBUG] Stacktrace: ", e)
+                    Logger.log(e)
                     setDebugStep(binding, "FAILED: ${e.javaClass.simpleName}: ${e.message}")
                     setDebugHttpCode(binding, "ERR")
                     // If dialog was dismissed (user pressed back), don't show error

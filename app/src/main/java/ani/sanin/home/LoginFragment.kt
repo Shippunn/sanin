@@ -308,7 +308,7 @@ class LoginFragment : Fragment() {
             }
         } catch (e: Exception) {
             Logger.log("[QR-DEBUG] EXCEPTION in LoginFragment.handleAuthenticated: ${e.javaClass.simpleName}: ${e.message}")
-            Logger.log("[QR-DEBUG] Stacktrace: ", e)
+            Logger.log(e)
             toast("Failed to retrieve user data")
         }
     }
