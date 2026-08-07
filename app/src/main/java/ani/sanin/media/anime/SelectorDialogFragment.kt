@@ -476,11 +476,20 @@ class SelectorDialogFragment : DialogFragment() {
                     holder.binding.streamRecyclerView.visibility = View.GONE
                 }
                 is VideoExtractor -> {
-                    holder.binding.streamName.text = ""//extractor.server.name
-                    holder.binding.streamName.visibility = View.GONE
-                    holder.binding.streamMeta.visibility = View.GONE
+                    holder.binding.streamName.text = item.server.name
+                    holder.binding.streamName.visibility = View.VISIBLE
+                    val meta = listOfNotNull(
+                        item.server.extraData?.get("quality"),
+                        item.server.extraData?.get("audio")?.uppercase()
+                    ).joinToString(" \u00b7 ")
+                    holder.binding.streamMeta.text = meta
+                    holder.binding.streamMeta.visibility =
+                        if (meta.isEmpty()) View.GONE else View.VISIBLE
                     holder.binding.streamLoading.visibility = View.GONE
                     holder.binding.streamRecyclerView.visibility = View.VISIBLE
+                    holder.binding.streamHeader.setOnClickListener {
+                        performClick(bindingAdapterPosition)
+                    }
                     holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
                     holder.binding.streamRecyclerView.adapter = VideoAdapter(item, onEpisodeDownloadHandler)
                 }
