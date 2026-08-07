@@ -268,7 +268,7 @@ class CommentsFragment : Fragment() {
             }
         }
 
-        binding.commentsList.post { binding.commentsList.requestFocus() }
+        binding.commentsList.post { carouselAdapter.requestFocusedCard() }
     }
 
     private fun setupInputListeners() {
@@ -514,7 +514,7 @@ class CommentsFragment : Fragment() {
         carouselAdapter.submitList(displayedComments.toList())
         binding.commentsProgressBar.visibility = View.GONE
         binding.commentsList.visibility = View.VISIBLE
-        if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
+        if (displayedComments.isNotEmpty()) carouselAdapter.requestFocusedCard()
     }
 
     /** Reveals up to 15 comments per call so TV rendering stays smooth. */
@@ -542,7 +542,7 @@ class CommentsFragment : Fragment() {
                 carouselAdapter.submitList(displayedComments.toList())
                 binding.commentsProgressBar.visibility = View.GONE
                 binding.commentsList.visibility = View.VISIBLE
-                if (displayedComments.isNotEmpty()) binding.commentsList.requestFocus()
+                if (displayedComments.isNotEmpty()) carouselAdapter.requestFocusedCard()
             }
         } finally {
             revealInProgress = false

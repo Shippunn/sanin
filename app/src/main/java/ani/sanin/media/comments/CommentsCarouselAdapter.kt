@@ -28,10 +28,24 @@ class CommentsCarouselAdapter(
         val old = focusedPosition
         focusedPosition = pos
         if (old != pos) {
-            (recyclerView ?: return).post {
+            val rv = recyclerView ?: return
+            val update = {
                 if (old != RecyclerView.NO_POSITION) notifyItemChanged(old)
                 notifyItemChanged(pos)
+                // Cement focus on the newly centered card so it never flashes or wanders
+                rv.post {
+                    rv.findViewHolderForAdapterPosition(pos)?.itemView?.requestFocus()
+                }
             }
+            // Notify synchronously when safe (no flash); only defer while mid-layout to avoid crashes
+            if (rv.isComputingLayout) rv.post(update) else update()
+        }
+    }
+
+    fun requestFocusedCard() {
+        (recyclerView ?: return).post {
+            recyclerView?.findViewHolderForAdapterPosition(focusedPosition)?.itemView?.requestFocus()
+                ?: recyclerView?.requestFocus()
         }
     }
 
