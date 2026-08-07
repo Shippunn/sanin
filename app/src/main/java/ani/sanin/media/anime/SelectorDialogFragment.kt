@@ -455,8 +455,10 @@ class SelectorDialogFragment : DialogFragment() {
                 is ServerPlaceholder -> {
                     holder.binding.streamName.text = item.name
                     holder.binding.streamName.visibility = View.VISIBLE
-                    val meta = listOfNotNull(item.quality, item.subDub)
-                        .joinToString(" \u00b7 ") { it.uppercase() }
+                    val meta = listOfNotNull(
+                        item.quality,
+                        item.subDub?.uppercase()
+                    ).joinToString(" \u00b7 ")
                     holder.binding.streamMeta.text = meta
                     holder.binding.streamMeta.visibility =
                         if (meta.isEmpty()) View.GONE else View.VISIBLE

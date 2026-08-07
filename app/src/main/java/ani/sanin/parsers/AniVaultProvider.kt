@@ -153,7 +153,11 @@ class AniVaultProvider : NativeAnimeParser() {
                 }
                 .toList()
             when {
-                heights.size >= 2 -> "Multi"
+                heights.size >= 2 -> {
+                    val min = heights.min()
+                    val max = heights.max()
+                    "Multi \u00b7 ${min}-${max}p"
+                }
                 heights.size == 1 -> "${heights.first()}p"
                 else -> null
             }
