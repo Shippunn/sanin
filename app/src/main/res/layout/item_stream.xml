@@ -8,18 +8,38 @@
     android:orientation="vertical"
     android:padding="8dp">
 
-    <TextView
-        android:id="@+id/streamName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
-        android:fontFamily="@font/poppins_bold"
-        android:textAllCaps="true"
-        android:textSize="16sp"
-        tools:text="@string/anime" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/streamName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="@font/poppins_bold"
+            android:textAllCaps="true"
+            android:textSize="16sp"
+            tools:text="@string/anime" />
+
+        <TextView
+            android:id="@+id/streamMeta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:alpha="0.7"
+            android:fontFamily="@font/poppins"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:text="1080p · SUB"
+            tools:visibility="visible" />
+    </LinearLayout>
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"

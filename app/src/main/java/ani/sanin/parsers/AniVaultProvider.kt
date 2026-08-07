@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.animesource.model.SEpisode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
+import java.net.URLEncoder
 
 class AniVaultProvider : NativeAnimeParser() {
 
@@ -64,45 +65,102 @@ class AniVaultProvider : NativeAnimeParser() {
         if (anilistId == null || anilistId <= 0 || episodeNum == null) return emptyList()
         return withContext(Dispatchers.IO) {
             try {
-                val type = if (selectDub) "dub" else "sub"
-                val jsonStr = get("$baseUrl/api/watch/anikoto/$anilistId/$episodeNum/$type")
-                val obj = Mapper.json.parseToJsonElement(jsonStr) as? JsonObject ?: return@withContext emptyList()
-
+                // Expose both sub & dub rows; the sub/dub toggle only decides which language sorts first.
+                val types = if (selectDub) listOf("dub", "sub") else listOf("sub", "dub")
                 val servers = mutableListOf<VideoServer>()
-                val m3u8 = (obj["m3u8"] as? JsonPrimitive)?.contentOrNull
-                val embedUrl = (obj["embedUrl"] as? JsonPrimitive)?.contentOrNull
-                val hlsProxyUrl = (obj["hlsProxyUrl"] as? JsonPrimitive)?.contentOrNull
-
-                val extraData = mutableMapOf("referer" to "https://megaplay.buzz/")
-
-                val subs = obj["subtitles"] as? JsonArray
-                if (subs != null && subs.isNotEmpty()) {
-                    val subJson = subs.mapNotNull { sub ->
-                        val subObj = sub as? JsonObject ?: return@mapNotNull null
-                        val url = (subObj["url"] as? JsonPrimitive)?.contentOrNull ?: return@mapNotNull null
-                        val lang = (subObj["lang"] as? JsonPrimitive)?.contentOrNull ?: "Unknown"
-                        val code = language(lang)
-                        "{\"url\":\"${url.replace("\"", "\\\"")}\",\"language\":\"$code\",\"type\":\"vtt\"}"
-                    }
-                    if (subJson.isNotEmpty()) {
-                        extraData["subtitles"] = "[${subJson.joinToString(",")}]"
+                val seenStreams = mutableSetOf<String>()
+                for (type in types) {
+                    val watch = fetchWatch(anilistId, episodeNum, type, null) ?: continue
+                    val defaultName = (watch["server"] as? JsonPrimitive)?.contentOrNull
+                    for (name in serverNames(watch)) {
+                        val perServer = if (name == defaultName) watch
+                            else fetchWatch(anilistId, episodeNum, type, name) ?: continue
+                        val m3u8 = (perServer["m3u8"] as? JsonPrimitive)?.contentOrNull
+                        val hlsProxyUrl = (perServer["hlsProxyUrl"] as? JsonPrimitive)?.contentOrNull
+                        val embedUrl = (perServer["embedUrl"] as? JsonPrimitive)?.contentOrNull
+                        val streamUrl = m3u8 ?: hlsProxyUrl ?: embedUrl
+                        if (streamUrl.isNullOrBlank()) continue
+                        // The backend serves the same stream under several labels; dedupe them.
+                        if (!seenStreams.add(streamUrl)) continue
+                        servers.add(buildServer(name, type, streamUrl, perServer))
                     }
                 }
-
-                val streamUrl = m3u8 ?: hlsProxyUrl ?: embedUrl
-                if (!streamUrl.isNullOrBlank()) {
-                    servers.add(VideoServer("AniVault", streamUrl, extraData))
-                }
-
-                if (!embedUrl.isNullOrBlank() && m3u8 != null) {
-                    servers.add(VideoServer("AniVault Embed", embedUrl))
-                }
-
                 servers
             } catch (e: Exception) {
                 Logger.log("AniVault loadVideoServers error: ${e.message}")
                 emptyList()
             }
         }
+    }
+
+    private suspend fun fetchWatch(anilistId: Int, episodeNum: Int, type: String, server: String?): JsonObject? {
+        val url = "$baseUrl/api/watch/anikoto/$anilistId/$episodeNum/$type" +
+            (server?.let { "?server=${URLEncoder.encode(it, "utf-8")}" } ?: "")
+        return try {
+            Mapper.json.parseToJsonElement(get(url)) as? JsonObject
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun serverNames(obj: JsonObject): List<String> {
+        val list = (obj["availableServers"] as? JsonArray)
+            ?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
+            ?.filter { it.isNotBlank() }
+        if (!list.isNullOrEmpty()) return list
+        return listOfNotNull((obj["server"] as? JsonPrimitive)?.contentOrNull)
+    }
+
+    private suspend fun buildServer(name: String, type: String, streamUrl: String, obj: JsonObject): VideoServer {
+        val extraData = mutableMapOf(
+            "referer" to "https://megaplay.buzz/",
+            "audio" to type.uppercase()
+        )
+        val subs = obj["subtitles"] as? JsonArray
+        if (subs != null && subs.isNotEmpty()) {
+            val subJson = subs.mapNotNull { sub ->
+                val subObj = sub as? JsonObject ?: return@mapNotNull null
+                val url = (subObj["url"] as? JsonPrimitive)?.contentOrNull ?: return@mapNotNull null
+                val lang = (subObj["lang"] as? JsonPrimitive)?.contentOrNull ?: "Unknown"
+                val code = language(lang)
+                "{\"url\":\"${url.replace("\"", "\\\"")}\",\"language\":\"$code\",\"type\":\"vtt\"}"
+            }
+            if (subJson.isNotEmpty()) {
+                extraData["subtitles"] = "[${subJson.joinToString(",")}]"
+            }
+        }
+        // Pass AniVault skip timestamps (when present) through to the player skip system
+        obj["intro"]?.let { if (it is JsonObject || it is JsonPrimitive) extraData["intro"] = it.toString() }
+        obj["outro"]?.let { if (it is JsonObject || it is JsonPrimitive) extraData["outro"] = it.toString() }
+        if (streamUrl.contains(".m3u8", ignoreCase = true)) {
+            resolveMasterQuality(streamUrl)?.let { extraData["quality"] = it }
+        }
+        return VideoServer(name, streamUrl, extraData)
+    }
+
+    private val qualityCache = mutableMapOf<String, String?>()
+
+    private suspend fun resolveMasterQuality(masterUrl: String): String? {
+        if (qualityCache.containsKey(masterUrl)) return qualityCache[masterUrl]
+        val label = try {
+            val body = get(masterUrl, mapOf("Referer" to "https://megaplay.buzz/"))
+            val heights = body.lineSequence()
+                .map { it.trim() }
+                .filter { it.startsWith("#EXT-X-STREAM-INF:", ignoreCase = true) }
+                .mapNotNull {
+                    Regex("RESOLUTION=\\d+x(\\d+)", RegexOption.IGNORE_CASE)
+                        .find(it)?.groupValues?.get(1)?.toIntOrNull()
+                }
+                .toList()
+            when {
+                heights.size >= 2 -> "Multi"
+                heights.size == 1 -> "${heights.first()}p"
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        }
+        qualityCache[masterUrl] = label
+        return label
     }
 }

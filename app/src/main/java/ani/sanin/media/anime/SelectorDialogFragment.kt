@@ -199,7 +199,13 @@ class SelectorDialogFragment : DialogFragment() {
                             }
                             withContext(Dispatchers.Main) {
                                 if (_binding == null || !isAdded) return@withContext
-                                servers.forEach { adapter.addServer(it.name) }
+                                servers.forEach {
+                                    adapter.addServer(
+                                        it.name,
+                                        it.extraData?.get("quality"),
+                                        it.extraData?.get("audio")
+                                    )
+                                }
                                 binding.selectorProgressBar.visibility = View.GONE
                                 binding.selectorMakeDefault.post { binding.selectorMakeDefault.requestFocus() }
                             }
@@ -426,7 +432,7 @@ class SelectorDialogFragment : DialogFragment() {
         }
     }
 
-    private inner class ServerPlaceholder(val name: String)
+    private inner class ServerPlaceholder(val name: String, val quality: String?, val subDub: String?)
 
     private inner class ExtractorAdapter(private val onEpisodeDownloadHandler: EpisodeDownloadHandler? = null) :
         RecyclerView.Adapter<ExtractorAdapter.StreamViewHolder>() {
@@ -449,12 +455,18 @@ class SelectorDialogFragment : DialogFragment() {
                 is ServerPlaceholder -> {
                     holder.binding.streamName.text = item.name
                     holder.binding.streamName.visibility = View.VISIBLE
+                    val meta = listOfNotNull(item.quality, item.subDub)
+                        .joinToString(" \u00b7 ") { it.uppercase() }
+                    holder.binding.streamMeta.text = meta
+                    holder.binding.streamMeta.visibility =
+                        if (meta.isEmpty()) View.GONE else View.VISIBLE
                     holder.binding.streamLoading.visibility = View.VISIBLE
                     holder.binding.streamRecyclerView.visibility = View.GONE
                 }
                 is VideoExtractor -> {
                     holder.binding.streamName.text = ""//extractor.server.name
                     holder.binding.streamName.visibility = View.GONE
+                    holder.binding.streamMeta.visibility = View.GONE
                     holder.binding.streamLoading.visibility = View.GONE
                     holder.binding.streamRecyclerView.visibility = View.VISIBLE
                     holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -466,8 +478,8 @@ class SelectorDialogFragment : DialogFragment() {
 
         override fun getItemCount(): Int = links.size
 
-        fun addServer(name: String) {
-            links.add(ServerPlaceholder(name))
+        fun addServer(name: String, quality: String? = null, subDub: String? = null) {
+            links.add(ServerPlaceholder(name, quality, subDub))
             notifyItemInserted(links.size - 1)
         }
 
@@ -584,7 +596,16 @@ class SelectorDialogFragment : DialogFragment() {
             }
             binding.urlNote.visibility = View.VISIBLE
             binding.urlNote.text = video.format.name
-            binding.urlQuality.text = extractor.server.name
+            val serverName = extractor.server.name
+            val qualityRegex = Regex("\\d{3,4}\\s*p", RegexOption.IGNORE_CASE)
+            binding.urlQuality.text = when {
+                video.quality != null && !serverName.contains(qualityRegex) ->
+                    "${video.quality}p"
+                video.quality != null -> serverName
+                extractor.videos.size > 1 && video.format == VideoType.M3U8 ->
+                    getString(R.string.multi_quality)
+                else -> serverName
+            }
         }
 
         override fun getItemCount(): Int = extractor.videos.size

@@ -61,9 +61,13 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
         return try {
             val obj = Mapper.json.parseToJsonElement(jsonStr) as? JsonObject ?: return null
             val start = (obj["start"] as? JsonPrimitive)
-                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
+                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() }
+                ?: (obj["startTime"] as? JsonPrimitive)
+                    ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
             val end = (obj["end"] as? JsonPrimitive)
-                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
+                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() }
+                ?: (obj["endTime"] as? JsonPrimitive)
+                    ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
             TimeStamp(start = start, end = end, name = name, type = type)
         } catch (_: Exception) {
             null

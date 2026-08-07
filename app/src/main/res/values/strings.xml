@@ -260,6 +260,7 @@
     <string name="source_info">Show Source Name</string>
     <string name="video_info_info">Shows what the Resolution of the current video playing, useful for <b>\"Multi Quality\"</b> servers.</string>
     <string name="default_quality">Auto Quality Selection</string>
+    <string name="multi_quality">Multi</string>
     <string name="height">Height</string>
     <string name="width">Width</string>
     <string name="default_quality_info">Automatically uses the closest quality provided by default, ONLY applied for \"Multi Quality\" Servers. Auto changes upon playing a video.</string>

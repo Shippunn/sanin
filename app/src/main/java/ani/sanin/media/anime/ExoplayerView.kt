@@ -3137,8 +3137,8 @@ class ExoplayerView :
         if (!isTimeStampsLoaded && PrefManager.getVal(PrefName.TimeStampsEnabled)) {
             val dur = exoPlayer.duration
             val extTimestamps =
-                (extractor?.server?.video?.timestamps ?: emptyList()) +
-                (extractor?.timestamps ?: emptyList())
+                ((extractor?.server?.video?.timestamps ?: emptyList()) +
+                    (extractor?.timestamps ?: emptyList())).distinct()
             lifecycleScope.launch(Dispatchers.IO) {
                 model.loadTimeStamps(
                     media.idMAL,

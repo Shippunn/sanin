@@ -23,6 +23,7 @@ object AniSkip {
             if (useProxyForTimeStamps) {
                 add("https://corsproxy.io/?${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
                 add("https://api.allorigins.win/raw?url=${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
+                add("https://r.jina.ai/$url")
             }
         }
         return tryWithSuspend {

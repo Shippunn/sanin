@@ -440,7 +440,13 @@ class VideoServerPassthrough(private val videoServer: VideoServer) : VideoExtrac
         val audioList = videoServer.video?.audioTracks ?: emptyList()
 
         return if (vidList.isNotEmpty()) {
-            VideoContainer(vidList, subList, audioList)
+            VideoContainer(
+                vidList,
+                subList,
+                audioList,
+                // Carry extension-provided skip timestamps into the player skip system
+                timestamps = videoServer.video?.timestamps ?: emptyList(),
+            )
         } else {
             throw Exception("No videos found")
         }
