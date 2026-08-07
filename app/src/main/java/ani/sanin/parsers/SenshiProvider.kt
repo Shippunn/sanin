@@ -15,7 +15,7 @@ class SenshiProvider : NativeAnimeParser() {
     override val saveName = "Senshi"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    override val baseUrl = "https://senshi.live"
+    override val defaultBaseUrl = "https://senshi.live"
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)

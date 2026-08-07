@@ -37,6 +37,7 @@ import ani.sanin.others.webview.CookieCatcher
 import ani.sanin.parsers.AnimeSources
 import ani.sanin.parsers.DynamicAnimeParser
 // OfflineAnimeParser removed
+import ani.sanin.parsers.NativeAnimeParser
 import ani.sanin.parsers.WatchSources
 import ani.sanin.px
 import ani.sanin.settings.FAQActivity
@@ -223,10 +224,10 @@ class AnimeWatchAdapter(
         // Settings
         binding.mediaSourceSettings.setOnClickListener {
             val parser = watchSources[source]
-            if (parser is DynamicAnimeParser) {
-                fragment.openSettings(parser.extension)
-            } else {
-                toast("Source not configurable")
+            when (parser) {
+                is DynamicAnimeParser -> fragment.openSettings(parser.extension)
+                is NativeAnimeParser -> fragment.openNativeProviderSettings(parser)
+                else -> toast("Source not configurable")
             }
         }
 

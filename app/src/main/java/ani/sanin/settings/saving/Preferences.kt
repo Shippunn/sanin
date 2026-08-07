@@ -293,6 +293,11 @@ enum class PrefName(val data: Pref) {
     TagsListIsAdult(Pref(Location.Irrelevant, Set::class, setOf<String>())),
     TagsListNonAdult(Pref(Location.Irrelevant, Set::class, setOf<String>())),
     MakeDefault(Pref(Location.Irrelevant, Boolean::class, true)),
+    RememberQualityChoice(Pref(Location.General, Boolean::class, false)),
+    PreferredQuality(Pref(Location.General, List::class, listOf<String>())),
+    ProviderBaseUrls(Pref(Location.General, List::class, listOf<String>())),
+    ProviderSources(Pref(Location.General, List::class, listOf<String>())),
+
     FirstComment(Pref(Location.Irrelevant, Boolean::class, true)),
     CommentAuthResponse(Pref(Location.Irrelevant, AuthResponse::class, "")),
     CommentTokenExpiry(Pref(Location.Irrelevant, Long::class, 0L)),

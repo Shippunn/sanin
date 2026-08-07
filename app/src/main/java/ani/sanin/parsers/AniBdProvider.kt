@@ -15,7 +15,7 @@ class AniBdProvider : NativeAnimeParser() {
     override val saveName = "AniBD"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    override val baseUrl = "https://epeng.animeapps.top"
+    override val defaultBaseUrl = "https://epeng.animeapps.top"
     private val catalogCache = mutableMapOf<Int, String>()
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {

@@ -51,6 +51,7 @@ import ani.sanin.others.LanguageMapper
 import ani.sanin.parsers.AnimeParser
 import ani.sanin.parsers.AnimeSources
 import ani.sanin.parsers.HAnimeSources
+import ani.sanin.parsers.NativeAnimeParser
 import ani.sanin.setBaseline
 import ani.sanin.setNavigationTheme
 import ani.sanin.toPx
@@ -647,6 +648,35 @@ class AnimeWatchFragment : Fragment() {
         } else {
             Toast.makeText(requireContext(), "Source is not configurable", Toast.LENGTH_SHORT)
                 .show()
+        }
+    }
+
+    fun openNativeProviderSettings(parser: NativeAnimeParser) {
+        val changeUIVisibility: (Boolean) -> Unit = { show ->
+            val activity = activity
+            if (activity is MediaDetailsActivity && isAdded) {
+                activity.findViewById<AppBarLayout>(R.id.mediaAppBar)?.isGone = true
+                activity.findViewById<View>(R.id.mediaTabContent)?.isVisible = show
+                activity.findViewById<CardView>(R.id.mediaCover)?.isGone = true
+                activity.findViewById<CardView>(R.id.mediaClose).isVisible = show
+                activity.findViewById<View>(R.id.mediaNavPills)?.isVisible = show
+                activity.findViewById<FrameLayout>(R.id.fragmentExtensionsContainer).isGone = show
+            }
+        }
+        requireActivity().runOnUiThread {
+            val fragment = AnimeSourcePreferencesFragment().getInstance(
+                { screen -> parser.setupPreferenceScreen(screen) }
+            ) {
+                changeUIVisibility(true)
+                loadEpisodes(media.selected!!.sourceIndex, true)
+            }
+            parentFragmentManager.beginTransaction().apply {
+                setCustomAnimations(R.anim.slide_up, R.anim.slide_down)
+                replace(R.id.fragmentExtensionsContainer, fragment)
+                addToBackStack(null)
+                commit()
+            }
+            changeUIVisibility(false)
         }
     }
 

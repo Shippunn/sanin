@@ -15,6 +15,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.CheckBox
+import android.widget.TextView
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 //import androidx.compose.ui.test.performClick
@@ -37,6 +39,7 @@ import ani.sanin.copyToClipboard
 import ani.sanin.currActivity
 import ani.sanin.currContext
 import ani.sanin.databinding.BottomSheetSelectorBinding
+import ani.sanin.databinding.ItemQualityOptionBinding
 import ani.sanin.databinding.ItemStreamBinding
 import ani.sanin.databinding.ItemUrlBinding
 import ani.sanin.getThemeColor
@@ -148,6 +151,12 @@ class SelectorDialogFragment : DialogFragment() {
             media = m
             if (media != null && !loaded) {
                 loaded = true
+                val providerName =
+                    model.watchSources?.get(media!!.selected?.sourceIndex ?: 0)?.name
+                binding.selectorProviderName.isVisible = providerName != null
+                binding.selectorProviderName.text = providerName ?: ""
+                binding.selectorAutoProviderName.isVisible = providerName != null
+                binding.selectorAutoProviderName.text = providerName ?: ""
 
                 fun fail(resId: Int){
                     snackString(getString(resId))
@@ -516,10 +525,23 @@ class SelectorDialogFragment : DialogFragment() {
         fun performClick(position: Int) {
             try {
                 val extractor = links.getOrNull(position) as? VideoExtractor ?: return
-                media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedExtractor =
-                    extractor.server.name
-                media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedVideo = 0
-                startExoplayer(media!!)
+                val options = buildQualityOptions(extractor)
+                if (options.isEmpty()) {
+                    playVideo(extractor, 0, remember = false)
+                    return
+                }
+                if (options.size <= 1) {
+                    playVideo(extractor, options.first().videoIndex, remember = false)
+                    return
+                }
+                val rememberEnabled = PrefManager.getVal<Boolean>(PrefName.RememberQualityChoice)
+                val preferred = getPreferredQuality(extractor.server.name)
+                if (rememberEnabled && preferred != null) {
+                    val saved = options.firstOrNull { it.label == preferred } ?: return
+                    playVideo(extractor, saved.videoIndex, remember = true)
+                    return
+                }
+                showQualityDialog(extractor, options, rememberEnabled)
             } catch (e: Exception) {
                 Injekt.get<CrashlyticsInterface>().logException(e)
             }
@@ -648,6 +670,12 @@ class SelectorDialogFragment : DialogFragment() {
                             extractor.server.name
                         media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedVideo =
                             bindingAdapterPosition
+                        if (PrefManager.getVal<Boolean>(PrefName.RememberQualityChoice)) {
+                            savePreferredQuality(
+                                extractor.server.name,
+                                qualityLabelFor(extractor.videos[bindingAdapterPosition])
+                            )
+                        }
                         if (makeDefault) {
                             media!!.selected!!.server = extractor.server.name
                             media!!.selected!!.video = bindingAdapterPosition
@@ -669,6 +697,135 @@ class SelectorDialogFragment : DialogFragment() {
                 }
             }
         }
+    }
+
+    private data class QualityOption(val label: String, val videoIndex: Int)
+
+    private fun buildQualityOptions(extractor: VideoExtractor): List<QualityOption> {
+        val options = mutableListOf<QualityOption>()
+        val masterIndex =
+            extractor.videos.indexOfFirst { it.quality == null && it.format == VideoType.M3U8 }
+        if (masterIndex >= 0) {
+            options += QualityOption(getString(R.string.quality_auto), masterIndex)
+        }
+        extractor.videos.mapIndexedNotNull { index, v -> v.quality?.let { index to it } }
+            .distinctBy { it.second }
+            .sortedByDescending { it.second }
+            .forEach { (index, quality) -> options += QualityOption("${quality}p", index) }
+        return options
+    }
+
+    private fun qualityLabelFor(video: Video): String =
+        if (video.quality == null) getString(R.string.quality_auto) else "${video.quality}p"
+
+    private fun getPreferredQuality(serverName: String): String? {
+        return PrefManager.getVal<List<String>>(PrefName.PreferredQuality)
+            .mapNotNull { entry ->
+                entry.split('=', limit = 2)
+                    .takeIf { it.size == 2 && it[0] == serverName }?.get(1)
+            }
+            .firstOrNull()
+    }
+
+    private fun savePreferredQuality(serverName: String, label: String) {
+        val current = PrefManager.getVal<List<String>>(PrefName.PreferredQuality)
+            .filterNot { it.startsWith("$serverName=") }
+        PrefManager.setVal(PrefName.PreferredQuality, current + "$serverName=$label")
+    }
+
+    private fun playVideo(extractor: VideoExtractor, videoIndex: Int, remember: Boolean) {
+        try {
+            media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedExtractor =
+                extractor.server.name
+            media!!.anime!!.episodes!![media!!.anime!!.selectedEpisode!!]?.selectedVideo =
+                videoIndex
+            if (remember) {
+                PrefManager.setVal(PrefName.RememberQualityChoice, true)
+                savePreferredQuality(extractor.server.name, qualityLabelFor(extractor.videos[videoIndex]))
+            }
+            startExoplayer(media!!)
+        } catch (e: Exception) {
+            Injekt.get<CrashlyticsInterface>().logException(e)
+        }
+    }
+
+    private fun showQualityDialog(
+        extractor: VideoExtractor,
+        options: List<QualityOption>,
+        rememberEnabled: Boolean
+    ) {
+        if (!isAdded || _binding == null) return
+        val dialog = Dialog(requireActivity(), R.style.MyPopup)
+        dialog.setContentView(R.layout.dialog_quality_select)
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.window?.apply {
+            setLayout(
+                (resources.displayMetrics.widthPixels * 0.92f).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT
+            )
+            setDimAmount(0.5f)
+            statusBarColor = Color.TRANSPARENT
+            navigationBarColor = requireContext().getThemeColor(
+                com.google.android.material.R.attr.colorSurface
+            )
+        }
+        GlassEffectManager.applyGlassToSheet(
+            dialog.findViewById(R.id.qualityDialogContainer),
+            GlassComponent.ServerSheet,
+            16f
+        )
+        dialog.findViewById<TextView>(R.id.qualityDialogTitle).text =
+            getString(R.string.select_quality)
+        dialog.findViewById<TextView>(R.id.qualityDialogServer).text = extractor.server.name
+        val rememberCheck = dialog.findViewById<CheckBox>(R.id.qualityDialogRemember)
+        rememberCheck.isChecked = rememberEnabled
+        val recycler = dialog.findViewById<RecyclerView>(R.id.qualityDialogRecycler)
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+        val selectedIndex = options.indexOfFirst { it.label == getPreferredQuality(extractor.server.name) }
+        recycler.adapter = QualityDialogAdapter(options, selectedIndex) { option ->
+            playVideo(extractor, option.videoIndex, rememberCheck.isChecked)
+            dialog.dismiss()
+        }
+        recycler.post { recycler.requestFocus() }
+        dialog.findViewById<View>(R.id.qualityDialogCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
+    }
+
+    private inner class QualityDialogAdapter(
+        private val options: List<QualityOption>,
+        private var selectedIndex: Int,
+        private val onSelect: (QualityOption) -> Unit
+    ) : RecyclerView.Adapter<QualityDialogAdapter.QualityViewHolder>() {
+
+        inner class QualityViewHolder(val binding: ItemQualityOptionBinding) :
+            RecyclerView.ViewHolder(binding.root)
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): QualityViewHolder =
+            QualityViewHolder(
+                ItemQualityOptionBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
+
+        override fun onBindViewHolder(holder: QualityViewHolder, position: Int) {
+            val option = options[position]
+            holder.binding.qualityOptionLabel.text = option.label
+            holder.binding.qualityOptionCheck.isVisible = position == selectedIndex
+            holder.itemView.isFocusable = true
+            FocusEffectUtil.applyFocusListener(holder.itemView)
+            holder.itemView.setOnClickListener {
+                selectedIndex = position
+                notifyDataSetChanged()
+                onSelect(option)
+            }
+        }
+
+        override fun getItemCount(): Int = options.size
     }
 
     companion object {

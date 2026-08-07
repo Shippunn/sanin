@@ -1,6 +1,14 @@
 package ani.sanin.parsers
 
+import android.content.Context
+import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
+import androidx.preference.SwitchPreferenceCompat
+import ani.sanin.currContext
 import ani.sanin.okHttpClient
+import ani.sanin.settings.saving.PrefManager
+import ani.sanin.settings.saving.PrefName
+import eu.kanade.tachiyomi.PreferenceScreen
 import okhttp3.Request
 import java.io.IOException
 import java.net.URLEncoder
@@ -11,7 +19,96 @@ abstract class NativeAnimeParser : AnimeParser() {
     override val hostUrl: String
         get() = "https://${saveName.lowercase()}.localhost"
 
-    open val baseUrl: String = ""
+    open val defaultBaseUrl: String = ""
+
+    val baseUrl: String
+        get() = providerBaseUrl(saveName) ?: defaultBaseUrl
+
+    /**
+     * Base screen shared by all native providers; providers may override to add
+     * provider-specific preferences (call super first).
+     */
+    open fun setupPreferenceScreen(screen: PreferenceScreen) {
+        val context: Context = currContext ?: return
+
+        screen.addPreference(SwitchPreferenceCompat(context).apply {
+            title = "Prefer Dub"
+            summary = "Prefer dubbed audio when available"
+            isChecked = PrefManager.getVal(PrefName.PreferDub)
+            setOnPreferenceChangeListener { _, newValue ->
+                PrefManager.setVal(PrefName.PreferDub, newValue as Boolean)
+                true
+            }
+        })
+
+        screen.addPreference(EditTextPreference(context).apply {
+            title = "Base URL / Mirror"
+            summary = providerBaseUrl(saveName) ?: defaultBaseUrl
+            dialogTitle = "Base URL / Mirror"
+            isPersistent = false
+            setText(providerBaseUrl(saveName) ?: defaultBaseUrl)
+            setOnPreferenceChangeListener { _, newValue ->
+                val url = (newValue as? String)?.trim().orEmpty()
+                saveProviderBaseUrl(saveName, url)
+                summary = url.ifBlank { defaultBaseUrl }
+                true
+            }
+        })
+    }
+
+    private fun providerBaseUrl(saveName: String): String? =
+        PrefManager.getVal<List<String>>(PrefName.ProviderBaseUrls)
+            .mapNotNull { entry ->
+                entry.split('=', limit = 2)
+                    .takeIf { it.size == 2 && it[0] == saveName }?.get(1)
+            }
+            .firstOrNull()
+            ?.takeIf { it.isNotBlank() }
+
+    private fun saveProviderBaseUrl(saveName: String, url: String) {
+        val current = PrefManager.getVal<List<String>>(PrefName.ProviderBaseUrls)
+            .filterNot { it.startsWith("$saveName=") }
+        PrefManager.setVal(
+            PrefName.ProviderBaseUrls,
+            if (url.isBlank()) current else current + "$saveName=$url"
+        )
+    }
+
+    protected fun providerSource(saveName: String): String? =
+        PrefManager.getVal<List<String>>(PrefName.ProviderSources)
+            .mapNotNull { entry ->
+                entry.split('=', limit = 2)
+                    .takeIf { it.size == 2 && it[0] == saveName }?.get(1)
+            }
+            .firstOrNull()
+            ?.takeIf { it.isNotBlank() }
+
+    protected fun saveProviderSource(saveName: String, source: String) {
+        val current = PrefManager.getVal<List<String>>(PrefName.ProviderSources)
+            .filterNot { it.startsWith("$saveName=") }
+        PrefManager.setVal(PrefName.ProviderSources, current + "$saveName=$source")
+    }
+
+    protected fun addProviderSourcePreference(
+        screen: PreferenceScreen,
+        entries: Array<String>,
+        values: Array<String>,
+        default: String
+    ) {
+        val context: Context = currContext ?: return
+        screen.addPreference(ListPreference(context).apply {
+            title = "Scraper source"
+            summary = providerSource(saveName) ?: default
+            this.entries = entries
+            this.entryValues = values
+            value = providerSource(saveName) ?: default
+            setOnPreferenceChangeListener { _, newValue ->
+                saveProviderSource(saveName, newValue.toString())
+                summary = newValue.toString()
+                true
+            }
+        })
+    }
 
     override suspend fun search(query: String): List<ShowResponse> = emptyList()
 

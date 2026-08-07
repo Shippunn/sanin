@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/qualityDialogContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bottom_sheet_background"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/qualityDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_bold"
+        android:padding="8dp"
+        android:text="@string/select_quality"
+        android:textAlignment="center"
+        android:textAllCaps="true"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/qualityDialogServer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:alpha="0.7"
+        android:fontFamily="@font/poppins"
+        android:textAlignment="center"
+        android:textSize="13sp"
+        tools:text="HD-1" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/qualityDialogRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxHeight="360dp"
+        android:focusable="true"
+        android:descendantFocusability="afterDescendants"
+        android:requiresFadingEdge="vertical"
+        tools:itemCount="4"
+        tools:listitem="@layout/item_quality_option" />
+
+    <CheckBox
+        android:id="@+id/qualityDialogRemember"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/poppins"
+        android:text="@string/remember_quality_choice"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/qualityDialogCancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="8dp"
+        android:fontFamily="@font/poppins_bold"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:padding="8dp"
+        android:text="@android:string/cancel"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="16sp"
+        app:cornerRadius="16dp" />
+
+</LinearLayout>

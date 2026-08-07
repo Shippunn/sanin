@@ -16,7 +16,20 @@ class AniVaultProvider : NativeAnimeParser() {
     override val saveName = "AniVault"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
-    override val baseUrl = "https://anivault-scraper.vercel.app"
+    override val defaultBaseUrl = "https://anivault-scraper.vercel.app"
+
+    private val currentSource: String
+        get() = providerSource(saveName) ?: "anikoto"
+
+    override fun setupPreferenceScreen(screen: eu.kanade.tachiyomi.PreferenceScreen) {
+        super.setupPreferenceScreen(screen)
+        addProviderSourcePreference(
+            screen,
+            entries = arrayOf("Anikoto", "AnimeHeaven", "Miruro", "Senshi"),
+            values = arrayOf("anikoto", "animeheaven", "miruro", "senshi"),
+            default = "anikoto"
+        )
+    }
 
     override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
         val saved = loadSavedShowResponse(mediaObj.id)
@@ -38,7 +51,7 @@ class AniVaultProvider : NativeAnimeParser() {
         if (anilistId == null || anilistId <= 0) return emptyList()
         return withContext(Dispatchers.IO) {
             try {
-                val jsonStr = get("$baseUrl/api/episodes?anilistId=$anilistId&source=anikoto")
+                val jsonStr = get("$baseUrl/api/episodes?anilistId=$anilistId&source=$currentSource")
                 val obj = Mapper.json.parseToJsonElement(jsonStr) as? JsonObject ?: return@withContext emptyList()
                 val array = obj["episodes"] as? JsonArray ?: return@withContext emptyList()
                 array.mapNotNull { element ->
@@ -94,7 +107,7 @@ class AniVaultProvider : NativeAnimeParser() {
     }
 
     private suspend fun fetchWatch(anilistId: Int, episodeNum: Int, type: String, server: String?): JsonObject? {
-        val url = "$baseUrl/api/watch/anikoto/$anilistId/$episodeNum/$type" +
+        val url = "$baseUrl/api/watch/$currentSource/$anilistId/$episodeNum/$type" +
             (server?.let { "?server=${URLEncoder.encode(it, "utf-8")}" } ?: "")
         return try {
             Mapper.json.parseToJsonElement(get(url)) as? JsonObject

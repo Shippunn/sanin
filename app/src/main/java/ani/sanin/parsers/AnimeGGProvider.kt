@@ -7,7 +7,7 @@ class AnimeGGProvider : NativeAnimeParser() {
 
     override val name = "AnimeGG"
     override val saveName = "animegg"
-    override val baseUrl = "https://www.animegg.org"
+    override val defaultBaseUrl = "https://www.animegg.org"
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
     override suspend fun search(query: String): List<ShowResponse> {
