@@ -551,7 +551,7 @@ class CommentsFragment : Fragment() {
 
     private suspend fun loadSaninComments() {
         val effectiveFilter = getEffectiveFilter()
-        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder)
+        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder, "newest")
         Logger.log("Comments: fetching Sanin comments media=$mediaId tag=$effectiveFilter sort=$sortOrder")
         try {
             val comments = withContext(Dispatchers.IO) {
@@ -567,7 +567,7 @@ class CommentsFragment : Fragment() {
     }
 
     private fun sortComments(list: MutableList<Comment>) {
-        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder)
+        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder, "newest")
         when (sortOrder) {
             "oldest" -> list.sortBy { timestampToMillis(it.timestamp) }
             "highest_rated" -> list.sortByDescending { it.upvotes - it.downvotes }
