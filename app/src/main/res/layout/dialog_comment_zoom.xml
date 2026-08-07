@@ -213,13 +213,29 @@
                     android:background="?android:attr/listDivider" />
 
                 <TextView
+                    android:id="@+id/zoomShowReplies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_pill_input"
+                    android:focusable="true"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="Show replies"
+                    android:textColor="#FF00E5FF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
                     android:id="@+id/zoomRepliesTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:fontFamily="@font/poppins_bold"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:id="@+id/zoomRepliesList"

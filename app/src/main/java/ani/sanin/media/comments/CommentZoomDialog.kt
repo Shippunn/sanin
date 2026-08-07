@@ -14,6 +14,7 @@ import ani.sanin.R
 import ani.sanin.buildMarkwon
 import ani.sanin.connections.comments.AnikotoAPI
 import ani.sanin.connections.comments.Comment
+import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.databinding.DialogCommentZoomBinding
 import ani.sanin.loadImage
 import ani.sanin.util.FocusEffectUtil
@@ -37,6 +38,7 @@ class CommentZoomDialog : DialogFragment() {
     private var isAnikoto: Boolean = false
     private var mediaId: Int = 0
     private var anikotoEpisode: Int = 0
+    private var repliesLoaded: Boolean = false
     private lateinit var markwon: io.noties.markwon.Markwon
 
     interface ZoomActionListener {
@@ -123,8 +125,22 @@ class CommentZoomDialog : DialogFragment() {
             }
         }
 
-        if (isAnikoto && replyCount > 0) {
-            loadReplies()
+        if (replyCount > 0) {
+            binding.zoomRepliesSection.visibility = View.VISIBLE
+            binding.zoomShowReplies.text = "Show replies ($replyCount)"
+            binding.zoomShowReplies.setOnClickListener {
+                binding.zoomShowReplies.visibility = View.GONE
+                binding.zoomRepliesTitle.visibility = View.VISIBLE
+                binding.zoomRepliesTitle.text = "Loading replies…"
+                loadReplies()
+            }
+            // Allow retrying from the failure state without reopening the dialog.
+            binding.zoomRepliesTitle.setOnClickListener {
+                if (!repliesLoaded && binding.zoomRepliesList.childCount == 0) {
+                    binding.zoomRepliesTitle.text = "Loading replies…"
+                    loadReplies()
+                }
+            }
         }
 
         FocusEffectUtil.applyFocusListener(
@@ -138,17 +154,21 @@ class CommentZoomDialog : DialogFragment() {
     }
 
     private fun loadReplies() {
-        binding.zoomRepliesSection.visibility = View.VISIBLE
-        binding.zoomRepliesTitle.text = "Replies ($replyCount)"
         lifecycleScope.launch {
             val replies = withContext(Dispatchers.IO) {
-                AnikotoAPI.getReplies(commentId, anikotoEpisode, mediaId)
+                if (isAnikoto) {
+                    AnikotoAPI.getReplies(commentId, anikotoEpisode, mediaId)
+                } else {
+                    CommentsAPI.getRepliesFromId(commentId, 1)?.comments ?: emptyList()
+                }
             }
             if (!isAdded || _binding == null) return@launch
             if (replies.isEmpty()) {
-                binding.zoomRepliesTitle.text = "Replies ($replyCount) · failed to load"
+                repliesLoaded = false
+                binding.zoomRepliesTitle.text = "No replies available · tap to retry"
                 return@launch
             }
+            repliesLoaded = true
             binding.zoomRepliesTitle.text = "Replies (${replies.size})"
             replies.forEach { addReplyRow(it) }
         }
@@ -256,6 +276,10 @@ class CommentZoomDialog : DialogFragment() {
             userVoteType: Int = 0,
             upvotes: Int = 0,
             downvotes: Int = 0,
+            replyCount: Int = 0,
+            isAnikoto: Boolean = false,
+            mediaId: Int = 0,
+            anikotoEpisode: Int = 0,
         ): CommentZoomDialog {
             val args = Bundle().apply {
                 putInt("commentId", commentId)
@@ -268,6 +292,10 @@ class CommentZoomDialog : DialogFragment() {
                 putInt("userVoteType", userVoteType)
                 putInt("upvotes", upvotes)
                 putInt("downvotes", downvotes)
+                putInt("replyCount", replyCount)
+                putBoolean("isAnikoto", isAnikoto)
+                putInt("mediaId", mediaId)
+                putInt("anikotoEpisode", anikotoEpisode)
             }
             val dialog = CommentZoomDialog()
             dialog.arguments = args
