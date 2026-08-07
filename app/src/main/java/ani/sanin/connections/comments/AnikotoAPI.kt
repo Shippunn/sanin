@@ -7,6 +7,7 @@ import ani.sanin.settings.saving.PrefName
 import ani.sanin.util.Logger
 import eu.kanade.tachiyomi.network.NetworkHelper
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
@@ -34,44 +35,61 @@ object AnikotoAPI {
     private const val BASE_URL = "https://anikoto.cz"
     private const val USER_AGENT =
         "Mozilla/5.0 (Linux; Android 14; Pixel 7 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36"
-    private const val MAX_EPISODES = 20
     private const val MAX_PAGES_PER_EPISODE = 10
     private const val EPISODE_TIMEOUT_MS = 20_000L
 
     private val client: OkHttpClient get() = Injekt.get<NetworkHelper>().client
     private val searchCache = mutableMapOf<String, AnikotoAnime>()
+    private val episodeCache = mutableMapOf<String, List<AnikotoEpisode>>()
 
     private data class AnikotoAnime(val animeId: String, val slug: String, val title: String)
     private data class AnikotoEpisode(val num: Int, val episodeId: String)
     private data class AnikotoWidget(val html: String?, val nextPage: Int?)
 
-    suspend fun getCommentsForMedia(
+    /**
+     * Fetches one chunk of episodes' comments from the ordered queue and streams
+     * each page through [onBatch]. Returns true when more episodes remain, so
+     * callers can keep loading chunk by chunk as the user scrolls.
+     */
+    suspend fun fetchAnikotoChunk(
         mediaId: Int,
         title: String,
         episodeProgress: Int?,
+        startIndex: Int,
+        chunkSize: Int,
         onBatch: suspend (List<Comment>) -> Unit
-    ) {
+    ): Boolean {
         val anime = findAnime(title) ?: run {
             Logger.log(Log.ERROR, "Anikoto: no anime match for '$title'")
-            return
+            return false
         }
-        val episodes = fetchEpisodes(anime.slug, anime.animeId) ?: run {
+        val ordered = orderedEpisodes(anime, episodeProgress)
+        if (ordered.isEmpty()) {
             Logger.log(Log.ERROR, "Anikoto: no episodes for '${anime.slug}'")
-            return
+            return false
         }
-        val ordered = orderEpisodes(episodes, episodeProgress)
-        Logger.log("Anikoto: ${ordered.size} episodes queued for '$title' (current=$episodeProgress)")
-        var total = 0
-        for (episode in ordered) {
-            val comments = withTimeoutOrNull(EPISODE_TIMEOUT_MS) {
+        val end = minOf(startIndex + chunkSize, ordered.size)
+        if (startIndex >= end) return false
+        val chunk = ordered.subList(startIndex, end)
+        Logger.log("Anikoto: chunk ${startIndex + 1}..$end of ${ordered.size} eps for '${anime.slug}' (current=$episodeProgress)")
+        for (episode in chunk) {
+            withTimeoutOrNull(EPISODE_TIMEOUT_MS) {
                 fetchEpisodeComments(anime, episode, mediaId, onBatch)
-            } ?: run {
-                Logger.log(Log.ERROR, "Anikoto: timed out fetching ep ${episode.num}")
-                emptyList()
-            }
-            total += comments.size
+            } ?: Logger.log(Log.ERROR, "Anikoto: timed out fetching ep ${episode.num}")
         }
-        Logger.log("Anikoto: $total comments across ${ordered.size} episodes")
+        return end < ordered.size
+    }
+
+    /** Display order: current episode down to 1, then current+1 up to the last. */
+    private suspend fun orderedEpisodes(anime: AnikotoAnime, progress: Int?): List<AnikotoEpisode> {
+        val episodes = episodeCache.getOrPut(anime.slug) {
+            fetchEpisodes(anime.slug, anime.animeId) ?: emptyList()
+        }
+        if (episodes.isEmpty()) return emptyList()
+        val current = progress ?: 0
+        val below = episodes.filter { it.num <= current }.sortedByDescending { it.num }
+        val above = episodes.filter { it.num > current }.sortedBy { it.num }
+        return below + above
     }
 
     /** Fetches replies for one Anikoto comment (same .cw_l-line format). */
@@ -91,14 +109,6 @@ object AnikotoAPI {
             Logger.log(e)
             emptyList()
         }
-    }
-
-    /** Display order: current episode down to 1, then current+1 up to the last. */
-    private fun orderEpisodes(episodes: List<AnikotoEpisode>, progress: Int?): List<AnikotoEpisode> {
-        val current = progress ?: 0
-        val below = episodes.filter { it.num <= current }.sortedByDescending { it.num }
-        val above = episodes.filter { it.num > current }.sortedBy { it.num }
-        return (below + above).take(MAX_EPISODES)
     }
 
     private suspend fun fetchEpisodeComments(
@@ -172,23 +182,35 @@ object AnikotoAPI {
 
     private suspend fun fetchEpisodes(slug: String, animeId: String): List<AnikotoEpisode>? {
         // Episode list is loaded via AJAX into #w-episodes; the watch page only
-        // contains a placeholder div.
-        val body = httpPost("$BASE_URL/ajax/episode/list/$animeId", referer = "$BASE_URL/watch/$slug/ep-1")
-            ?: return null
-        val html = try {
-            Json.parseToJsonElement(body).jsonObject["result"]?.jsonPrimitive?.contentOrNull
-        } catch (e: Exception) {
-            Logger.log(e)
-            null
-        } ?: return null
-        val doc = Jsoup.parse(html)
-        val episodes = doc.select("ul.ep-range li a[data-id]").mapNotNull { link ->
-            val episodeId = link.attr("data-id")
-            val num = link.attr("data-num").toIntOrNull()
-            if (episodeId.isEmpty() || num == null) null else AnikotoEpisode(num, episodeId)
+        // contains a placeholder div. The site rate-limits aggressively, so retry
+        // a couple of times before giving up on a title.
+        for (attempt in 0..2) {
+            val body = httpPost("$BASE_URL/ajax/episode/list/$animeId", referer = "$BASE_URL/watch/$slug/ep-1")
+            if (body != null) {
+                val html = try {
+                    Json.parseToJsonElement(body).jsonObject["result"]?.jsonPrimitive?.contentOrNull
+                } catch (e: Exception) {
+                    Logger.log(e)
+                    null
+                }
+                if (html != null) {
+                    val doc = Jsoup.parse(html)
+                    val episodes = doc.select("ul.ep-range li a[data-id]").mapNotNull { link ->
+                        val episodeId = link.attr("data-id")
+                        val num = link.attr("data-num").toIntOrNull()
+                        if (episodeId.isEmpty() || num == null) null else AnikotoEpisode(num, episodeId)
+                    }
+                    if (episodes.isEmpty()) {
+                        Logger.log(Log.ERROR, "Anikoto: no episodes parsed for slug=$slug")
+                    } else {
+                        return episodes
+                    }
+                }
+            }
+            if (attempt < 2) delay(1_500L * (attempt + 1))
         }
-        if (episodes.isEmpty()) Logger.log(Log.ERROR, "Anikoto: no episodes parsed for slug=$slug")
-        return episodes.ifEmpty { null }
+        Logger.log(Log.ERROR, "Anikoto: episode list failed after retries for slug=$slug")
+        return null
     }
 
     private suspend fun fetchWidgetHtml(

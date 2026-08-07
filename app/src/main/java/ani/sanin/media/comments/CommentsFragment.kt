@@ -33,6 +33,7 @@ import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.customAlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -417,15 +418,37 @@ class CommentsFragment : Fragment() {
         }
     }
 
+    /**
+     * Fetches Anikoto comments episode by episode (current down to 1, then above)
+     * in chunks. Only fetches the next chunk once the user has scrolled through
+     * the current one, so long series load progressively instead of stopping at
+     * the first 20 episodes.
+     */
     private suspend fun loadAnikotoComments() {
-        if (mediaName.isBlank()) return
+        if (mediaName.isBlank()) {
+            anikotoLoadDone = true
+            return
+        }
         Logger.log("Comments: fetching Anikoto comments title=$mediaName progress=$userProgress")
         try {
-            withTimeoutOrNull(ANIKOTO_TOTAL_TIMEOUT_MS) {
-                AnikotoAPI.getCommentsForMedia(mediaId, mediaName, userProgress) { batch ->
+            var startIndex = 0
+            var hasMore = true
+            while (hasMore) {
+                // Wait until the current chunk is being consumed before fetching more.
+                while (anikotoCommentPool.size >= ANIKOTO_POOL_LOW_WATERMARK) {
+                    delay(500)
+                }
+                var producedAny = false
+                hasMore = AnikotoAPI.fetchAnikotoChunk(
+                    mediaId, mediaName, userProgress, startIndex, ANIKOTO_CHUNK_EPISODES
+                ) { batch ->
+                    if (batch.isNotEmpty()) producedAny = true
                     anikotoCommentPool.addAll(batch)
                     revealNextBatch()
                 }
+                startIndex += ANIKOTO_CHUNK_EPISODES
+                // Pace through stretches of comment-less episodes to avoid hammering the site.
+                if (!producedAny) delay(1_500L)
             }
         } catch (e: Exception) {
             Logger.log(Log.ERROR, "Comments: Anikoto comments failed: ${e.message}")
@@ -674,7 +697,8 @@ class CommentsFragment : Fragment() {
     companion object {
         private const val PROVIDER_TIMEOUT_MS = 12_000L
         private const val REVEAL_BATCH_SIZE = 15
-        private const val ANIKOTO_TOTAL_TIMEOUT_MS = 300_000L
+        private const val ANIKOTO_CHUNK_EPISODES = 10
+        private const val ANIKOTO_POOL_LOW_WATERMARK = 15
 
         fun resolveColorAttr(attr: Int, context: android.content.Context): Int {
             val typedArray = context.obtainStyledAttributes(intArrayOf(attr))
