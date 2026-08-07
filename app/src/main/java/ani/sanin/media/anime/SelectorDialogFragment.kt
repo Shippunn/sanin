@@ -488,7 +488,7 @@ class SelectorDialogFragment : DialogFragment() {
                     holder.binding.streamLoading.visibility = View.GONE
                     holder.binding.streamRecyclerView.visibility = View.VISIBLE
                     holder.binding.streamHeader.setOnClickListener {
-                        performClick(bindingAdapterPosition)
+                        performClick(holder.bindingAdapterPosition)
                     }
                     holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
                     holder.binding.streamRecyclerView.adapter = VideoAdapter(item, onEpisodeDownloadHandler)
