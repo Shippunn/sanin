@@ -347,9 +347,9 @@ class CommentsFragment : Fragment() {
                     else -> return@setOnMenuItemClickListener false
                 }
                 PrefManager.setVal(PrefName.CommentSortOrder, sortOrder)
-                lifecycleScope.launch {
-                    loadAndDisplayComments()
-                }
+                sortComments(displayedComments)
+                carouselAdapter.submitList(displayedComments.toList())
+                binding.commentsList.scrollToPosition(0)
                 true
             }
             popup.inflate(R.menu.comments_sort_menu)
@@ -382,21 +382,6 @@ class CommentsFragment : Fragment() {
         binding.commentCurrentProgress.setOnClickListener {
             val progress = userProgress ?: return@setOnClickListener
             if (progress <= 0) return@setOnClickListener
-            if (filterTag != null && filterTag != progress) {
-                filterTag = null
-                isAutoFilterOn = false
-            } else {
-                isAutoFilterOn = !isAutoFilterOn
-            }
-            updateCurrentProgressButton()
-            lifecycleScope.launch {
-                loadAndDisplayComments()
-            }
-        }
-
-        binding.commentCurrentProgress.setOnLongClickListener {
-            val progress = userProgress ?: return@setOnLongClickListener false
-            if (progress <= 0) return@setOnLongClickListener false
             val total = totalEpisodesOrChapters ?: progress
             val maxEp = maxOf(total, progress)
 
@@ -414,7 +399,15 @@ class CommentsFragment : Fragment() {
                 }
                 show()
             }
-            true
+        }
+
+        binding.commentClearFilter.setOnClickListener {
+            filterTag = null
+            isAutoFilterOn = false
+            updateCurrentProgressButton()
+            lifecycleScope.launch {
+                loadAndDisplayComments()
+            }
         }
 
         // Input focus shrink animation
@@ -454,11 +447,25 @@ class CommentsFragment : Fragment() {
         val progress = userProgress ?: 0
         if (progress <= 0) {
             binding.commentCurrentProgress.visibility = View.GONE
+            binding.commentClearFilter.visibility = View.GONE
             return
         }
+        val isFiltered = filterTag != null
         val activeFilter = filterTag ?: progress
         binding.commentCurrentProgress.text = "Ep $activeFilter"
         binding.commentCurrentProgress.visibility = View.VISIBLE
+
+        if (isFiltered) {
+            binding.commentCurrentProgress.alpha = 1f
+            binding.commentCurrentProgress.setBackgroundResource(R.drawable.btn_solid_primary)
+            binding.commentCurrentProgress.setTextColor(resolveColorAttr(android.R.attr.colorBackground, requireContext()))
+            binding.commentClearFilter.visibility = View.VISIBLE
+        } else {
+            binding.commentCurrentProgress.alpha = 0.6f
+            binding.commentCurrentProgress.setBackgroundResource(R.drawable.btn_transparent_round)
+            binding.commentCurrentProgress.setTextColor(0xFFAAAAAA.toInt())
+            binding.commentClearFilter.visibility = View.GONE
+        }
     }
 
     suspend fun loadAndDisplayComments() {
@@ -544,17 +551,28 @@ class CommentsFragment : Fragment() {
 
     private suspend fun loadSaninComments() {
         val effectiveFilter = getEffectiveFilter()
-        Logger.log("Comments: fetching Sanin comments media=$mediaId tag=$effectiveFilter")
+        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder)
+        Logger.log("Comments: fetching Sanin comments media=$mediaId tag=$effectiveFilter sort=$sortOrder")
         try {
             val comments = withContext(Dispatchers.IO) {
-                CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = null)
+                CommentsAPI.getCommentsForId(mediaId, page = 1, tag = effectiveFilter, sort = sortOrder)
             }
             saninComments.addAll(comments?.comments ?: emptyList())
-            saninComments.sortByDescending { timestampToMillis(it.timestamp) }
+            sortComments(saninComments)
             totalPages = comments?.totalPages ?: 1
             Logger.log("Comments: Sanin fetched ${saninComments.size} comments (totalPages=${comments?.totalPages})")
         } catch (e: Exception) {
             Logger.log(Log.ERROR, "Comments: Sanin fetch FAILED: ${e.message}")
+        }
+    }
+
+    private fun sortComments(list: MutableList<Comment>) {
+        val sortOrder = PrefManager.getVal(PrefName.CommentSortOrder)
+        when (sortOrder) {
+            "oldest" -> list.sortBy { timestampToMillis(it.timestamp) }
+            "highest_rated" -> list.sortByDescending { it.upvotes - it.downvotes }
+            "lowest_rated" -> list.sortBy { it.upvotes - it.downvotes }
+            else -> list.sortByDescending { timestampToMillis(it.timestamp) }
         }
     }
 

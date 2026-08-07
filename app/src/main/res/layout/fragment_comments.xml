@@ -171,6 +171,18 @@
                     tools:ignore="HardcodedText" />
 
                 <ImageView
+                    android:id="@+id/commentClearFilter"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Clear filter"
+                    android:src="@drawable/ic_round_close_24"
+                    android:visibility="gone"
+                    app:tint="#FFAAAAAA"
+                    tools:ignore="ContentDescription" />
+
+                <ImageView
                     android:id="@+id/commentSort"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
