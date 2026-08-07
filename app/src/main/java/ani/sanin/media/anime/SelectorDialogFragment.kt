@@ -50,6 +50,7 @@ import ani.sanin.media.MediaType
 import ani.sanin.navBarHeight
 import ani.sanin.parsers.Subtitle
 import ani.sanin.parsers.Video
+import ani.sanin.parsers.NativeAnimeParser
 import ani.sanin.parsers.VideoExtractor
 import ani.sanin.parsers.VideoType
 import ani.sanin.setSafeOnClickListener
@@ -490,12 +491,13 @@ class SelectorDialogFragment : DialogFragment() {
         override fun getItemCount(): Int = links.size
 
         fun addServer(name: String, quality: String? = null, subDub: String? = null) {
+            if (name in disabledServerNames()) return
             links.add(ServerPlaceholder(name, quality, subDub))
             notifyItemInserted(links.size - 1)
         }
 
         fun add(videoExtractor: VideoExtractor) {
-            if (videoExtractor.videos.isNotEmpty()) {
+            if (videoExtractor.videos.isNotEmpty() && videoExtractor.server.name !in disabledServerNames()) {
                 val idx = links.indexOfFirst { it is ServerPlaceholder && it.name == videoExtractor.server.name }
                 if (idx >= 0) {
                     links[idx] = videoExtractor
@@ -516,7 +518,9 @@ class SelectorDialogFragment : DialogFragment() {
         }
 
         fun addAll(extractors: List<VideoExtractor>?) {
+            val disabled = disabledServerNames()
             val valid = extractors.orEmpty().toList().filterNotNull()
+                .filter { it.server.name !in disabled }
             if (valid.isEmpty()) return
             links.addAll(valid)
             notifyItemRangeInserted(0, links.size)
@@ -826,6 +830,17 @@ class SelectorDialogFragment : DialogFragment() {
         }
 
         override fun getItemCount(): Int = options.size
+    }
+
+    private fun disabledServerNames(): Set<String> {
+        val provider = model.watchSources?.get(media?.selected?.sourceIndex ?: 0)
+        val saveName = (provider as? NativeAnimeParser)?.saveName ?: return emptySet()
+        return PrefManager.getVal<List<String>>(PrefName.ProviderDisabledServers)
+            .mapNotNull { entry ->
+                entry.split('=', limit = 2)
+                    .takeIf { it.size == 2 && it[0] == saveName }?.get(1)
+            }
+            .toSet()
     }
 
     companion object {

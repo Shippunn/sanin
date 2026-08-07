@@ -3,6 +3,8 @@ package ani.sanin.parsers
 import android.content.Context
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
+import androidx.preference.MultiSelectListPreference
+import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
 import ani.sanin.currContext
 import ani.sanin.okHttpClient
@@ -24,6 +26,9 @@ abstract class NativeAnimeParser : AnimeParser() {
     val baseUrl: String
         get() = providerBaseUrl(saveName) ?: defaultBaseUrl
 
+    /** Server names the user can disable from this provider's settings screen. */
+    open val knownServers: List<String> = emptyList()
+
     /**
      * Base screen shared by all native providers; providers may override to add
      * provider-specific preferences (call super first).
@@ -32,6 +37,7 @@ abstract class NativeAnimeParser : AnimeParser() {
         val context: Context = currContext() ?: return
 
         screen.addPreference(SwitchPreferenceCompat(context).apply {
+            key = "prefer_dub_$saveName"
             title = "Prefer Dub"
             summary = "Prefer dubbed audio when available"
             isChecked = PrefManager.getVal(PrefName.PreferDub)
@@ -42,6 +48,7 @@ abstract class NativeAnimeParser : AnimeParser() {
         })
 
         screen.addPreference(EditTextPreference(context).apply {
+            key = "base_url_$saveName"
             title = "Base URL / Mirror"
             summary = providerBaseUrl(saveName) ?: defaultBaseUrl
             dialogTitle = "Base URL / Mirror"
@@ -54,6 +61,46 @@ abstract class NativeAnimeParser : AnimeParser() {
                 true
             }
         })
+
+        screen.addPreference(SwitchPreferenceCompat(context).apply {
+            key = "remember_quality_$saveName"
+            title = "Remember my quality choice"
+            summary = "Auto-play the last chosen quality for multi-quality servers"
+            isChecked = PrefManager.getVal(PrefName.RememberQualityChoice)
+            setOnPreferenceChangeListener { _, newValue ->
+                PrefManager.setVal(PrefName.RememberQualityChoice, newValue as Boolean)
+                true
+            }
+        })
+
+        screen.addPreference(Preference(context).apply {
+            key = "reset_quality_$saveName"
+            title = "Reset saved quality choices"
+            summary = "Clear the per-server quality preferences"
+            setOnPreferenceClickListener {
+                PrefManager.setVal(PrefName.PreferredQuality, emptyList<String>())
+                summary = "Cleared"
+                true
+            }
+        })
+
+        if (knownServers.isNotEmpty()) {
+            screen.addPreference(MultiSelectListPreference(context).apply {
+                key = "disabled_servers_$saveName"
+                title = "Disable servers"
+                summary = "Disabled servers won't show in the server sheet"
+                dialogTitle = "Disable servers"
+                this.entries = knownServers.toTypedArray()
+                this.entryValues = knownServers.toTypedArray()
+                isPersistent = false
+                values = disabledServers(saveName).toMutableSet()
+                setOnPreferenceChangeListener { _, newValue ->
+                    @Suppress("UNCHECKED_CAST")
+                    saveDisabledServers(saveName, newValue as Set<String>)
+                    true
+                }
+            })
+        }
     }
 
     private fun providerBaseUrl(saveName: String): String? =
@@ -72,6 +119,20 @@ abstract class NativeAnimeParser : AnimeParser() {
             PrefName.ProviderBaseUrls,
             if (url.isBlank()) current else current + "$saveName=$url"
         )
+    }
+
+    private fun disabledServers(saveName: String): Set<String> =
+        PrefManager.getVal<List<String>>(PrefName.ProviderDisabledServers)
+            .mapNotNull { entry ->
+                entry.split('=', limit = 2)
+                    .takeIf { it.size == 2 && it[0] == saveName }?.get(1)
+            }
+            .toSet()
+
+    private fun saveDisabledServers(saveName: String, servers: Set<String>) {
+        val current = PrefManager.getVal<List<String>>(PrefName.ProviderDisabledServers)
+            .filterNot { it.startsWith("$saveName=") }
+        PrefManager.setVal(PrefName.ProviderDisabledServers, current + servers.map { "$saveName=$it" })
     }
 
     protected fun providerSource(saveName: String): String? =
@@ -97,6 +158,7 @@ abstract class NativeAnimeParser : AnimeParser() {
     ) {
         val context: Context = currContext() ?: return
         screen.addPreference(ListPreference(context).apply {
+            key = "scraper_source_$saveName"
             title = "Scraper source"
             summary = providerSource(saveName) ?: default
             this.entries = entries

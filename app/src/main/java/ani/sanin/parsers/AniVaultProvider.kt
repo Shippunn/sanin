@@ -21,6 +21,14 @@ class AniVaultProvider : NativeAnimeParser() {
     private val currentSource: String
         get() = providerSource(saveName) ?: "anikoto"
 
+    override val knownServers: List<String>
+        get() = when (currentSource) {
+            "animeheaven" -> listOf("AnimeHeaven")
+            "senshi" -> listOf("Senshi", "StreamNin", "FileMoon")
+            "anikoto" -> listOf("HD-1", "Vidstream-2", "Kiwi Stream (sub)")
+            else -> emptyList()
+        }
+
     override fun setupPreferenceScreen(screen: eu.kanade.tachiyomi.PreferenceScreen) {
         super.setupPreferenceScreen(screen)
         addProviderSourcePreference(

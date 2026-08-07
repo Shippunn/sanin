@@ -13,6 +13,7 @@ class AniZoneProvider : NativeAnimeParser() {
     override fun isDubAvailableSeparately(sourceLang: Int?): Boolean = true
 
     override val defaultBaseUrl = "https://anizone.to"
+    override val knownServers = listOf("AniZone")
 
     override suspend fun search(query: String): List<ShowResponse> {
         return withContext(Dispatchers.IO) {

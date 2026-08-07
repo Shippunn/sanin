@@ -297,6 +297,7 @@ enum class PrefName(val data: Pref) {
     PreferredQuality(Pref(Location.General, List::class, listOf<String>())),
     ProviderBaseUrls(Pref(Location.General, List::class, listOf<String>())),
     ProviderSources(Pref(Location.General, List::class, listOf<String>())),
+    ProviderDisabledServers(Pref(Location.General, List::class, listOf<String>())),
 
     FirstComment(Pref(Location.Irrelevant, Boolean::class, true)),
     CommentAuthResponse(Pref(Location.Irrelevant, AuthResponse::class, "")),
