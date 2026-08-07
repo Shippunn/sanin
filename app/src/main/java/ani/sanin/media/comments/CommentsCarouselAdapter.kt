@@ -28,9 +28,23 @@ class CommentsCarouselAdapter(
         val old = focusedPosition
         focusedPosition = pos
         if (old != pos) {
-            notifyItemChanged(old)
-            notifyItemChanged(pos)
+            (recyclerView ?: return).post {
+                if (old != RecyclerView.NO_POSITION) notifyItemChanged(old)
+                notifyItemChanged(pos)
+            }
         }
+    }
+
+    private var recyclerView: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(rv: RecyclerView) {
+        super.onAttachedToRecyclerView(rv)
+        recyclerView = rv
+    }
+
+    override fun onDetachedFromRecyclerView(rv: RecyclerView) {
+        super.onDetachedFromRecyclerView(rv)
+        recyclerView = null
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
