@@ -605,7 +605,9 @@ class ExoplayerView :
 
         // TimeStamps
         model.timeStamps.observe(this) { it ->
-            isTimeStampsLoaded = true
+            // Only mark as loaded once real data arrives; the initial null emission
+            // must not block the first load in onRenderedFirstFrame.
+            if (it != null) isTimeStampsLoaded = true
             exoSkipOpEd.visibility =
                 if (it != null) {
                     val adGroups =
@@ -3134,7 +3136,9 @@ class ExoplayerView :
 
         if (!isTimeStampsLoaded && PrefManager.getVal(PrefName.TimeStampsEnabled)) {
             val dur = exoPlayer.duration
-            val extTimestamps = extractor?.server?.video?.timestamps ?: emptyList()
+            val extTimestamps =
+                (extractor?.server?.video?.timestamps ?: emptyList()) +
+                (extractor?.timestamps ?: emptyList())
             lifecycleScope.launch(Dispatchers.IO) {
                 model.loadTimeStamps(
                     media.idMAL,

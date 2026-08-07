@@ -3,6 +3,8 @@ package ani.sanin.parsers
 import ani.sanin.FileUrl
 import ani.sanin.Mapper
 import ani.sanin.okHttpClient
+import eu.kanade.tachiyomi.animesource.model.ChapterType
+import eu.kanade.tachiyomi.animesource.model.TimeStamp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -39,8 +41,33 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
         }
 
         val subtitles = parseSubtitles(server.extraData?.get("subtitles"))
+        val timestamps = parseTimestamps(server.extraData)
 
-        return VideoContainer(videos, subtitles)
+        return VideoContainer(videos, subtitles, timestamps = timestamps)
+    }
+
+    private fun parseTimestamps(extraData: Map<String, String>?): List<TimeStamp> {
+        val result = mutableListOf<TimeStamp>()
+        extraData?.get("intro")?.let { json ->
+            parseTimestamp(json, "intro", ChapterType.Opening)?.let { result.add(it) }
+        }
+        extraData?.get("outro")?.let { json ->
+            parseTimestamp(json, "outro", ChapterType.Ending)?.let { result.add(it) }
+        }
+        return result
+    }
+
+    private fun parseTimestamp(jsonStr: String, name: String, type: ChapterType): TimeStamp? {
+        return try {
+            val obj = Mapper.json.parseToJsonElement(jsonStr) as? JsonObject ?: return null
+            val start = (obj["start"] as? JsonPrimitive)
+                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
+            val end = (obj["end"] as? JsonPrimitive)
+                ?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() } ?: return null
+            TimeStamp(start = start, end = end, name = name, type = type)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private suspend fun parseHlsMaster(masterUrl: String, headers: Map<String, String>): List<Video> {

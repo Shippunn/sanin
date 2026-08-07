@@ -1,7 +1,9 @@
 package ani.sanin.others
 
+import ani.sanin.Mapper
 import ani.sanin.client
 import ani.sanin.tryWithSuspend
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import java.net.URLEncoder
 
@@ -16,17 +18,27 @@ object AniSkip {
     ): List<Stamp>? {
         val url =
             "https://api.aniskip.com/v2/skip-times/$malId/$episodeNumber?types[]=ed&types[]=mixed-ed&types[]=mixed-op&types[]=op&types[]=recap&episodeLength=$episodeLength"
+        val candidates = buildList {
+            add(url)
+            if (useProxyForTimeStamps) {
+                add("https://corsproxy.io/?${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
+                add("https://api.allorigins.win/raw?url=${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
+            }
+        }
         return tryWithSuspend {
-            val a = if (useProxyForTimeStamps)
-                client.get(
-                    "https://corsproxy.io/?${
-                        URLEncoder.encode(url, "utf-8").replace("+", "%20")
-                    }"
-                )
-            else
-                client.get(url)
-            val res = a.parsed<AniSkipResponse>()
-            if (res.found) res.results else null
+            for (candidate in candidates) {
+                val a = withTimeoutOrNull(12_000L) { client.get(candidate) } ?: continue
+                if (a.code != 200) continue
+                val text = a.text
+                if (!text.trimStart().startsWith("{")) continue
+                val res = try {
+                    Mapper.json.decodeFromString<AniSkipResponse>(text)
+                } catch (e: Exception) {
+                    continue
+                }
+                if (res.found) return@tryWithSuspend res.results
+            }
+            null
         }
     }
 

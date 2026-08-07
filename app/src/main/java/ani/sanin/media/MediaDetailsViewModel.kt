@@ -30,6 +30,7 @@ import ani.sanin.tryWithSuspend
 import ani.sanin.util.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -749,14 +750,20 @@ class MediaDetailsViewModel : ViewModel() {
         if (timeStampsMap.containsKey(episodeNum))
             return timeStamps.postValue(timeStampsMap[episodeNum])
         // Extension timestamps take priority; fall back to AniSkip when the extension has none
-        val result: List<AniSkip.Stamp>? = if (extensionTimestamps.isNotEmpty()) {
+        var result: List<AniSkip.Stamp>? = if (extensionTimestamps.isNotEmpty()) {
             extensionTimestamps.map { it.toAniSkipStamp() }
         } else if (malId != null) {
             AniSkip.getResult(malId, episodeNum, duration, useProxyForTimeStamps)
         } else {
             null
         }
-        timeStampsMap[episodeNum] = result
+        // Retry once after a short delay on transient failures, then keep the
+        // failure uncached so the next first-frame/episode change can retry.
+        if (result == null && extensionTimestamps.isEmpty() && malId != null) {
+            delay(1_500L)
+            result = AniSkip.getResult(malId, episodeNum, duration, useProxyForTimeStamps)
+        }
+        if (result != null) timeStampsMap[episodeNum] = result
         timeStamps.postValue(result)
     }
 
