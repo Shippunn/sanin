@@ -374,7 +374,7 @@ class QrLoginDialog(
             Logger.log("[QR-DEBUG] Polling loop started for sessionId=$sessionId")
             while (isActive) {
                 try {
-                    delay(2000) // Poll every 2 seconds
+                    delay(1000) // Poll every 1 second
 
                     pollCount++
                     setDebugPollCount(binding)

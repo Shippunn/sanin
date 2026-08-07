@@ -1,5 +1,6 @@
 package ani.sanin.media.comments
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context.INPUT_METHOD_SERVICE
 import android.os.Bundle
@@ -8,6 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.appcompat.widget.PopupMenu
+import androidx.core.animation.doOnEnd
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +23,7 @@ import ani.sanin.connections.mal.MAL
 import ani.sanin.connections.LogoApi
 import ani.sanin.connections.comments.AnikotoAPI
 import ani.sanin.connections.comments.CommentsAPI
+import ani.sanin.databinding.DialogEdittextBinding
 import ani.sanin.media.MediaListDialogFragment
 import ani.sanin.databinding.FragmentCommentsBinding
 import ani.sanin.loadImage
@@ -58,6 +62,7 @@ class CommentsFragment : Fragment() {
     private var commentsLoaded = false
     private var isAutoFilterOn = false
     private var isSpoilerMode = false
+    private var totalEpisodesOrChapters: Int? = null
 
     private var displayedComments = mutableListOf<Comment>()
     private val anikotoCommentPool = mutableListOf<Comment>()
@@ -122,6 +127,7 @@ class CommentsFragment : Fragment() {
                 }
 
                 userProgress = newMedia.userProgress
+                totalEpisodesOrChapters = newMedia.anime?.totalEpisodes
                 updateCurrentProgressButton()
 
                 updateListEditorText(newMedia.userStatus)
@@ -284,6 +290,7 @@ class CommentsFragment : Fragment() {
 
         binding.commentSpoiler.setOnClickListener {
             isSpoilerMode = !isSpoilerMode
+            binding.commentSpoiler.alpha = if (isSpoilerMode) 1f else 0.5f
             binding.commentSpoiler.setImageResource(
                 if (isSpoilerMode) R.drawable.format_spoiler_24
                 else R.drawable.ic_round_remove_red_eye_24
@@ -302,9 +309,143 @@ class CommentsFragment : Fragment() {
             gifPicker.show(childFragmentManager, "gifPicker")
         }
 
+        binding.commentLabel.setOnClickListener {
+            activity.customAlertDialog().apply {
+                val customView = DialogEdittextBinding.inflate(layoutInflater)
+                setTitle("Enter a chapter/episode number tag")
+                setCustomView(customView.root)
+                setPosButton("OK") {
+                    val text = customView.dialogEditText.text.toString()
+                    tag = text.toIntOrNull()
+                    if (tag == null) {
+                        binding.commentLabel.setBackgroundResource(R.drawable.ic_label_off_24)
+                    } else {
+                        binding.commentLabel.setBackgroundResource(R.drawable.ic_label_24)
+                    }
+                }
+                setNeutralButton("Clear") {
+                    tag = null
+                    binding.commentLabel.setBackgroundResource(R.drawable.ic_label_off_24)
+                }
+                setNegButton("Cancel") {
+                    tag = null
+                    binding.commentLabel.setBackgroundResource(R.drawable.ic_label_off_24)
+                }
+                show()
+            }
+        }
+
+        // Sort button
+        binding.commentSort.setOnClickListener { sortView ->
+            val popup = PopupMenu(requireContext(), sortView)
+            popup.setOnMenuItemClickListener { item ->
+                val sortOrder = when (item.itemId) {
+                    R.id.comment_sort_newest -> "newest"
+                    R.id.comment_sort_oldest -> "oldest"
+                    R.id.comment_sort_highest_rated -> "highest_rated"
+                    R.id.comment_sort_lowest_rated -> "lowest_rated"
+                    else -> return@setOnMenuItemClickListener false
+                }
+                PrefManager.setVal(PrefName.CommentSortOrder, sortOrder)
+                lifecycleScope.launch {
+                    loadAndDisplayComments()
+                }
+                true
+            }
+            popup.inflate(R.menu.comments_sort_menu)
+            popup.show()
+        }
+
+        // Rules button
+        binding.openRules.setOnClickListener {
+            activity.customAlertDialog().apply {
+                setTitle("Commenting Rules")
+                setMessage(
+                    "BREAK ANY RULE = YOU'RE GONE\n\n" +
+                            "1. NO RACISM, DISCRIMINATION, OR HATE SPEECH\n" +
+                            "2. NO SPAMMING OR SELF-PROMOTION\n" +
+                            "3. ABSOLUTELY NO NSFW CONTENT\n" +
+                            "4. ENGLISH ONLY - NO EXCEPTIONS\n" +
+                            "5. NO IMPERSONATION, HARASSMENT, OR ABUSE\n" +
+                            "6. NO ILLEGAL CONTENT OR EXTREME DISRESPECT TOWARDS ANY FANDOM\n" +
+                            "7. DO NOT REQUEST OR SHARE REPOSITORIES/EXTENSIONS\n" +
+                            "8. SPOILERS ALLOWED ONLY WITH SPOILER TAGS AND A WARNING\n" +
+                            "9. NO SEXUALIZING OR INAPPROPRIATE COMMENTS ABOUT MINOR CHARACTERS\n" +
+                            "10. IF IT'S WRONG, DON'T POST IT!\n\n"
+                )
+                setNegButton("I Understand") {}
+                show()
+            }
+        }
+
+        // Episode badge click - open episode list dialog
+        binding.commentCurrentProgress.setOnClickListener {
+            val progress = userProgress ?: return@setOnClickListener
+            if (progress <= 0) return@setOnClickListener
+            if (filterTag != null && filterTag != progress) {
+                filterTag = null
+                isAutoFilterOn = false
+            } else {
+                isAutoFilterOn = !isAutoFilterOn
+            }
+            updateCurrentProgressButton()
+            lifecycleScope.launch {
+                loadAndDisplayComments()
+            }
+        }
+
+        binding.commentCurrentProgress.setOnLongClickListener {
+            val progress = userProgress ?: return@setOnLongClickListener false
+            if (progress <= 0) return@setOnLongClickListener false
+            val total = totalEpisodesOrChapters ?: progress
+            val maxEp = maxOf(total, progress)
+
+            val items = Array(maxEp) { i -> "Ep ${i + 1}" }
+            val currentSelection = if (filterTag != null) filterTag!! - 1 else progress - 1
+            activity.customAlertDialog().apply {
+                setTitle("Filter by Episode")
+                singleChoiceItems(items, currentSelection) { selected ->
+                    filterTag = selected + 1
+                    isAutoFilterOn = true
+                    updateCurrentProgressButton()
+                    lifecycleScope.launch {
+                        loadAndDisplayComments()
+                    }
+                }
+                show()
+            }
+            true
+        }
+
+        // Input focus shrink animation
         binding.commentInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 TvKeyboardUtil.showKeyboardDelayed(binding.commentInput)
+
+                val targetWidth = binding.commentInputLayout.width -
+                        binding.commentGif.width -
+                        binding.commentSpoiler.width -
+                        binding.commentLabel.width -
+                        binding.commentSend.width -
+                        binding.commentUserAvatar.width - 12
+                val anim = ValueAnimator.ofInt(binding.commentInput.width, targetWidth)
+                anim.addUpdateListener { valueAnimator ->
+                    val layoutParams = binding.commentInput.layoutParams
+                    layoutParams.width = valueAnimator.animatedValue as Int
+                    binding.commentInput.layoutParams = layoutParams
+                }
+                anim.duration = 300
+                anim.start()
+                anim.doOnEnd {
+                    binding.commentGif.visibility = View.VISIBLE
+                    binding.commentSpoiler.visibility = View.VISIBLE
+                    binding.commentLabel.visibility = View.VISIBLE
+                    binding.commentSend.visibility = View.VISIBLE
+                    binding.commentGif.animate().translationX(0f).setDuration(300).start()
+                    binding.commentSpoiler.animate().translationX(0f).setDuration(300).start()
+                    binding.commentLabel.animate().translationX(0f).setDuration(300).start()
+                    binding.commentSend.animate().translationX(0f).setDuration(300).start()
+                }
             }
         }
     }
@@ -315,9 +456,8 @@ class CommentsFragment : Fragment() {
             binding.commentCurrentProgress.visibility = View.GONE
             return
         }
-        val label = "Ep"
         val activeFilter = filterTag ?: progress
-        binding.commentCurrentProgress.text = "$label $activeFilter"
+        binding.commentCurrentProgress.text = "Ep $activeFilter"
         binding.commentCurrentProgress.visibility = View.VISIBLE
     }
 

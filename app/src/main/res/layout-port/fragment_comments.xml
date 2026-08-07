@@ -65,10 +65,57 @@
         app:cornerRadius="16dp"
         app:strokeColor="@android:color/white" />
 
+    <!-- Episode Badge + Sort + Rules Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/commentCurrentProgress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.6"
+            android:background="@drawable/btn_transparent_round"
+            android:fontFamily="@font/poppins_bold"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="3dp"
+            android:text="Ep 1"
+            android:textColor="#FFAAAAAA"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:ignore="HardcodedText" />
+
+        <ImageView
+            android:id="@+id/commentSort"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/sort_by"
+            app:srcCompat="@drawable/ic_round_sort_24"
+            app:tint="#FF888888" />
+
+        <ImageView
+            android:id="@+id/openRules"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/open_rules"
+            app:srcCompat="@drawable/ic_round_info_24"
+            app:tint="#FF888888" />
+    </LinearLayout>
+
     <!-- Carousel -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="4dp"
         android:layout_weight="1"
         android:clipChildren="false"
         android:clipToPadding="false">
@@ -167,80 +214,92 @@
                 tools:ignore="ContentDescription" />
         </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/commentInputLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_pill_input"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp">
-
-                    <com.google.android.material.imageview.ShapeableImageView
-                        android:id="@+id/commentUserAvatar"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:scaleType="centerCrop"
-                        app:shapeAppearanceOverlay="@style/CircularImageView"
-                        app:srcCompat="@drawable/ic_round_add_circle_24"
-                        tools:ignore="ContentDescription" />
-
-                    <EditText
-                        android:id="@+id/commentInput"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:fontFamily="@font/poppins"
-                        android:hint="Add a comment..."
-                        android:inputType="textMultiLine"
-                        android:maxLength="300"
-                        android:maxLines="2"
-                        android:textColor="#FFFFFFFF"
-                        android:textColorHint="#FF666666"
-                        android:textSize="12sp"
-                        tools:ignore="HardcodedText" />
-
-                    <ImageButton
-                        android:id="@+id/commentSend"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:focusable="true"
-                        android:src="@drawable/ic_round_send_24"
-                        app:tint="#FFBB86FC"
-                        tools:ignore="ContentDescription" />
-                </LinearLayout>
-
         <LinearLayout
+            android:id="@+id/commentInputLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:orientation="horizontal">
+            android:background="@drawable/bg_pill_input"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/commentUserAvatar"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:scaleType="centerCrop"
+                app:shapeAppearanceOverlay="@style/CircularImageView"
+                app:srcCompat="@drawable/ic_round_add_circle_24"
+                tools:ignore="ContentDescription" />
+
+            <EditText
+                android:id="@+id/commentInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:fontFamily="@font/poppins"
+                android:hint="Add a comment..."
+                android:inputType="textMultiLine"
+                android:maxLength="300"
+                android:maxLines="2"
+                android:textColor="#FFFFFFFF"
+                android:textColorHint="#FF666666"
+                android:textSize="12sp"
+                tools:ignore="HardcodedText" />
 
             <ImageButton
                 android:id="@+id/commentGif"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:focusable="true"
                 android:padding="2dp"
                 android:src="@drawable/ic_round_gif_24"
+                android:visibility="gone"
                 app:tint="#FF888888"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription"
+                tools:visibility="visible" />
 
             <ImageButton
                 android:id="@+id/commentSpoiler"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:focusable="true"
                 android:padding="2dp"
                 android:src="@drawable/ic_round_remove_red_eye_24"
+                android:visibility="gone"
                 app:tint="#FF888888"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription"
+                tools:visibility="visible" />
+
+            <ImageButton
+                android:id="@+id/commentLabel"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/ic_label_off_24"
+                android:visibility="gone"
+                tools:ignore="ContentDescription"
+                tools:visibility="visible" />
+
+            <ImageButton
+                android:id="@+id/commentSend"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:focusable="true"
+                android:src="@drawable/ic_round_send_24"
+                android:visibility="gone"
+                app:tint="#FFBB86FC"
+                tools:ignore="ContentDescription"
+                tools:visibility="visible" />
         </LinearLayout>
     </LinearLayout>
 
@@ -251,10 +310,4 @@
         android:layout_height="0dp"
         android:visibility="gone"
         tools:ignore="ContentDescription" />
-
-    <TextView
-        android:id="@+id/commentCurrentProgress"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
 </LinearLayout>
