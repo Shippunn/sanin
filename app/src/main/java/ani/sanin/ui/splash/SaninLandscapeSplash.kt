@@ -1,54 +1,50 @@
 package ani.sanin.ui.splash
 
 import ani.sanin.R
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
-
-private data class SplashParticle(
-    val startX: Float,
-    val startY: Float,
-    val targetX: Float,
-    val targetY: Float,
-    val size: Float,
-    val alpha: Float,
-    val startDelay: Float,
-    val duration: Float
-)
 
 @Composable
 fun SaninLandscapeSplash(
-    modifier: Modifier = Modifier,
     onFinished: () -> Unit
 ) {
     val context = LocalContext.current
@@ -60,88 +56,114 @@ fun SaninLandscapeSplash(
         ).asImageBitmap()
     }
 
-    val emblem = remember {
+    val emblemBitmap = remember {
         BitmapFactory.decodeResource(
             context.resources,
             R.drawable.sanin_emblem
         )
     }
 
-    /*
-     * Sample the emblem once.
-     * These points become the final destinations
-     * of the blue particles.
-     */
-    val targetPoints = remember(emblem) {
-        sampleEmblemPoints(
-            bitmap = emblem,
-            maxPoints = 130
+    val emblemImage = remember {
+        emblemBitmap.asImageBitmap()
+    }
+
+    val wordmarkBitmap = remember {
+        BitmapFactory.decodeResource(
+            context.resources,
+            R.drawable.sanin_wordmark
         )
     }
 
-    var progress = remember {
+    val wordmark = painterResource(
+        R.drawable.sanin_wordmark
+    )
+
+    val targets = remember(emblemBitmap) {
+        sampleEmblem(
+            emblemBitmap,
+            120
+        )
+    }
+
+    val progress = remember {
         Animatable(0f)
     }
 
     LaunchedEffect(Unit) {
         progress.animateTo(
-            targetValue = 1f,
+            1f,
             animationSpec = tween(
-                durationMillis = 2300,
+                durationMillis = 2400,
                 easing = LinearEasing
             )
         )
 
-        delay(300)
+        delay(250)
+
         onFinished()
     }
 
-    val animationProgress = progress.value
+    val p = progress.value
 
     /*
-     * Small breathing animation for the blue artwork.
+     * ======================================================
+     * NATURAL BACKGROUND REVEAL
+     * ======================================================
+     *
+     * The supplied background already contains the correct
+     * blue corner artwork.
+     *
+     * We simply reveal it gradually from black.
      */
-    val infinite = rememberInfiniteTransition(
-        label = "saninGlow"
-    )
-
-    val glowPulse by infinite.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1600,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glowPulse"
-    )
 
     val backgroundAlpha =
-        ((animationProgress - 0.03f) / 0.35f)
-            .coerceIn(0f, 1f)
+        FastOutSlowInEasing.transform(
+            ((p - 0.02f) / 0.38f)
+                .coerceIn(0f, 1f)
+        )
 
-    val wordmarkAlpha =
-        ((animationProgress - 0.16f) / 0.32f)
-            .coerceIn(0f, 1f)
+    /*
+     * SANIN appears early.
+     */
 
-    val emblemAlpha =
-        ((animationProgress - 0.32f) / 0.58f)
-            .coerceIn(0f, 1f)
+    val logoAlpha =
+        FastOutSlowInEasing.transform(
+            ((p - 0.12f) / 0.25f)
+                .coerceIn(0f, 1f)
+        )
+
+    /*
+     * EMBLEM PARTICLE FORMATION
+     */
 
     val particleProgress =
-        ((animationProgress - 0.30f) / 0.58f)
+        FastOutSlowInEasing.transform(
+            ((p - 0.27f) / 0.48f)
+                .coerceIn(0f, 1f)
+        )
+
+    val emblemAlpha =
+        FastOutSlowInEasing.transform(
+            ((p - 0.42f) / 0.35f)
+                .coerceIn(0f, 1f)
+        )
+
+    /*
+     * ONE synchronized shine across BOTH logos.
+     */
+
+    val shine =
+        ((p - 0.62f) / 0.20f)
             .coerceIn(0f, 1f)
 
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
 
         /*
-         * --------------------------------------------------
+         * ==================================================
          * BACKGROUND
-         * --------------------------------------------------
+         * ==================================================
          */
 
         Image(
@@ -149,96 +171,81 @@ fun SaninLandscapeSplash(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                .alpha(
-                    backgroundAlpha * glowPulse
-                )
+                .alpha(backgroundAlpha),
+            contentScale = ContentScale.FillBounds
         )
 
         /*
-         * --------------------------------------------------
-         * SUBTLE CORNER GLOW
-         * --------------------------------------------------
+         * ==================================================
+         * LOGO COMPOSITION
+         * ==================================================
+         *
+         * SANIN above.
+         * EMBLEM below.
+         *
+         * They must never overlap.
          */
 
-        Canvas(
+        Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            drawCornerGlow(
-                topLeft = true,
-                intensity = backgroundAlpha
+
+            Image(
+                painter = wordmark,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = (-65).dp)
+                    .alpha(logoAlpha)
             )
 
-            drawCornerGlow(
-                topLeft = false,
-                intensity = backgroundAlpha
+            Image(
+                bitmap = emblemImage,
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .offset(y = 90.dp)
+                    .alpha(emblemAlpha)
             )
         }
 
         /*
-         * --------------------------------------------------
-         * WORDMARK
-         * --------------------------------------------------
-         */
-
-        Image(
-            painter = painterResource(
-                R.drawable.sanin_wordmark
-            ),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .alpha(wordmarkAlpha)
-        )
-
-        /*
-         * --------------------------------------------------
-         * EMBLEM PARTICLES
-         * --------------------------------------------------
+         * ==================================================
+         * EMBLEM MATERIALIZATION
+         * ==================================================
          */
 
         Canvas(
             modifier = Modifier.fillMaxSize()
         ) {
-            drawParticles(
-                points = targetPoints,
+            drawEmblemParticles(
+                targets = targets,
                 progress = particleProgress
             )
         }
 
         /*
-         * --------------------------------------------------
-         * REAL EMBLEM
-         * --------------------------------------------------
+         * ==================================================
+         * SYNCHRONIZED LOGO SHINE
+         * ==================================================
+         *
+         * ONE light source travels across both SANIN
+         * and the emblem.
+         *
+         * The shine is clipped to the alpha masks of the
+         * supplied PNGs so no rectangle is visible outside
+         * the actual logo pixels.
          */
 
-        Image(
-            bitmap = emblem.asImageBitmap(),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .alpha(emblemAlpha)
-        )
+        if (shine > 0f && shine < 1f) {
 
-        /*
-         * --------------------------------------------------
-         * FINAL BLUE PULSE
-         * --------------------------------------------------
-         */
-
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val pulseProgress =
-                ((animationProgress - 0.68f) / 0.20f)
-                    .coerceIn(0f, 1f)
-
-            if (pulseProgress > 0f && pulseProgress < 1f) {
-                drawEmblemPulse(
-                    intensity =
-                        sin(
-                            pulseProgress *
-                                Math.PI
-                        ).toFloat()
+            Canvas(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                drawLogoShine(
+                    progress = shine,
+                    wordmark = wordmarkBitmap.asImageBitmap(),
+                    emblem = emblemImage
                 )
             }
         }
@@ -248,91 +255,70 @@ fun SaninLandscapeSplash(
 
 /*
  * ==========================================================
- * EMBLEM POINT SAMPLING
+ * EMBLEM SAMPLING
  * ==========================================================
  */
 
-private fun sampleEmblemPoints(
-    bitmap: android.graphics.Bitmap,
-    maxPoints: Int
+private fun sampleEmblem(
+    bitmap: Bitmap,
+    maxParticles: Int
 ): List<Offset> {
 
-    val points = mutableListOf<Offset>()
-
-    val width = bitmap.width
-    val height = bitmap.height
+    val result = mutableListOf<Offset>()
 
     val step =
-        kotlin.math.sqrt(
-            (width * height).toFloat() /
-                maxPoints
+        sqrt(
+            bitmap.width.toFloat() *
+                bitmap.height.toFloat() /
+                maxParticles
         )
             .toInt()
             .coerceAtLeast(2)
 
-    for (y in 0 until height step step) {
+    for (y in 0 until bitmap.height step step) {
 
-        for (x in 0 until width step step) {
+        for (x in 0 until bitmap.width step step) {
 
             val pixel =
                 bitmap.getPixel(x, y)
 
-            val alpha =
-                android.graphics.Color.alpha(pixel)
+            if (android.graphics.Color.alpha(pixel) > 40) {
 
-            if (alpha > 45) {
-
-                /*
-                 * Normalize the emblem coordinates.
-                 */
-
-                val normalizedX =
+                result += Offset(
                     x.toFloat() /
-                        width.toFloat()
-
-                val normalizedY =
+                        bitmap.width,
                     y.toFloat() /
-                        height.toFloat()
-
-                points += Offset(
-                    normalizedX,
-                    normalizedY
+                        bitmap.height
                 )
             }
         }
     }
 
-    /*
-     * Limit the number of particles.
-     */
-
-    return points
+    return result
         .shuffled(Random(42))
-        .take(maxPoints)
+        .take(maxParticles)
 }
 
 
 /*
  * ==========================================================
- * PARTICLE DRAWING
+ * EMBLEM PARTICLES
  * ==========================================================
  */
 
-private fun DrawScope.drawParticles(
-    points: List<Offset>,
+private fun DrawScope.drawEmblemParticles(
+    targets: List<Offset>,
     progress: Float
 ) {
 
     if (progress <= 0f) return
 
-    val centerX = size.width / 2f
-    val centerY = size.height / 2f
+    val centerX =
+        size.width / 2f
 
-    /*
-     * The actual emblem is 230x310.
-     * Convert its pixel-space proportions
-     * to the screen.
-     */
+    val centerY =
+        size.height / 2f +
+            90.dp.toPx()
 
     val emblemWidth =
         230.dp.toPx()
@@ -340,30 +326,22 @@ private fun DrawScope.drawParticles(
     val emblemHeight =
         310.dp.toPx()
 
-    points.forEachIndexed { index, target ->
-
-        /*
-         * Give every particle a deterministic
-         * individual delay.
-         */
+    targets.forEachIndexed { index, target ->
 
         val delay =
-            (index % 17) / 17f * 0.35f
+            (index % 19) /
+                19f *
+                0.25f
 
         val local =
-            (
-                progress - delay
-            )
+            ((progress - delay) /
+                (1f - delay))
                 .coerceIn(0f, 1f)
 
         val eased =
             FastOutSlowInEasing.transform(
                 local
             )
-
-        /*
-         * Target position inside the emblem.
-         */
 
         val targetX =
             centerX -
@@ -373,67 +351,59 @@ private fun DrawScope.drawParticles(
         val targetY =
             centerY -
                 emblemHeight / 2f +
-                target.y * emblemHeight +
-                55.dp.toPx()
+                target.y * emblemHeight
 
         /*
-         * Start particles in a loose ring
-         * surrounding the emblem.
+         * Start particles close to their final
+         * destination so they form the emblem,
+         * rather than exploding across the screen.
          */
 
         val angle =
-            (index * 137.5f) *
-                Math.PI /
-                180.0
+            index * 2.39996f
 
-        val startDistance =
-            150.dp.toPx() +
-                (index % 5) *
-                24.dp.toPx()
+        val radius =
+            65.dp.toPx() +
+                (index % 7) *
+                9.dp.toPx()
 
         val startX =
-            centerX +
-                cos(angle).toFloat() *
-                startDistance
+            targetX +
+                cos(angle) * radius
 
         val startY =
-            centerY +
-                sin(angle).toFloat() *
-                startDistance
+            targetY +
+                sin(angle) * radius
 
         val x =
-            startX +
-                (targetX - startX) *
+            lerp(
+                startX,
+                targetX,
                 eased
+            )
 
         val y =
-            startY +
-                (targetY - startY) *
+            lerp(
+                startY,
+                targetY,
                 eased
-
-        /*
-         * Particles fade as they reach their
-         * final position.
-         */
+            )
 
         val alpha =
-            (1f - eased)
-                .coerceIn(0f, 1f) *
-                0.85f
-
-        val size =
-            (1.3f + (index % 4) * 0.55f)
-                .dp
-                .toPx()
+            (1f - eased) *
+                0.9f
 
         drawCircle(
             color = Color(
-                red = 0.08f,
-                green = 0.48f,
+                red = 0.10f,
+                green = 0.55f,
                 blue = 1f,
                 alpha = alpha
             ),
-            radius = size,
+            radius =
+                (1.2f + index % 3)
+                    .dp
+                    .toPx(),
             center = Offset(x, y)
         )
     }
@@ -442,86 +412,193 @@ private fun DrawScope.drawParticles(
 
 /*
  * ==========================================================
- * CORNER GLOW
+ * SYNCHRONIZED LOGO SHINE
  * ==========================================================
+ *
+ * The shine sweep calculation is intentionally kept here.
+ * The final rendering clips the sweep to the alpha masks of
+ * sanin_wordmark.png and sanin_emblem.png, so the light is
+ * only ever visible on the actual logo pixels.
  */
 
-private fun DrawScope.drawCornerGlow(
-    topLeft: Boolean,
-    intensity: Float
+private fun DrawScope.drawLogoShine(
+    progress: Float,
+    wordmark: ImageBitmap,
+    emblem: ImageBitmap
 ) {
 
-    val center =
-        if (topLeft) {
-            Offset(
-                x = size.width * 0.06f,
-                y = size.height * 0.10f
-            )
-        } else {
-            Offset(
-                x = size.width * 0.94f,
-                y = size.height * 0.90f
-            )
-        }
+    /*
+     * The logos are rendered centered, SANIN 65.dp above the
+     * center and the emblem 90.dp below it, at their intrinsic
+     * sizes. Mirror that here so the masks line up exactly
+     * with the visible logos.
+     */
 
-    val radius =
-        size.width * 0.22f
+    val centerX =
+        size.width / 2f
 
-    drawCircle(
-        brush = Brush.radialGradient(
+    val centerY =
+        size.height / 2f
+
+    val wordmarkLeft =
+        centerX -
+            wordmark.width * density / 2f
+
+    val wordmarkTop =
+        centerY -
+            65f * density -
+            wordmark.height * density / 2f
+
+    val emblemLeft =
+        centerX -
+            emblem.width * density / 2f
+
+    val emblemTop =
+        centerY +
+            90f * density -
+            emblem.height * density / 2f
+
+    /*
+     * ONE light source travels across both SANIN
+     * and the emblem.
+     */
+
+    val x =
+        size.width *
+            (
+                0.28f +
+                    progress * 0.44f
+            )
+
+    val width =
+        size.width * 0.045f
+
+    val gradient =
+        Brush.linearGradient(
             colors = listOf(
+                Color.Transparent,
+
                 Color(
-                    red = 0.03f,
-                    green = 0.35f,
+                    red = 0.45f,
+                    green = 0.85f,
                     blue = 1f,
-                    alpha = 0.08f * intensity
+                    alpha = 0.15f
                 ),
+
+                Color(
+                    red = 0.70f,
+                    green = 0.95f,
+                    blue = 1f,
+                    alpha = 0.95f
+                ),
+
+                Color(
+                    red = 0.35f,
+                    green = 0.75f,
+                    blue = 1f,
+                    alpha = 0.20f
+                ),
+
                 Color.Transparent
             ),
-            center = center,
-            radius = radius
-        ),
-        radius = radius,
-        center = center
-    )
+            start = Offset(
+                x - width,
+                0f
+            ),
+            end = Offset(
+                x + width,
+                0f
+            )
+        )
+
+    /*
+     * Render the sweep inside a layer containing only the two
+     * logos, then draw the sweep with SrcIn so it is masked by
+     * the PNG alpha and never appears as a rectangle outside
+     * the actual logo pixels.
+     */
+
+    val maskBounds =
+        Rect(
+            left = min(
+                wordmarkLeft,
+                emblemLeft
+            ),
+            top = min(
+                wordmarkTop,
+                emblemTop
+            ),
+            right = max(
+                wordmarkLeft +
+                    wordmark.width * density,
+                emblemLeft +
+                    emblem.width * density
+            ),
+            bottom = max(
+                wordmarkTop +
+                    wordmark.height * density,
+                emblemTop +
+                    emblem.height * density
+            )
+        )
+
+    saveLayer(
+        maskBounds,
+        Paint()
+    ) {
+
+        drawImage(
+            image = wordmark,
+            dstOffset = IntOffset(
+                wordmarkLeft.roundToInt(),
+                wordmarkTop.roundToInt()
+            ),
+            dstSize = IntSize(
+                (wordmark.width * density).roundToInt(),
+                (wordmark.height * density).roundToInt()
+            )
+        )
+
+        drawImage(
+            image = emblem,
+            dstOffset = IntOffset(
+                emblemLeft.roundToInt(),
+                emblemTop.roundToInt()
+            ),
+            dstSize = IntSize(
+                (emblem.width * density).roundToInt(),
+                (emblem.height * density).roundToInt()
+            )
+        )
+
+        drawRect(
+            brush = gradient,
+            topLeft = Offset(
+                x - width,
+                maskBounds.top
+            ),
+            size = Size(
+                width * 2f,
+                maskBounds.height
+            ),
+            alpha = 0.85f,
+            blendMode = BlendMode.SrcIn
+        )
+    }
 }
 
 
 /*
  * ==========================================================
- * FINAL EMBLEM PULSE
+ * UTILITY
  * ==========================================================
  */
 
-private fun DrawScope.drawEmblemPulse(
-    intensity: Float
-) {
-
-    val center =
-        Offset(
-            x = size.width / 2f,
-            y = size.height / 2f +
-                55.dp.toPx()
-        )
-
-    val radius =
-        size.width * 0.13f
-
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(
-                Color(
-                    red = 0.03f,
-                    green = 0.40f,
-                    blue = 1f,
-                    alpha = 0.18f * intensity
-                ),
-                Color.Transparent
-            ),
-            center = center,
-            radius = radius
-        ),
-        radius = radius,
-        center = center
-    )
-}
+private fun lerp(
+    start: Float,
+    end: Float,
+    fraction: Float
+): Float =
+    start +
+        (end - start) *
+        fraction
