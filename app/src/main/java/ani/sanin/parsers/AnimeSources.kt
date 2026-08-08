@@ -14,11 +14,11 @@ object AnimeSources : WatchSources() {
 
     val allNativeParsers by lazy {
         listOf(
-            SenshiProvider(),
-            AniBdProvider(),
-            AniZoneProvider(),
-            AnimeGGProvider(),
             AniVaultProvider(),
+            AniBdProvider(),
+            AnimeGGProvider(),
+            AniZoneProvider(),
+            SenshiProvider(),
         )
     }
 
