@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
@@ -30,10 +31,12 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
+import kotlin.math.maxOf
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -43,14 +46,12 @@ fun SaninLandscapeSplash(
     onFinished: () -> Unit
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
 
-    val emblemTargets = remember {
-        sampleEmblemPixels(
-            BitmapFactory.decodeResource(
-                context.resources,
-                R.drawable.sanin_emblem
-            ),
-            120
+    val emblemBitmap = remember {
+        BitmapFactory.decodeResource(
+            context.resources,
+            R.drawable.sanin_emblem
         )
     }
 
@@ -124,9 +125,30 @@ fun SaninLandscapeSplash(
         (p - 0.64f) / 0.20f
     ).coerceIn(0f, 1f)
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
     ) {
+
+        /*
+         * Emblem particles are generated once per layout.
+         * They spawn far away and travel along curved
+         * Bezier paths to their exact emblem pixel.
+         */
+        val emblemParticles = remember(emblemBitmap, maxWidth, maxHeight) {
+            with(density) {
+                val width = maxWidth.toPx()
+                val height = maxHeight.toPx()
+                createEmblemParticles(
+                    bitmap = emblemBitmap,
+                    screenWidth = width,
+                    screenHeight = height,
+                    emblemCenterX = width / 2f,
+                    emblemCenterY = height / 2f + 90.dp.toPx(),
+                    emblemWidth = 230.dp.toPx(),
+                    emblemHeight = 310.dp.toPx()
+                )
+            }
+        }
 
         /*
          * ==================================================
@@ -202,7 +224,7 @@ fun SaninLandscapeSplash(
             modifier = Modifier.fillMaxSize()
         ) {
             drawEmblemParticles(
-                targets = emblemTargets,
+                particles = emblemParticles,
                 progress = particleProgress
             )
         }
@@ -411,48 +433,175 @@ private fun LogoShine(
 
 /*
  * ==========================================================
- * EMBLEM SAMPLING
+ * EMBLEM PARTICLE GENERATION
  * ==========================================================
  */
 
-private fun sampleEmblemPixels(
+private data class EmblemParticle(
+    val startX: Float,
+    val startY: Float,
+    val controlX: Float,
+    val controlY: Float,
+    val targetX: Float,
+    val targetY: Float,
+    val delay: Float,
+    val duration: Float,
+    val radius: Float,
+    val alpha: Float
+)
+
+private fun createEmblemParticles(
     bitmap: Bitmap,
-    maxParticles: Int
-): List<Offset> {
+    screenWidth: Float,
+    screenHeight: Float,
+    emblemCenterX: Float,
+    emblemCenterY: Float,
+    emblemWidth: Float,
+    emblemHeight: Float,
+    count: Int = 220
+): List<EmblemParticle> {
 
-    val result = mutableListOf<Offset>()
+    val random = Random(42)
 
-    val step =
+    /*
+     * Sample the actual visible pixels of the PNG.
+     */
+    val visiblePixels = mutableListOf<Pair<Float, Float>>()
+
+    val step = maxOf(
+        2,
         sqrt(
             bitmap.width.toFloat() *
                 bitmap.height.toFloat() /
-                maxParticles
-        )
-            .toInt()
-            .coerceAtLeast(2)
+                count
+        ).toInt()
+    )
 
     for (y in 0 until bitmap.height step step) {
 
         for (x in 0 until bitmap.width step step) {
 
-            val pixel =
-                bitmap.getPixel(x, y)
-
-            if (android.graphics.Color.alpha(pixel) > 40) {
-
-                result += Offset(
-                    x.toFloat() /
-                        bitmap.width,
-                    y.toFloat() /
-                        bitmap.height
+            if (android.graphics.Color.alpha(
+                    bitmap.getPixel(x, y)
+                ) > 45
+            ) {
+                visiblePixels += Pair(
+                    x.toFloat() / bitmap.width,
+                    y.toFloat() / bitmap.height
                 )
             }
         }
     }
 
-    return result
-        .shuffled(Random(42))
-        .take(maxParticles)
+    val maxSpan = maxOf(screenWidth, screenHeight)
+
+    return visiblePixels
+        .shuffled(random)
+        .take(count)
+        .map { target ->
+
+            /*
+             * Exact destination on the emblem.
+             */
+            val targetX =
+                emblemCenterX -
+                    emblemWidth / 2f +
+                    target.first * emblemWidth
+
+            val targetY =
+                emblemCenterY -
+                    emblemHeight / 2f +
+                    target.second * emblemHeight
+
+            /*
+             * Start FAR away from the target:
+             * roughly 28-66% of the screen's largest
+             * dimension, in any direction.
+             */
+            val angle =
+                random.nextFloat() *
+                    (Math.PI * 2f).toFloat()
+
+            val distance =
+                maxSpan *
+                    (0.28f + random.nextFloat() * 0.38f)
+
+            val startX =
+                targetX +
+                    cos(angle) * distance
+
+            val startY =
+                targetY +
+                    sin(angle) * distance
+
+            /*
+             * Perpendicular offset creates a natural curve.
+             */
+            val perpendicularX = -sin(angle)
+            val perpendicularY = cos(angle)
+
+            val curveAmount =
+                maxSpan *
+                    (-0.12f + random.nextFloat() * 0.24f)
+
+            val midpointX =
+                (startX + targetX) / 2f
+
+            val midpointY =
+                (startY + targetY) / 2f
+
+            val controlX =
+                midpointX +
+                    perpendicularX * curveAmount
+
+            val controlY =
+                midpointY +
+                    perpendicularY * curveAmount
+
+            /*
+             * Farther particles are generally smaller
+             * and dimmer.
+             */
+            val distanceFactor =
+                (
+                    (distance / maxSpan - 0.28f) /
+                        0.38f
+                )
+                    .coerceIn(0f, 1f)
+
+            EmblemParticle(
+                startX = startX,
+                startY = startY,
+                controlX = controlX,
+                controlY = controlY,
+                targetX = targetX,
+                targetY = targetY,
+
+                /*
+                 * Stagger the particles.
+                 */
+                delay =
+                    random.nextFloat() * 0.42f,
+
+                /*
+                 * Slight speed variation.
+                 */
+                duration =
+                    0.48f +
+                        random.nextFloat() * 0.24f,
+
+                /*
+                 * Small particles.
+                 */
+                radius =
+                    (0.65f + random.nextFloat() * 1.8f) *
+                        (1f - 0.35f * distanceFactor),
+
+                alpha =
+                    (0.35f + random.nextFloat() * 0.65f) *
+                        (1f - 0.40f * distanceFactor)
+            )
+        }
 }
 
 
@@ -463,106 +612,96 @@ private fun sampleEmblemPixels(
  */
 
 private fun DrawScope.drawEmblemParticles(
-    targets: List<Offset>,
+    particles: List<EmblemParticle>,
     progress: Float
 ) {
 
     if (progress <= 0f) return
 
-    val centerX = size.width / 2f
-    val centerY =
-        size.height / 2f +
-            90.dp.toPx()
+    particles.forEach { particle ->
 
-    val emblemWidth =
-        230.dp.toPx()
+        val localProgress =
+            (
+                (progress - particle.delay) /
+                    particle.duration
+            ).coerceIn(0f, 1f)
 
-    val emblemHeight =
-        310.dp.toPx()
-
-    targets.forEachIndexed { index, target ->
-
-        val delay =
-            (index % 19) /
-                19f *
-                0.25f
-
-        val local =
-            ((progress - delay) /
-                (1f - delay))
-                .coerceIn(0f, 1f)
-
-        val eased =
-            FastOutSlowInEasing.transform(
-                local
-            )
-
-        val targetX =
-            centerX -
-                emblemWidth / 2f +
-                target.x * emblemWidth
-
-        val targetY =
-            centerY -
-                emblemHeight / 2f +
-                target.y * emblemHeight
+        if (localProgress <= 0f) {
+            return@forEach
+        }
 
         /*
-         * Start particles close to their final
-         * destination so they form the emblem,
-         * rather than exploding across the screen.
+         * Smooth movement.
          */
+        val t =
+            FastOutSlowInEasing.transform(
+                localProgress
+            )
 
-        val angle =
-            index * 2.39996f
-
-        val radius =
-            65.dp.toPx() +
-                (index % 7) *
-                9.dp.toPx()
-
-        val startX =
-            targetX +
-                cos(angle) * radius
-
-        val startY =
-            targetY +
-                sin(angle) * radius
+        /*
+         * Quadratic Bezier:
+         *
+         * START
+         *   |
+         * CONTROL
+         *   |
+         * TARGET
+         */
+        val oneMinusT = 1f - t
 
         val x =
-            lerp(
-                startX,
-                targetX,
-                eased
-            )
+            oneMinusT * oneMinusT *
+                particle.startX +
+            2f * oneMinusT * t *
+                particle.controlX +
+            t * t *
+                particle.targetX
 
         val y =
-            lerp(
-                startY,
-                targetY,
-                eased
-            )
+            oneMinusT * oneMinusT *
+                particle.startY +
+            2f * oneMinusT * t *
+                particle.controlY +
+            t * t *
+                particle.targetY
 
-        val alpha =
-            (1f - eased) *
-                0.9f
+        /*
+         * Fade out near the destination.
+         */
+        val fadeOut =
+            if (localProgress > 0.82f) {
+                1f -
+                    (
+                        (localProgress - 0.82f) /
+                            0.18f
+                    )
+            } else {
+                1f
+            }
+
+        /*
+         * Slightly smaller near the final position.
+         */
+        val radius =
+            particle.radius.dp.toPx() *
+                (1f - t * 0.35f)
 
         drawCircle(
             color = Color(
-                0.10f,
-                0.55f,
-                1f,
-                alpha
+                red = 0.10f,
+                green = 0.55f,
+                blue = 1f,
+                alpha =
+                    (
+                        particle.alpha *
+                            fadeOut
+                    ).coerceIn(0f, 1f)
             ),
-            radius =
-                (1.2f + index % 3)
-                    .dp
-                    .toPx(),
+            radius = radius,
             center = Offset(x, y)
         )
     }
 }
-
 
 /*
  * ==========================================================
