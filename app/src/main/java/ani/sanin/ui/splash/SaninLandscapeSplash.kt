@@ -542,7 +542,7 @@ private fun DrawScope.drawLogoShine(
             )
         )
 
-    saveLayer(
+    drawContext.canvas.saveLayer(
         maskBounds,
         Paint()
     )
@@ -585,7 +585,7 @@ private fun DrawScope.drawLogoShine(
         blendMode = BlendMode.SrcIn
     )
 
-    restore()
+    drawContext.canvas.restore()
 }
 
 
