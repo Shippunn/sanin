@@ -36,7 +36,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
-import kotlin.math.maxOf
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
