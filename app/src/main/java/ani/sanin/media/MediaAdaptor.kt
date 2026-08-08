@@ -197,6 +197,15 @@ class MediaAdaptor(
                         (if (media.userScore != 0) R.drawable.item_user_score else R.drawable.item_score)
                     )
                     b.itemCompactTitle.text = media.userPreferredName
+                    if (media.anime != null) {
+                        b.itemCompactUserProgress.text = (media.userProgress ?: "~").toString()
+                        b.itemCompactTotal.text =
+                            " | ${if (media.anime.nextAiringEpisode != null) (media.anime.nextAiringEpisode.toString() + " | " + (media.anime.totalEpisodes ?: "~").toString()) else (media.anime.totalEpisodes ?: "~").toString()}"
+                        b.itemCompactProgressContainer.visibility =
+                            if (media.isFav) View.GONE else View.VISIBLE
+                    } else {
+                        b.itemCompactProgressContainer.visibility = View.GONE
+                    }
                 }
             }
 
@@ -576,6 +585,15 @@ class MediaAdaptor(
                 }
             }
             b.itemCompactScoreBG.visibility = View.VISIBLE
+            if (media.anime != null) {
+                b.itemCompactUserProgress.text = (media.userProgress ?: "~").toString()
+                b.itemCompactTotal.text =
+                    " | ${if (media.anime.nextAiringEpisode != null) (media.anime.nextAiringEpisode.toString() + " | " + (media.anime.totalEpisodes ?: "~").toString()) else (media.anime.totalEpisodes ?: "~").toString()}"
+                b.itemCompactProgressContainer.visibility =
+                    if (media.isFav) View.GONE else View.VISIBLE
+            } else {
+                b.itemCompactProgressContainer.visibility = View.GONE
+            }
         }
     }
 
