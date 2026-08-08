@@ -598,7 +598,8 @@ class CommentsFragment : Fragment() {
                 }
                 var producedAny = false
                 hasMore = AnikotoAPI.fetchAnikotoChunk(
-                    mediaId, mediaName, userProgress, startIndex, ANIKOTO_CHUNK_EPISODES
+                    mediaId, mediaName, userProgress, startIndex, ANIKOTO_CHUNK_EPISODES,
+                    filterEpisode = getEffectiveFilter()
                 ) { batch ->
                     if (batch.isNotEmpty()) producedAny = true
                     anikotoCommentPool.addAll(batch)

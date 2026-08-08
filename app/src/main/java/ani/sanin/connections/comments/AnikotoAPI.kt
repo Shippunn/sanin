@@ -57,13 +57,14 @@ object AnikotoAPI {
         episodeProgress: Int?,
         startIndex: Int,
         chunkSize: Int,
+        filterEpisode: Int? = null,
         onBatch: suspend (List<Comment>) -> Unit
     ): Boolean {
         val anime = findAnime(title) ?: run {
             Logger.log(Log.ERROR, "Anikoto: no anime match for '$title'")
             return false
         }
-        val ordered = orderedEpisodes(anime, episodeProgress)
+        val ordered = orderedEpisodes(anime, episodeProgress, filterEpisode)
         if (ordered.isEmpty()) {
             Logger.log(Log.ERROR, "Anikoto: no episodes for '${anime.slug}'")
             return false
@@ -71,7 +72,8 @@ object AnikotoAPI {
         val end = minOf(startIndex + chunkSize, ordered.size)
         if (startIndex >= end) return false
         val chunk = ordered.subList(startIndex, end)
-        Logger.log("Anikoto: chunk ${startIndex + 1}..$end of ${ordered.size} eps for '${anime.slug}' (current=$episodeProgress)")
+        val scope = if (filterEpisode != null) "filter=ep$filterEpisode" else "current=$episodeProgress"
+        Logger.log("Anikoto: chunk ${startIndex + 1}..$end of ${ordered.size} eps for '${anime.slug}' ($scope)")
         for (episode in chunk) {
             withTimeoutOrNull(EPISODE_TIMEOUT_MS) {
                 fetchEpisodeComments(anime, episode, mediaId, onBatch)
@@ -81,11 +83,18 @@ object AnikotoAPI {
     }
 
     /** Display order: current episode down to 1, then current+1 up to the last. */
-    private suspend fun orderedEpisodes(anime: AnikotoAnime, progress: Int?): List<AnikotoEpisode> {
+    private suspend fun orderedEpisodes(
+        anime: AnikotoAnime,
+        progress: Int?,
+        filterEpisode: Int? = null
+    ): List<AnikotoEpisode> {
         val episodes = episodeCache.getOrPut(anime.slug) {
             fetchEpisodes(anime.slug, anime.animeId) ?: emptyList()
         }
         if (episodes.isEmpty()) return emptyList()
+        if (filterEpisode != null) {
+            return episodes.filter { it.num == filterEpisode }
+        }
         val current = progress ?: 0
         val below = episodes.filter { it.num <= current }.sortedByDescending { it.num }
         val above = episodes.filter { it.num > current }.sortedBy { it.num }
