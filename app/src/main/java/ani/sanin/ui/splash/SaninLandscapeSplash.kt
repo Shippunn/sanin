@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.saveLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -546,46 +545,47 @@ private fun DrawScope.drawLogoShine(
     saveLayer(
         maskBounds,
         Paint()
-    ) {
+    )
 
-        drawImage(
-            image = wordmark,
-            dstOffset = IntOffset(
-                wordmarkLeft.roundToInt(),
-                wordmarkTop.roundToInt()
-            ),
-            dstSize = IntSize(
-                (wordmark.width * density).roundToInt(),
-                (wordmark.height * density).roundToInt()
-            )
+    drawImage(
+        image = wordmark,
+        dstOffset = IntOffset(
+            wordmarkLeft.roundToInt(),
+            wordmarkTop.roundToInt()
+        ),
+        dstSize = IntSize(
+            (wordmark.width * density).roundToInt(),
+            (wordmark.height * density).roundToInt()
         )
+    )
 
-        drawImage(
-            image = emblem,
-            dstOffset = IntOffset(
-                emblemLeft.roundToInt(),
-                emblemTop.roundToInt()
-            ),
-            dstSize = IntSize(
-                (emblem.width * density).roundToInt(),
-                (emblem.height * density).roundToInt()
-            )
+    drawImage(
+        image = emblem,
+        dstOffset = IntOffset(
+            emblemLeft.roundToInt(),
+            emblemTop.roundToInt()
+        ),
+        dstSize = IntSize(
+            (emblem.width * density).roundToInt(),
+            (emblem.height * density).roundToInt()
         )
+    )
 
-        drawRect(
-            brush = gradient,
-            topLeft = Offset(
-                x - width,
-                maskBounds.top
-            ),
-            size = Size(
-                width * 2f,
-                maskBounds.height
-            ),
-            alpha = 0.85f,
-            blendMode = BlendMode.SrcIn
-        )
-    }
+    drawRect(
+        brush = gradient,
+        topLeft = Offset(
+            x - width,
+            maskBounds.top
+        ),
+        size = Size(
+            width * 2f,
+            maskBounds.height
+        ),
+        alpha = 0.85f,
+        blendMode = BlendMode.SrcIn
+    )
+
+    restore()
 }
 
 
