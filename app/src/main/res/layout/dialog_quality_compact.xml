@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/qualityCompactContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bottom_sheet_background"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/qualityCompactTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poppins_bold"
+        android:padding="8dp"
+        android:textAlignment="center"
+        android:textAllCaps="true"
+        android:textSize="16sp"
+        tools:text="HD-1" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/qualityCompactRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="true"
+        android:maxHeight="300dp"
+        android:requiresFadingEdge="vertical"
+        android:descendantFocusability="afterDescendants"
+        tools:itemCount="3"
+        tools:listitem="@layout/item_quality_option" />
+
+    <Button
+        android:id="@+id/qualityCompactCancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/poppins_bold"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:padding="6dp"
+        android:text="@android:string/cancel"
+        android:textColor="?attr/colorOnSurface"
+        android:textSize="14sp"
+        app:cornerRadius="12dp" />
+
+</LinearLayout>

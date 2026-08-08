@@ -487,8 +487,18 @@ class SelectorDialogFragment : DialogFragment() {
                         if (meta.isEmpty()) View.GONE else View.VISIBLE
                     holder.binding.streamLoading.visibility = View.GONE
                     holder.binding.streamRecyclerView.visibility = View.VISIBLE
+                    holder.binding.streamHeader.isFocusable = true
+                    FocusEffectUtil.applyFocusListener(holder.binding.streamHeader)
                     holder.binding.streamHeader.setOnClickListener {
                         performClick(holder.bindingAdapterPosition)
+                    }
+                    holder.binding.streamHeader.setOnLongClickListener {
+                        if (item.videos.size > 1) {
+                            showQualityCompactDialog(item)
+                            true
+                        } else {
+                            false
+                        }
                     }
                     holder.binding.streamRecyclerView.layoutManager = LinearLayoutManager(requireContext())
                     holder.binding.streamRecyclerView.adapter = VideoAdapter(item, onEpisodeDownloadHandler)
@@ -839,6 +849,50 @@ class SelectorDialogFragment : DialogFragment() {
         }
 
         override fun getItemCount(): Int = options.size
+    }
+
+    private fun showQualityCompactDialog(extractor: VideoExtractor) {
+        if (!isAdded || _binding == null) return
+        val options = buildQualityOptions(extractor)
+        if (options.isEmpty()) {
+            playVideo(extractor, 0, remember = false)
+            return
+        }
+        val dialog = Dialog(requireActivity(), R.style.MyPopup)
+        dialog.setContentView(R.layout.dialog_quality_compact)
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(true)
+        dialog.window?.apply {
+            setLayout(
+                (resources.displayMetrics.widthPixels * 0.72f).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT
+            )
+            setDimAmount(0.5f)
+            statusBarColor = Color.TRANSPARENT
+            navigationBarColor = requireContext().getThemeColor(
+                com.google.android.material.R.attr.colorSurface
+            )
+        }
+        GlassEffectManager.applyGlassToSheet(
+            dialog.findViewById(R.id.qualityCompactContainer),
+            GlassComponent.ServerSheet,
+            16f
+        )
+        dialog.findViewById<TextView>(R.id.qualityCompactTitle).text = extractor.server.name
+
+        val recycler = dialog.findViewById<RecyclerView>(R.id.qualityCompactRecycler)
+        recycler.layoutManager = LinearLayoutManager(requireContext())
+        val selectedIndex =
+            options.indexOfFirst { it.label == getPreferredQuality(extractor.server.name) }
+        recycler.adapter = QualityDialogAdapter(options, selectedIndex) { option ->
+            playVideo(extractor, option.videoIndex, remember = false)
+            dialog.dismiss()
+        }
+        recycler.post { recycler.requestFocus() }
+        dialog.findViewById<View>(R.id.qualityCompactCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        dialog.show()
     }
 
     private fun disabledServerNames(): Set<String> {
