@@ -201,8 +201,7 @@ class MediaAdaptor(
                         b.itemCompactUserProgress.text = (media.userProgress ?: "~").toString()
                         b.itemCompactTotal.text =
                             " | ${if (media.anime.nextAiringEpisode != null) (media.anime.nextAiringEpisode.toString() + " | " + (media.anime.totalEpisodes ?: "~").toString()) else (media.anime.totalEpisodes ?: "~").toString()}"
-                        b.itemCompactProgressContainer.visibility =
-                            if (media.isFav) View.GONE else View.VISIBLE
+                        b.itemCompactProgressContainer.visibility = View.VISIBLE
                     } else {
                         b.itemCompactProgressContainer.visibility = View.GONE
                     }
@@ -589,8 +588,7 @@ class MediaAdaptor(
                 b.itemCompactUserProgress.text = (media.userProgress ?: "~").toString()
                 b.itemCompactTotal.text =
                     " | ${if (media.anime.nextAiringEpisode != null) (media.anime.nextAiringEpisode.toString() + " | " + (media.anime.totalEpisodes ?: "~").toString()) else (media.anime.totalEpisodes ?: "~").toString()}"
-                b.itemCompactProgressContainer.visibility =
-                    if (media.isFav) View.GONE else View.VISIBLE
+                b.itemCompactProgressContainer.visibility = View.VISIBLE
             } else {
                 b.itemCompactProgressContainer.visibility = View.GONE
             }
