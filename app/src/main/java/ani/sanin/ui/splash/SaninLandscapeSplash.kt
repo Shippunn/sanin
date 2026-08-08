@@ -18,27 +18,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -49,49 +44,21 @@ fun SaninLandscapeSplash(
 ) {
     val context = LocalContext.current
 
-    val background = remember {
-        BitmapFactory.decodeResource(
-            context.resources,
-            R.drawable.sanin_splash_background
-        ).asImageBitmap()
-    }
-
-    val emblemBitmap = remember {
-        BitmapFactory.decodeResource(
-            context.resources,
-            R.drawable.sanin_emblem
-        )
-    }
-
-    val emblemImage = remember {
-        emblemBitmap.asImageBitmap()
-    }
-
-    val wordmarkBitmap = remember {
-        BitmapFactory.decodeResource(
-            context.resources,
-            R.drawable.sanin_wordmark
-        )
-    }
-
-    val wordmark = painterResource(
-        R.drawable.sanin_wordmark
-    )
-
-    val targets = remember(emblemBitmap) {
-        sampleEmblem(
-            emblemBitmap,
+    val emblemTargets = remember {
+        sampleEmblemPixels(
+            BitmapFactory.decodeResource(
+                context.resources,
+                R.drawable.sanin_emblem
+            ),
             120
         )
     }
 
-    val progress = remember {
-        Animatable(0f)
-    }
+    val progress = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         progress.animateTo(
-            1f,
+            targetValue = 1f,
             animationSpec = tween(
                 durationMillis = 2400,
                 easing = LinearEasing
@@ -99,62 +66,63 @@ fun SaninLandscapeSplash(
         )
 
         delay(250)
-
         onFinished()
     }
 
     val p = progress.value
 
     /*
-     * ======================================================
-     * NATURAL BACKGROUND REVEAL
-     * ======================================================
+     * ------------------------------------------------------
+     * BACKGROUND
+     * ------------------------------------------------------
      *
-     * The supplied background already contains the correct
-     * blue corner artwork.
+     * This is the user's ORIGINAL background artwork.
+     * No additional edge glow is created.
      *
-     * We simply reveal it gradually from black.
+     * It starts almost black and gradually reaches its
+     * natural brightness.
      */
-
-    val backgroundAlpha =
-        FastOutSlowInEasing.transform(
-            ((p - 0.02f) / 0.38f)
-                .coerceIn(0f, 1f)
-        )
+    val backgroundAlpha = FastOutSlowInEasing.transform(
+        ((p - 0.02f) / 0.38f).coerceIn(0f, 1f)
+    )
 
     /*
-     * SANIN appears early.
+     * ------------------------------------------------------
+     * WORDMARK
+     * ------------------------------------------------------
      */
 
-    val logoAlpha =
-        FastOutSlowInEasing.transform(
-            ((p - 0.12f) / 0.25f)
-                .coerceIn(0f, 1f)
-        )
+    val wordmarkAlpha = FastOutSlowInEasing.transform(
+        ((p - 0.20f) / 0.25f).coerceIn(0f, 1f)
+    )
 
     /*
-     * EMBLEM PARTICLE FORMATION
+     * ------------------------------------------------------
+     * EMBLEM
+     * ------------------------------------------------------
      */
 
-    val particleProgress =
-        FastOutSlowInEasing.transform(
-            ((p - 0.27f) / 0.48f)
-                .coerceIn(0f, 1f)
-        )
+    val particleProgress = FastOutSlowInEasing.transform(
+        ((p - 0.30f) / 0.48f).coerceIn(0f, 1f)
+    )
 
-    val emblemAlpha =
-        FastOutSlowInEasing.transform(
-            ((p - 0.42f) / 0.35f)
-                .coerceIn(0f, 1f)
-        )
+    val emblemAlpha = FastOutSlowInEasing.transform(
+        ((p - 0.48f) / 0.30f).coerceIn(0f, 1f)
+    )
 
     /*
-     * ONE synchronized shine across BOTH logos.
+     * ------------------------------------------------------
+     * ONE SYNCHRONIZED SHINE
+     * ------------------------------------------------------
+     *
+     * SANIN + EMBLEM receive the same light event.
+     *
+     * Neither image changes size or position.
      */
 
-    val shine =
-        ((p - 0.62f) / 0.20f)
-            .coerceIn(0f, 1f)
+    val shineProgress = (
+        (p - 0.64f) / 0.20f
+    ).coerceIn(0f, 1f)
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -162,12 +130,14 @@ fun SaninLandscapeSplash(
 
         /*
          * ==================================================
-         * BACKGROUND
+         * ORIGINAL BACKGROUND
          * ==================================================
          */
 
         Image(
-            bitmap = background,
+            painter = painterResource(
+                R.drawable.sanin_splash_background
+            ),
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
@@ -177,78 +147,264 @@ fun SaninLandscapeSplash(
 
         /*
          * ==================================================
-         * LOGO COMPOSITION
+         * FIXED LOGO COMPOSITION
          * ==================================================
          *
-         * SANIN above.
-         * EMBLEM below.
-         *
-         * They must never overlap.
+         * IMPORTANT:
+         * These values NEVER animate.
+         * ContentScale.None keeps the PNG dimensions as the
+         * source of truth - no fitting, no scaling.
          */
 
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        /*
+         * SANIN
+         */
 
-            Image(
-                painter = wordmark,
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = (-65).dp)
-                    .alpha(logoAlpha)
-            )
+        Image(
+            painter = painterResource(
+                R.drawable.sanin_wordmark
+            ),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = (-65).dp)
+                .alpha(wordmarkAlpha),
+            contentScale = ContentScale.None
+        )
 
-            Image(
-                bitmap = emblemImage,
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .offset(y = 90.dp)
-                    .alpha(emblemAlpha)
-            )
-        }
+        /*
+         * EMBLEM
+         */
+
+        Image(
+            painter = painterResource(
+                R.drawable.sanin_emblem
+            ),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = 90.dp)
+                .alpha(emblemAlpha),
+            contentScale = ContentScale.None
+        )
 
         /*
          * ==================================================
          * EMBLEM MATERIALIZATION
          * ==================================================
+         *
+         * Particles are sampled from the actual alpha pixels
+         * of sanin_emblem.png so they form the real emblem
+         * silhouette.
          */
 
         Canvas(
             modifier = Modifier.fillMaxSize()
         ) {
             drawEmblemParticles(
-                targets = targets,
+                targets = emblemTargets,
                 progress = particleProgress
             )
         }
 
         /*
          * ==================================================
-         * SYNCHRONIZED LOGO SHINE
+         * SYNCHRONIZED LIGHT
          * ==================================================
          *
-         * ONE light source travels across both SANIN
-         * and the emblem.
+         * IMPORTANT:
+         * This must illuminate the existing PNG pixels.
          *
-         * The shine is clipped to the alpha masks of the
-         * supplied PNGs so no rectangle is visible outside
-         * the actual logo pixels.
+         * It must NOT transform the PNG itself.
          */
 
-        if (shine > 0f && shine < 1f) {
+        if (shineProgress > 0f && shineProgress < 1f) {
 
-            Canvas(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                drawLogoShine(
-                    progress = shine,
-                    wordmark = wordmarkBitmap.asImageBitmap(),
-                    emblem = emblemImage
-                )
-            }
+            LogoShine(
+                progress = shineProgress
+            )
         }
+    }
+}
+
+
+/*
+ * ==========================================================
+ * SYNCHRONIZED LOGO SHINE
+ * ==========================================================
+ *
+ * The sweep is clipped to the actual alpha of each PNG.
+ * Only alpha/brightness is animated - geometry never
+ * changes, so neither logo can visibly grow.
+ */
+
+@Composable
+private fun LogoShine(
+    progress: Float
+) {
+
+    val shineX = lerp(
+        0.25f,
+        0.75f,
+        progress
+    )
+
+    /*
+     * Narrow highlight.
+     */
+    val shineWidth = 0.10f
+
+    /*
+     * Brightness is strongest in the center of the shine.
+     */
+    val intensity =
+        sin(progress * Math.PI)
+            .toFloat()
+            .coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+
+        /*
+         * --------------------------------------------------
+         * SANIN SHINE
+         * --------------------------------------------------
+         */
+
+        Image(
+            painter = painterResource(
+                R.drawable.sanin_wordmark
+            ),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = (-65).dp)
+                .graphicsLayer {
+                    /*
+                     * CRITICAL:
+                     * No scale transformation.
+                     *
+                     * The PNG remains exactly the same size.
+                     */
+
+                    alpha = intensity * 0.85f
+
+                    compositingStrategy =
+                        CompositingStrategy.Offscreen
+                }
+                .drawWithContent {
+
+                    drawContent()
+
+                    /*
+                     * A localized icy-blue brightness layer.
+                     *
+                     * The layer is masked with the PNG alpha
+                     * (SrcIn) so the light is only ever
+                     * visible on the actual logo pixels.
+                     */
+
+                    drawContext.canvas.saveLayer(
+                        Rect(Offset.Zero, size),
+                        Paint()
+                    )
+
+                    drawContent()
+
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(
+                                    0.55f,
+                                    0.90f,
+                                    1f,
+                                    0.85f
+                                ),
+                                Color.Transparent
+                            ),
+                            startX =
+                                size.width *
+                                    (shineX - shineWidth),
+                            endX =
+                                size.width *
+                                    (shineX + shineWidth)
+                        ),
+                        blendMode =
+                            BlendMode.SrcIn
+                    )
+
+                    drawContext.canvas.restore()
+                },
+            contentScale = ContentScale.None
+        )
+
+        /*
+         * --------------------------------------------------
+         * EMBLEM SHINE
+         * --------------------------------------------------
+         */
+
+        Image(
+            painter = painterResource(
+                R.drawable.sanin_emblem
+            ),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = 90.dp)
+                .graphicsLayer {
+                    /*
+                     * SAME fixed geometry.
+                     *
+                     * Absolutely no scaling.
+                     */
+
+                    alpha = intensity * 0.95f
+
+                    compositingStrategy =
+                        CompositingStrategy.Offscreen
+                }
+                .drawWithContent {
+
+                    drawContent()
+
+                    drawContext.canvas.saveLayer(
+                        Rect(Offset.Zero, size),
+                        Paint()
+                    )
+
+                    drawContent()
+
+                    drawRect(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(
+                                    0.55f,
+                                    0.90f,
+                                    1f,
+                                    0.90f
+                                ),
+                                Color.Transparent
+                            ),
+                            startX =
+                                size.width *
+                                    (shineX - shineWidth),
+                            endX =
+                                size.width *
+                                    (shineX + shineWidth)
+                        ),
+                        blendMode =
+                            BlendMode.SrcIn
+                    )
+
+                    drawContext.canvas.restore()
+                },
+            contentScale = ContentScale.None
+        )
     }
 }
 
@@ -259,7 +415,7 @@ fun SaninLandscapeSplash(
  * ==========================================================
  */
 
-private fun sampleEmblem(
+private fun sampleEmblemPixels(
     bitmap: Bitmap,
     maxParticles: Int
 ): List<Offset> {
@@ -313,9 +469,7 @@ private fun DrawScope.drawEmblemParticles(
 
     if (progress <= 0f) return
 
-    val centerX =
-        size.width / 2f
-
+    val centerX = size.width / 2f
     val centerY =
         size.height / 2f +
             90.dp.toPx()
@@ -395,10 +549,10 @@ private fun DrawScope.drawEmblemParticles(
 
         drawCircle(
             color = Color(
-                red = 0.10f,
-                green = 0.55f,
-                blue = 1f,
-                alpha = alpha
+                0.10f,
+                0.55f,
+                1f,
+                alpha
             ),
             radius =
                 (1.2f + index % 3)
@@ -412,185 +566,6 @@ private fun DrawScope.drawEmblemParticles(
 
 /*
  * ==========================================================
- * SYNCHRONIZED LOGO SHINE
- * ==========================================================
- *
- * The shine sweep calculation is intentionally kept here.
- * The final rendering clips the sweep to the alpha masks of
- * sanin_wordmark.png and sanin_emblem.png, so the light is
- * only ever visible on the actual logo pixels.
- */
-
-private fun DrawScope.drawLogoShine(
-    progress: Float,
-    wordmark: ImageBitmap,
-    emblem: ImageBitmap
-) {
-
-    /*
-     * The logos are rendered centered, SANIN 65.dp above the
-     * center and the emblem 90.dp below it, at their intrinsic
-     * sizes. Mirror that here so the masks line up exactly
-     * with the visible logos.
-     */
-
-    val centerX =
-        size.width / 2f
-
-    val centerY =
-        size.height / 2f
-
-    val wordmarkLeft =
-        centerX -
-            wordmark.width * density / 2f
-
-    val wordmarkTop =
-        centerY -
-            65f * density -
-            wordmark.height * density / 2f
-
-    val emblemLeft =
-        centerX -
-            emblem.width * density / 2f
-
-    val emblemTop =
-        centerY +
-            90f * density -
-            emblem.height * density / 2f
-
-    /*
-     * ONE light source travels across both SANIN
-     * and the emblem.
-     */
-
-    val x =
-        size.width *
-            (
-                0.28f +
-                    progress * 0.44f
-            )
-
-    val width =
-        size.width * 0.045f
-
-    val gradient =
-        Brush.linearGradient(
-            colors = listOf(
-                Color.Transparent,
-
-                Color(
-                    red = 0.45f,
-                    green = 0.85f,
-                    blue = 1f,
-                    alpha = 0.15f
-                ),
-
-                Color(
-                    red = 0.70f,
-                    green = 0.95f,
-                    blue = 1f,
-                    alpha = 0.95f
-                ),
-
-                Color(
-                    red = 0.35f,
-                    green = 0.75f,
-                    blue = 1f,
-                    alpha = 0.20f
-                ),
-
-                Color.Transparent
-            ),
-            start = Offset(
-                x - width,
-                0f
-            ),
-            end = Offset(
-                x + width,
-                0f
-            )
-        )
-
-    /*
-     * Render the sweep inside a layer containing only the two
-     * logos, then draw the sweep with SrcIn so it is masked by
-     * the PNG alpha and never appears as a rectangle outside
-     * the actual logo pixels.
-     */
-
-    val maskBounds =
-        Rect(
-            left = min(
-                wordmarkLeft,
-                emblemLeft
-            ),
-            top = min(
-                wordmarkTop,
-                emblemTop
-            ),
-            right = max(
-                wordmarkLeft +
-                    wordmark.width * density,
-                emblemLeft +
-                    emblem.width * density
-            ),
-            bottom = max(
-                wordmarkTop +
-                    wordmark.height * density,
-                emblemTop +
-                    emblem.height * density
-            )
-        )
-
-    drawContext.canvas.saveLayer(
-        maskBounds,
-        Paint()
-    )
-
-    drawImage(
-        image = wordmark,
-        dstOffset = IntOffset(
-            wordmarkLeft.roundToInt(),
-            wordmarkTop.roundToInt()
-        ),
-        dstSize = IntSize(
-            (wordmark.width * density).roundToInt(),
-            (wordmark.height * density).roundToInt()
-        )
-    )
-
-    drawImage(
-        image = emblem,
-        dstOffset = IntOffset(
-            emblemLeft.roundToInt(),
-            emblemTop.roundToInt()
-        ),
-        dstSize = IntSize(
-            (emblem.width * density).roundToInt(),
-            (emblem.height * density).roundToInt()
-        )
-    )
-
-    drawRect(
-        brush = gradient,
-        topLeft = Offset(
-            x - width,
-            maskBounds.top
-        ),
-        size = Size(
-            width * 2f,
-            maskBounds.height
-        ),
-        alpha = 0.85f,
-        blendMode = BlendMode.SrcIn
-    )
-
-    drawContext.canvas.restore()
-}
-
-
-/*
- * ==========================================================
  * UTILITY
  * ==========================================================
  */
@@ -599,7 +574,7 @@ private fun lerp(
     start: Float,
     end: Float,
     fraction: Float
-): Float =
-    start +
-        (end - start) *
-        fraction
+): Float {
+    return start +
+        (end - start) * fraction
+}
