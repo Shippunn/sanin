@@ -26,6 +26,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnAttach
 import androidx.core.view.isVisible
+import androidx.compose.ui.platform.ComposeView
 import com.bumptech.glide.Glide
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.documentfile.provider.DocumentFile
@@ -70,6 +71,7 @@ import ani.sanin.settings.saving.internal.PreferencePackager
 import ani.sanin.themes.ThemeManager
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.ui.components.NavigationPillsViewModel
+import ani.sanin.ui.splash.SaninLandscapeSplash
 import ani.sanin.util.AudioHelper
 import ani.sanin.util.Logger
 import ani.sanin.util.customAlertDialog
@@ -131,7 +133,13 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        window.setBackgroundDrawableResource(R.drawable.splash_logo)
+        window.setBackgroundDrawableResource(
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                R.drawable.sanin_splash_background
+            } else {
+                R.drawable.splash_logo
+            }
+        )
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -294,28 +302,48 @@ class MainActivity : AppCompatActivity() {
 
         binding.root.isMotionEventSplittingEnabled = false
 
-        val splash = SplashScreenBinding.inflate(layoutInflater)
-        binding.root.addView(splash.root)
         val splashStart = System.currentTimeMillis()
         val initComplete = CompletableDeferred<Unit>()
-        lifecycleScope.launch {
-            initComplete.await()
-            val elapsed = System.currentTimeMillis() - splashStart
-            if (elapsed < 2700L) delay(2700L - elapsed)
-                window.setBackgroundDrawableResource(R.color.bg_black)
-                if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
-                    ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
-                        duration = 400L
-                        doOnEnd {
-                            binding.root.removeView(splash.root)
-                            showFirstTimeProviderDialog()
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            val splashView = ComposeView(this).apply {
+                setContent {
+                    SaninLandscapeSplash(
+                        onFinished = {
+                            lifecycleScope.launch {
+                                initComplete.await()
+                                val elapsed = System.currentTimeMillis() - splashStart
+                                if (elapsed < 2700L) delay(2700L - elapsed)
+                                window.setBackgroundDrawableResource(R.color.bg_black)
+                                binding.root.removeView(this@apply)
+                                showFirstTimeProviderDialog()
+                            }
                         }
-                        start()
-                    }
-                } else {
-                    binding.root.removeView(splash.root)
-                    showFirstTimeProviderDialog()
+                    )
                 }
+            }
+            binding.root.addView(splashView)
+        } else {
+            val splash = SplashScreenBinding.inflate(layoutInflater)
+            binding.root.addView(splash.root)
+            lifecycleScope.launch {
+                initComplete.await()
+                val elapsed = System.currentTimeMillis() - splashStart
+                if (elapsed < 2700L) delay(2700L - elapsed)
+                    window.setBackgroundDrawableResource(R.color.bg_black)
+                    if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
+                        ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
+                            duration = 400L
+                            doOnEnd {
+                                binding.root.removeView(splash.root)
+                                showFirstTimeProviderDialog()
+                            }
+                            start()
+                        }
+                    } else {
+                        binding.root.removeView(splash.root)
+                        showFirstTimeProviderDialog()
+                    }
+            }
         }
 
         binding.root.doOnAttach {
