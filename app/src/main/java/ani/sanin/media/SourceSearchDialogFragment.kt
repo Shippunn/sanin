@@ -12,6 +12,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import ani.sanin.BottomSheetDialogFragment
+import ani.sanin.R
 import ani.sanin.databinding.BottomSheetSourceSearchBinding
 import ani.sanin.media.anime.AnimeSourceAdapter
 import ani.sanin.navBarHeight
