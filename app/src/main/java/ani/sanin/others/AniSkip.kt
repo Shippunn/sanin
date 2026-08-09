@@ -28,18 +28,21 @@ object AniSkip {
         )
         val url =
             "https://api.aniskip.com/v2/skip-times/$malId/$episodeNumber?types[]=ed&types[]=mixed-ed&types[]=mixed-op&types[]=op&types[]=recap&episodeLength=$safeEpisodeLength"
-        val candidates = buildList {
-            add(url)
-            if (useProxyForTimeStamps) {
-                add("https://corsproxy.io/?${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
-                add("https://api.allorigins.win/raw?url=${URLEncoder.encode(url, "utf-8").replace("+", "%20")}")
-                add("https://r.jina.ai/$url")
-            }
-        }
+        val proxies = listOf(
+            "https://corsproxy.io/?${URLEncoder.encode(url, "utf-8").replace("+", "%20")}",
+            "https://api.allorigins.win/raw?url=${URLEncoder.encode(url, "utf-8").replace("+", "%20")}",
+            "https://r.jina.ai/$url"
+        )
+        // When the proxy option is on, try the CORS relays first: some devices
+        // (e.g. Fire TV) can't reach api.aniskip.com directly and the direct call
+        // would otherwise burn a full timeout before the relays get a chance.
+        // The relays are also kept as an automatic fallback when the option is off,
+        // so the skip button works on those devices out of the box.
+        val candidates = if (useProxyForTimeStamps) proxies + url else listOf(url) + proxies
         return tryWithSuspend {
             for (candidate in candidates) {
                 val started = java.lang.System.currentTimeMillis()
-                val a = withTimeoutOrNull(12_000L) { client.get(candidate) }
+                val a = withTimeoutOrNull(8_000L) { client.get(candidate) }
                 val elapsed = java.lang.System.currentTimeMillis() - started
                 if (a == null) {
                     Logger.log("AniSkip: TIMEOUT after ${elapsed}ms for ${candidate.take(100)}")
