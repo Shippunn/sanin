@@ -10,5 +10,5 @@
         android:layout_height="match_parent"
         android:contentDescription="@string/app_name"
         android:scaleType="centerCrop"
-        android:src="@drawable/splash_logo" />
+        android:src="@drawable/sanin_splash_background_portrait" />
 </FrameLayout>

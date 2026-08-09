@@ -22,7 +22,6 @@ import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnAttach
 import androidx.core.view.isVisible
@@ -47,7 +46,6 @@ import ani.sanin.util.GlassComponent
 import ani.sanin.util.GlassEffectManager
 import ani.sanin.databinding.ActivityMainBinding
 import ani.sanin.databinding.DialogUserAgentBinding
-import ani.sanin.databinding.SplashScreenBinding
 import ani.sanin.home.AnimeFragment
 import ani.sanin.home.DiscoveryFragment
 import ani.sanin.home.HomeFragment
@@ -72,6 +70,7 @@ import ani.sanin.themes.ThemeManager
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.ui.components.NavigationPillsViewModel
 import ani.sanin.ui.splash.SaninLandscapeSplash
+import ani.sanin.ui.splash.SaninPortraitSplash
 import ani.sanin.util.AudioHelper
 import ani.sanin.util.Logger
 import ani.sanin.util.customAlertDialog
@@ -137,7 +136,7 @@ class MainActivity : AppCompatActivity() {
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 R.drawable.sanin_splash_background
             } else {
-                R.drawable.splash_logo
+                R.drawable.sanin_splash_background_portrait
             }
         )
 
@@ -326,27 +325,26 @@ class MainActivity : AppCompatActivity() {
             }
             binding.root.addView(splashView)
         } else {
-            val splash = SplashScreenBinding.inflate(layoutInflater)
-            binding.root.addView(splash.root)
-            lifecycleScope.launch {
-                initComplete.await()
-                val elapsed = System.currentTimeMillis() - splashStart
-                if (elapsed < 2700L) delay(2700L - elapsed)
-                    window.setBackgroundDrawableResource(R.color.bg_black)
-                    if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.SplashAnimations)) {
-                        ObjectAnimator.ofFloat(splash.root, View.ALPHA, 1f, 0f).apply {
-                            duration = 400L
-                            doOnEnd {
-                                binding.root.removeView(splash.root)
+            val splashView = ComposeView(this).apply {
+                // Opaque from the first frame so the home tab
+                // never shows through while the splash fades in.
+                setBackgroundColor(android.graphics.Color.BLACK)
+                setContent {
+                    SaninPortraitSplash(
+                        onFinished = {
+                            lifecycleScope.launch {
+                                initComplete.await()
+                                val elapsed = System.currentTimeMillis() - splashStart
+                                if (elapsed < 2700L) delay(2700L - elapsed)
+                                window.setBackgroundDrawableResource(R.color.bg_black)
+                                binding.root.removeView(this@apply)
                                 showFirstTimeProviderDialog()
                             }
-                            start()
                         }
-                    } else {
-                        binding.root.removeView(splash.root)
-                        showFirstTimeProviderDialog()
-                    }
+                    )
+                }
             }
+            binding.root.addView(splashView)
         }
 
         binding.root.doOnAttach {

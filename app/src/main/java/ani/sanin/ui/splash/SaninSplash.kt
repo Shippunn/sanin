@@ -8,8 +8,8 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,15 +35,133 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toDp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
+/*
+ * ==========================================================
+ * SHARED SANIN SPLASH
+ * ==========================================================
+ *
+ * One shared particle materialization engine drives both
+ * orientations. Each orientation only supplies its own
+ * configuration (assets + logo geometry):
+ *
+ *   Shared ParticleMaterializationEngine
+ *         |
+ *         ├── Landscape configuration
+ *         |
+ *         └── Portrait configuration
+ *
+ * The engine handles alpha-pixel sampling, particle creation
+ * with far-away curved Bezier trajectories, drawing, and the
+ * synchronized logo shine. It never animates logo geometry.
+ */
+
+internal data class SaninSplashGeometry(
+    val wordmarkOffsetY: Dp,
+    val emblemOffsetY: Dp,
+    val emblemWidth: Dp,
+    val emblemHeight: Dp
+)
+
+internal sealed interface SaninSplashConfig {
+    val backgroundRes: Int
+    val wordmarkRes: Int
+    val emblemRes: Int
+    val particleCount: Int
+}
+
+/*
+ * Fixed geometry - used by landscape so its exact current
+ * layout is preserved.
+ */
+internal data class FixedSaninSplashConfig(
+    override val backgroundRes: Int,
+    override val wordmarkRes: Int,
+    override val emblemRes: Int,
+    val geometry: SaninSplashGeometry,
+    override val particleCount: Int = 220
+) : SaninSplashConfig
+
+/*
+ * Canvas-relative geometry - used by portrait. Logo centers
+ * are fractions of the portrait canvas height and the emblem
+ * particle field is sized from the emblem's actual pixels, so
+ * particles always land exactly on the drawn logo.
+ */
+internal data class CanvasSaninSplashConfig(
+    override val backgroundRes: Int,
+    override val wordmarkRes: Int,
+    override val emblemRes: Int,
+    val wordmarkCenterY: Float,
+    val emblemCenterY: Float,
+    override val particleCount: Int = 220
+) : SaninSplashConfig
+
+/*
+ * Landscape configuration - identical to the previous
+ * dedicated landscape splash.
+ */
+private val LandscapeConfig = FixedSaninSplashConfig(
+    backgroundRes = R.drawable.sanin_splash_background,
+    wordmarkRes = R.drawable.sanin_wordmark,
+    emblemRes = R.drawable.sanin_emblem,
+    geometry = SaninSplashGeometry(
+        wordmarkOffsetY = (-65).dp,
+        emblemOffsetY = 90.dp,
+        emblemWidth = 230.dp,
+        emblemHeight = 310.dp
+    )
+)
+
+/*
+ * Portrait configuration - uses the new portrait assets.
+ */
+private val PortraitConfig = CanvasSaninSplashConfig(
+    backgroundRes = R.drawable.sanin_splash_background_portrait,
+    wordmarkRes = R.drawable.sanin_wordmark_portrait,
+    emblemRes = R.drawable.sanin_emblem_portrait,
+    wordmarkCenterY = 0.42f,
+    emblemCenterY = 0.58f
+)
+
 @Composable
 fun SaninLandscapeSplash(
+    onFinished: () -> Unit
+) {
+    SaninSplash(
+        config = LandscapeConfig,
+        onFinished = onFinished
+    )
+}
+
+@Composable
+fun SaninPortraitSplash(
+    onFinished: () -> Unit
+) {
+    SaninSplash(
+        config = PortraitConfig,
+        onFinished = onFinished
+    )
+}
+
+
+/*
+ * ==========================================================
+ * SHARED MATERIALIZATION ENGINE
+ * ==========================================================
+ */
+
+@Composable
+internal fun SaninSplash(
+    config: SaninSplashConfig,
     onFinished: () -> Unit
 ) {
     val context = LocalContext.current
@@ -52,7 +170,7 @@ fun SaninLandscapeSplash(
     val emblemBitmap = remember {
         BitmapFactory.decodeResource(
             context.resources,
-            R.drawable.sanin_emblem
+            config.emblemRes
         )
     }
 
@@ -79,6 +197,7 @@ fun SaninLandscapeSplash(
      * ------------------------------------------------------
      *
      * This is the user's ORIGINAL background artwork.
+     * The natural blue corner elements are part of it.
      * No additional edge glow is created.
      *
      * It starts almost black and gradually reaches its
@@ -136,11 +255,26 @@ fun SaninLandscapeSplash(
     ) {
 
         /*
+         * Resolve the orientation-specific logo geometry.
+         */
+        val geometry = when (config) {
+            is FixedSaninSplashConfig -> config.geometry
+            is CanvasSaninSplashConfig -> with(density) {
+                SaninSplashGeometry(
+                    wordmarkOffsetY = maxHeight * (config.wordmarkCenterY - 0.5f),
+                    emblemOffsetY = maxHeight * (config.emblemCenterY - 0.5f),
+                    emblemWidth = emblemBitmap.width.toDp(),
+                    emblemHeight = emblemBitmap.height.toDp()
+                )
+            }
+        }
+
+        /*
          * Emblem particles are generated once per layout.
          * They spawn far away and travel along curved
          * Bezier paths to their exact emblem pixel.
          */
-        val emblemParticles = remember(emblemBitmap, maxWidth, maxHeight) {
+        val emblemParticles = remember(emblemBitmap, maxWidth, maxHeight, geometry) {
             with(density) {
                 val width = maxWidth.toPx()
                 val height = maxHeight.toPx()
@@ -149,9 +283,10 @@ fun SaninLandscapeSplash(
                     screenWidth = width,
                     screenHeight = height,
                     emblemCenterX = width / 2f,
-                    emblemCenterY = height / 2f + 90.dp.toPx(),
-                    emblemWidth = 230.dp.toPx(),
-                    emblemHeight = 310.dp.toPx()
+                    emblemCenterY = height / 2f + geometry.emblemOffsetY.toPx(),
+                    emblemWidth = geometry.emblemWidth.toPx(),
+                    emblemHeight = geometry.emblemHeight.toPx(),
+                    count = config.particleCount
                 )
             }
         }
@@ -164,7 +299,7 @@ fun SaninLandscapeSplash(
 
         Image(
             painter = painterResource(
-                R.drawable.sanin_splash_background
+                config.backgroundRes
             ),
             contentDescription = null,
             modifier = Modifier
@@ -190,12 +325,12 @@ fun SaninLandscapeSplash(
 
         Image(
             painter = painterResource(
-                R.drawable.sanin_wordmark
+                config.wordmarkRes
             ),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = (-65).dp)
+                .offset(y = geometry.wordmarkOffsetY)
                 .alpha(wordmarkAlpha),
             contentScale = ContentScale.None
         )
@@ -206,12 +341,12 @@ fun SaninLandscapeSplash(
 
         Image(
             painter = painterResource(
-                R.drawable.sanin_emblem
+                config.emblemRes
             ),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.Center)
-                .offset(y = 90.dp)
+                .offset(y = geometry.emblemOffsetY)
                 .alpha(emblemAlpha),
             contentScale = ContentScale.None
         )
@@ -222,7 +357,7 @@ fun SaninLandscapeSplash(
          * ==================================================
          *
          * Particles are sampled from the actual alpha pixels
-         * of sanin_emblem.png so they form the real emblem
+         * of the emblem so they form the real emblem
          * silhouette.
          */
 
@@ -249,7 +384,9 @@ fun SaninLandscapeSplash(
         if (shineProgress > 0f && shineProgress < 1f) {
 
             LogoShine(
-                progress = shineProgress
+                progress = shineProgress,
+                config = config,
+                geometry = geometry
             )
         }
     }
@@ -268,7 +405,9 @@ fun SaninLandscapeSplash(
 
 @Composable
 private fun LogoShine(
-    progress: Float
+    progress: Float,
+    config: SaninSplashConfig,
+    geometry: SaninSplashGeometry
 ) {
 
     /*
@@ -314,93 +453,12 @@ private fun LogoShine(
          * --------------------------------------------------
          */
 
-        Image(
-            painter = painterResource(
-                R.drawable.sanin_wordmark
-            ),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-65).dp)
-                .graphicsLayer {
-                    /*
-                     * CRITICAL:
-                     * No scale transformation.
-                     *
-                     * The PNG remains exactly the same size.
-                     */
-
-                    alpha = intensity
-
-                    compositingStrategy =
-                        CompositingStrategy.Offscreen
-                }
-                .drawWithContent {
-
-                    drawContent()
-
-                    /*
-                     * A localized icy-blue brightness layer.
-                     *
-                     * The layer is masked with the PNG alpha
-                     * (SrcIn) so the light is only ever
-                     * visible on the actual logo pixels.
-                     */
-
-                    drawContext.canvas.saveLayer(
-                        Rect(Offset.Zero, size),
-                        Paint()
-                    )
-
-                    drawContent()
-
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(
-                                    0.78f,
-                                    0.96f,
-                                    1f,
-                                    1f
-                                ),
-                                Color.Transparent
-                            ),
-                            startX =
-                                size.width *
-                                    (shineX - shineWidth),
-                            endX =
-                                size.width *
-                                    (shineX + shineWidth)
-                        ),
-                        blendMode =
-                            BlendMode.SrcIn
-                    )
-
-                    drawContext.canvas.restore()
-
-                    /*
-                     * Sparkles riding the band, clipped to
-                     * the same PNG alpha.
-                     */
-
-                    drawContext.canvas.saveLayer(
-                        Rect(Offset.Zero, size),
-                        Paint()
-                    )
-
-                    drawContent()
-
-                    drawLogoSparkles(
-                        bandX = shineX * size.width,
-                        logoWidth = size.width,
-                        logoHeight = size.height,
-                        intensity = intensity
-                    )
-
-                    drawContext.canvas.restore()
-                },
-            contentScale = ContentScale.None
+        ShineLayer(
+            logoRes = config.wordmarkRes,
+            offsetY = geometry.wordmarkOffsetY,
+            shineX = shineX,
+            shineWidth = shineWidth,
+            intensity = intensity
         )
 
         /*
@@ -409,81 +467,124 @@ private fun LogoShine(
          * --------------------------------------------------
          */
 
-        Image(
-            painter = painterResource(
-                R.drawable.sanin_emblem
-            ),
-            contentDescription = null,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = 90.dp)
-                .graphicsLayer {
-                    /*
-                     * SAME fixed geometry.
-                     *
-                     * Absolutely no scaling.
-                     */
-
-                    alpha = intensity
-
-                    compositingStrategy =
-                        CompositingStrategy.Offscreen
-                }
-                .drawWithContent {
-
-                    drawContent()
-
-                    drawContext.canvas.saveLayer(
-                        Rect(Offset.Zero, size),
-                        Paint()
-                    )
-
-                    drawContent()
-
-                    drawRect(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(
-                                    0.78f,
-                                    0.96f,
-                                    1f,
-                                    1f
-                                ),
-                                Color.Transparent
-                            ),
-                            startX =
-                                size.width *
-                                    (shineX - shineWidth),
-                            endX =
-                                size.width *
-                                    (shineX + shineWidth)
-                        ),
-                        blendMode =
-                            BlendMode.SrcIn
-                    )
-
-                    drawContext.canvas.restore()
-
-                    drawContext.canvas.saveLayer(
-                        Rect(Offset.Zero, size),
-                        Paint()
-                    )
-
-                    drawContent()
-
-                    drawLogoSparkles(
-                        bandX = shineX * size.width,
-                        logoWidth = size.width,
-                        logoHeight = size.height,
-                        intensity = intensity
-                    )
-
-                    drawContext.canvas.restore()
-                },
-            contentScale = ContentScale.None
+        ShineLayer(
+            logoRes = config.emblemRes,
+            offsetY = geometry.emblemOffsetY,
+            shineX = shineX,
+            shineWidth = shineWidth,
+            intensity = intensity
         )
     }
+}
+
+
+/*
+ * ==========================================================
+ * LOGO SHINE LAYER
+ * ==========================================================
+ *
+ * One logo layer with the shine band and sparkles masked to
+ * the actual PNG alpha (SrcIn), so the light is only ever
+ * visible on the real logo pixels.
+ */
+
+@Composable
+private fun ShineLayer(
+    logoRes: Int,
+    offsetY: Dp,
+    shineX: Float,
+    shineWidth: Float,
+    intensity: Float
+) {
+
+    Image(
+        painter = painterResource(
+            logoRes
+        ),
+        contentDescription = null,
+        modifier = Modifier
+            .align(Alignment.Center)
+            .offset(y = offsetY)
+            .graphicsLayer {
+                /*
+                 * CRITICAL:
+                 * No scale transformation.
+                 *
+                 * The PNG remains exactly the same size.
+                 */
+
+                alpha = intensity
+
+                compositingStrategy =
+                    CompositingStrategy.Offscreen
+            }
+            .drawWithContent {
+
+                drawContent()
+
+                /*
+                 * A localized icy-blue brightness layer.
+                 *
+                 * The layer is masked with the PNG alpha
+                 * (SrcIn) so the light is only ever
+                 * visible on the actual logo pixels.
+                 */
+
+                drawContext.canvas.saveLayer(
+                    Rect(Offset.Zero, size),
+                    Paint()
+                )
+
+                drawContent()
+
+                drawRect(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(
+                                0.78f,
+                                0.96f,
+                                1f,
+                                1f
+                            ),
+                            Color.Transparent
+                        ),
+                        startX =
+                            size.width *
+                                (shineX - shineWidth),
+                        endX =
+                            size.width *
+                                (shineX + shineWidth)
+                    ),
+                    blendMode =
+                        BlendMode.SrcIn
+                )
+
+                drawContext.canvas.restore()
+
+                /*
+                 * Sparkles riding the band, clipped to
+                 * the same PNG alpha.
+                 */
+
+                drawContext.canvas.saveLayer(
+                    Rect(Offset.Zero, size),
+                    Paint()
+                )
+
+                drawContent()
+
+                drawLogoSparkles(
+                    bandX = shineX * size.width,
+                    logoWidth = size.width,
+                    logoHeight = size.height,
+                    intensity = intensity
+                )
+
+                drawContext.canvas.restore()
+            },
+        contentScale = ContentScale.None
+    )
 }
 
 
