@@ -873,6 +873,11 @@ class ExoplayerView :
         skipView.nextFocusLeftId = R.id.exo_skip_op_ed
         skipView.nextFocusUpId = R.id.exo_ep_sel_btn
         playerView.findViewById<View>(R.id.exo_skip_op_ed).nextFocusRightId = R.id.exo_skip
+        playerView.findViewById<View>(R.id.exo_skip_op_ed).nextFocusUpId = R.id.exo_skip
+        skipTimeButton.nextFocusDownId = R.id.exo_rotate
+        skipTimeButton.nextFocusRightId = R.id.exo_screen
+        skipTimeButton.nextFocusLeftId = R.id.exo_skip_op_ed
+        skipTimeButton.nextFocusUpId = R.id.exo_ep_sel_btn
         playerView.findViewById<View>(R.id.exo_rotate).nextFocusUpId = R.id.exo_skip
         playerView.findViewById<View>(R.id.exo_screen).nextFocusUpId = R.id.exo_skip
         progressBar.setOnFocusChangeListener { _, hasFocus ->
@@ -3324,8 +3329,7 @@ class ExoplayerView :
                             "Player: skip button SHOWN (auto-hide) type=${new.skipType} " +
                                 "at ${playerCurrentTime}s"
                         )
-                        skipTimeButton.visibility = View.VISIBLE
-                        exoSkip.visibility = View.GONE
+                        showSkipTimestampButton()
                         skipTimeText.text = new.skipType.getType()
                         skipTimeButton.setOnClickListener {
                             seekToMs((new.interval.endTime * 1000).toLong())
@@ -3341,9 +3345,7 @@ class ExoplayerView :
                             object : CountDownTimer(5000, 1000) {
                                 override fun onTick(millisUntilFinished: Long) {
                                     if (new == null) {
-                                        skipTimeButton.visibility = View.GONE
-                                        exoSkip.isVisible =
-                                            PrefManager.getVal<Int>(PrefName.SkipTime) > 0
+                                        hideSkipTimestampButton()
                                         disappeared = false
                                         functionstarted = false
                                         cancelTimer()
@@ -3351,9 +3353,7 @@ class ExoplayerView :
                                 }
 
                                 override fun onFinish() {
-                                    skipTimeButton.visibility = View.GONE
-                                    exoSkip.isVisible =
-                                        PrefManager.getVal<Int>(PrefName.SkipTime) > 0
+                                    hideSkipTimestampButton()
                                     disappeared = true
                                     functionstarted = false
                                     cancelTimer()
@@ -3369,8 +3369,7 @@ class ExoplayerView :
                                 "Player: skip button SHOWN (persistent) type=${new.skipType} " +
                                     "at ${playerCurrentTime}s"
                             )
-                            skipTimeButton.visibility = View.VISIBLE
-                            exoSkip.visibility = View.GONE
+                            showSkipTimestampButton()
                             skipTimeText.text = new.skipType.getType()
                             skipTimeButton.setOnClickListener {
                                 seekToMs((new.interval.endTime * 1000).toLong())
@@ -3409,14 +3408,41 @@ class ExoplayerView :
                     }
                     disappeared = false
                     functionstarted = false
-                    skipTimeButton.visibility = View.GONE
-                    exoSkip.isVisible = PrefManager.getVal<Int>(PrefName.SkipTime) > 0
+                    hideSkipTimestampButton()
                     ""
                 }
         }
         handler.postDelayed({
             updateTimeStamp()
         }, 500)
+    }
+
+    // The timestamp skip card replaces exo_skip in the same corner; repoint the
+    // focus chain from the controls below it so D-pad up reaches the card.
+    private fun showSkipTimestampButton() {
+        skipTimeButton.visibility = View.VISIBLE
+        exoSkip.visibility = View.GONE
+        exoRotate.nextFocusUpId = R.id.exo_skip_timestamp
+        exoScreen.nextFocusUpId = R.id.exo_skip_timestamp
+        exoSkipOpEd.nextFocusRightId = R.id.exo_skip_timestamp
+        exoSkipOpEd.nextFocusUpId = R.id.exo_skip_timestamp
+    }
+
+    private fun hideSkipTimestampButton() {
+        skipTimeButton.visibility = View.GONE
+        exoSkip.isVisible = PrefManager.getVal<Int>(PrefName.SkipTime) > 0
+        if (skipTimeButton.hasFocus()) {
+            if (exoSkip.visibility == View.VISIBLE) {
+                exoSkip.requestFocus()
+            } else {
+                exoPlay.requestFocus()
+            }
+        }
+        exoRotate.nextFocusUpId = R.id.exo_skip
+        exoScreen.nextFocusUpId = R.id.exo_skip
+        exoSkipOpEd.nextFocusRightId = R.id.exo_skip
+        exoSkipOpEd.nextFocusUpId =
+            if (exoSkip.visibility == View.VISIBLE) R.id.exo_skip else androidx.media3.ui.R.id.exo_progress
     }
 
     fun onSetTrackGroupOverride(
