@@ -28,7 +28,7 @@
                 android:id="@+id/carouselAvatar"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:scaleType="centerCrop"
+                android:scaleType="fitCenter"
                 app:shapeAppearanceOverlay="@style/CircularImageView"
                 app:srcCompat="@drawable/ic_round_add_circle_24"
                 tools:ignore="ContentDescription" />
@@ -177,9 +177,9 @@
 
             <ImageView
                 android:id="@+id/carouselGifAbove"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center_horizontal"
                 android:scaleType="fitCenter"
                 android:visibility="gone"
                 tools:ignore="ContentDescription" />
@@ -197,10 +197,10 @@
 
             <ImageView
                 android:id="@+id/carouselGifBelow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginTop="6dp"
-                android:adjustViewBounds="true"
+                android:layout_gravity="center_horizontal"
                 android:scaleType="fitCenter"
                 android:visibility="gone"
                 tools:ignore="ContentDescription" />

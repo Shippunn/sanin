@@ -83,10 +83,10 @@
 
             <ImageView
                 android:id="@+id/pillGifAbove"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginTop="4dp"
-                android:adjustViewBounds="true"
+                android:layout_gravity="center_horizontal"
                 android:scaleType="fitCenter"
                 android:visibility="gone"
                 tools:ignore="ContentDescription" />
@@ -106,10 +106,10 @@
 
             <ImageView
                 android:id="@+id/pillGifBelow"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:layout_marginTop="4dp"
-                android:adjustViewBounds="true"
+                android:layout_gravity="center_horizontal"
                 android:scaleType="fitCenter"
                 android:visibility="gone"
                 tools:ignore="ContentDescription" />
