@@ -303,10 +303,12 @@ object TvKeyboardUtil {
             }
             decorView.addView(
                 keyboard,
-                ViewGroup.LayoutParams(
+                FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
-                )
+                ).apply {
+                    gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                }
             )
         }
         return keyboard
@@ -324,12 +326,13 @@ object TvKeyboardUtil {
             tvkLog("getCompactKeyboard: created new compact keyboard (root=${decorView.javaClass.simpleName})")
             val landscape = view.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
             val params = FrameLayout.LayoutParams(
-                if (landscape) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             ).apply {
                 gravity = Gravity.START or Gravity.BOTTOM
                 bottomMargin = (16 * view.resources.displayMetrics.density).toInt()
-                leftMargin = (16 * view.resources.displayMetrics.density).toInt()
+                leftMargin = (12 * view.resources.displayMetrics.density).toInt()
+                rightMargin = (12 * view.resources.displayMetrics.density).toInt()
             }
             if (landscape) {
                 keyboard.post {
