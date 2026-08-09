@@ -1,7 +1,9 @@
 package ani.sanin.connections.auth
 
 import android.app.AlertDialog
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.CountDownTimer
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +12,7 @@ import ani.sanin.connections.anilist.Anilist
 import ani.sanin.databinding.DialogQrLoginBinding
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
+import ani.sanin.restartApp
 import ani.sanin.toast
 import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.Logger
@@ -258,6 +261,18 @@ class QrLoginDialog(
                 dialog = null
                 dialogBinding = null
                 currentSessionId = null
+
+                // Restart the app so it boots with the fresh AniList session
+                Logger.log("[QR-DEBUG] Restarting app after QR login")
+                val activity = context as? Activity
+                if (activity != null && !activity.isFinishing) {
+                    activity.restartApp()
+                } else {
+                    context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
+                        it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                        context.startActivity(it)
+                    }
+                }
             } catch (e: Exception) {
                 Logger.log("[QR-DEBUG] Login flow failed: ${e.message}")
                 setDebugStep(binding, "FAILED: ${e.javaClass.simpleName}: ${e.message}")
