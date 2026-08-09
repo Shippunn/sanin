@@ -20,6 +20,8 @@
             app:resize_mode="fit"
             app:show_buffering="when_playing" />
 
+        <include layout="@layout/panel_episode_comments" />
+
     </FrameLayout>
 
     <include layout="@layout/drawer_episode_rail" />

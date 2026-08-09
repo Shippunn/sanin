@@ -45,6 +45,7 @@ import android.view.animation.AnimationUtils
 import android.widget.AdapterView
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
 import com.google.android.material.chip.Chip
@@ -95,6 +96,8 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.imageview.ShapeableImageView
 import androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_DEPRESSED
 import androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import androidx.media3.ui.CaptionStyleCompat.EDGE_TYPE_NONE
@@ -156,6 +159,7 @@ import ani.sanin.util.Logger
 import ani.sanin.util.customAlertDialog
 import com.anggrayudi.storage.file.extension
 import java.io.File
+import java.text.SimpleDateFormat
 import kotlinx.coroutines.withContext
 import android.content.res.Resources
 import android.view.LayoutInflater
@@ -175,15 +179,19 @@ import io.github.peerless2012.ass.media.parser.AssSubtitleParserFactory
 import io.github.peerless2012.ass.media.type.AssRenderType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.Calendar
 import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
+import java.util.TimeZone
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
@@ -192,8 +200,13 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import androidx.core.net.toUri
 import ani.sanin.connections.LogoApi
+import ani.sanin.connections.comments.AnikotoAPI
+import ani.sanin.connections.comments.Comment
+import ani.sanin.connections.comments.CommentsAPI
 import ani.sanin.connections.subtitles.StremioSubtitles
 import ani.sanin.connections.subtitles.StremioSub
+import ani.sanin.media.comments.CommentZoomDialog
+import ani.sanin.loadImage
 import java.net.URI
 
 @UnstableApi
@@ -249,6 +262,14 @@ class ExoplayerView :
     private lateinit var episodeDrawerList: RecyclerView
     private lateinit var episodeDrawerClose: ImageButton
     private var episodeDrawerAdapter: EpisodeRailAdapter? = null
+    private lateinit var episodeCommentPanel: View
+    private lateinit var episodeCommentList: RecyclerView
+    private lateinit var episodeCommentClose: ImageButton
+    private lateinit var episodeCommentTitle: TextView
+    private lateinit var episodeCommentProgress: ProgressBar
+    private var episodeCommentAdapter: EpisodeCommentPillAdapter? = null
+    private var episodeCommentJob: Job? = null
+    private var commentPanelEpisode: String? = null
     private lateinit var customSubtitleView: Xubtitle
     private var assHandler: AssHandler? = null
     private var assSubtitleView: io.github.peerless2012.ass.media.widget.AssSubtitleView? = null
@@ -547,6 +568,23 @@ class ExoplayerView :
         episodeDrawerList.nextFocusUpId = R.id.episodeDrawerClose
         FocusEffectUtil.applyFocusListener(episodeDrawerClose)
         episodeDrawerClose.setOnClickListener { episodeDrawer.closeDrawer(episodeDrawerContent) }
+
+        // Episode comments panel (opened from the comment icon on each rail row)
+        episodeCommentPanel = findViewById(R.id.episodeCommentPanel)
+        episodeCommentList = findViewById(R.id.episodeCommentList)
+        episodeCommentClose = findViewById(R.id.episodeCommentClose)
+        episodeCommentTitle = findViewById(R.id.episodeCommentTitle)
+        episodeCommentProgress = findViewById(R.id.episodeCommentProgress)
+        episodeCommentList.layoutManager = LinearLayoutManager(this)
+        episodeCommentAdapter = EpisodeCommentPillAdapter { comment ->
+            openPlayerCommentZoom(comment)
+        }
+        episodeCommentList.adapter = episodeCommentAdapter
+        episodeCommentClose.nextFocusDownId = R.id.episodeCommentList
+        episodeCommentList.nextFocusUpId = R.id.episodeCommentClose
+        FocusEffectUtil.applyFocusListener(episodeCommentClose)
+        episodeCommentClose.setOnClickListener { closeEpisodeCommentPanel(returnToRail = true) }
+
         episodeDrawer.setDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
             override fun onDrawerOpened(drawerView: View) {
@@ -562,13 +600,17 @@ class ExoplayerView :
                 }
             }
             override fun onDrawerClosed(drawerView: View) {
-                episodeTitleBtn.requestFocus()
+                if (episodeCommentPanel.visibility != View.VISIBLE) {
+                    episodeTitleBtn.requestFocus()
+                }
             }
             override fun onDrawerStateChanged(newState: Int) {}
         })
 
         episodeTitleBtn.setOnClickListener {
-            if (episodeDrawer.isDrawerOpen(episodeDrawerContent)) {
+            if (episodeCommentPanel.visibility == View.VISIBLE) {
+                closeEpisodeCommentPanel(returnToRail = true)
+            } else if (episodeDrawer.isDrawerOpen(episodeDrawerContent)) {
                 episodeDrawer.closeDrawer(episodeDrawerContent)
             } else {
                 episodeDrawer.openDrawer(episodeDrawerContent)
@@ -1421,16 +1463,22 @@ class ExoplayerView :
 
         // Episode Side Rail
         episodeDrawerList.layoutManager = LinearLayoutManager(this)
-        episodeDrawerAdapter = EpisodeRailAdapter(episodes) { epKey ->
-            val idx = episodeArr.indexOf(epKey)
-            if (idx >= 0 && idx != currentEpisodeIndex) {
-                episodeDrawer.closeDrawer(episodeDrawerContent)
-                disappeared = false
-                functionstarted = false
-                currentEpisodeIndex = idx
-                change(idx)
-            }
-        }
+        episodeDrawerAdapter = EpisodeRailAdapter(
+            episodes = episodes,
+            onEpisodeClick = { epKey ->
+                val idx = episodeArr.indexOf(epKey)
+                if (idx >= 0 && idx != currentEpisodeIndex) {
+                    episodeDrawer.closeDrawer(episodeDrawerContent)
+                    disappeared = false
+                    functionstarted = false
+                    currentEpisodeIndex = idx
+                    change(idx)
+                }
+            },
+            onCommentClick = { epKey ->
+                openEpisodeComments(epKey)
+            },
+        )
         episodeDrawerList.adapter = episodeDrawerAdapter
 
         // Next Episode
@@ -3712,6 +3760,11 @@ class ExoplayerView :
 
     private fun handleBackPress(): Boolean {
         val now = java.lang.System.currentTimeMillis()
+        if (episodeCommentPanel.visibility == View.VISIBLE) {
+            closeEpisodeCommentPanel(returnToRail = true)
+            backPressTime = now
+            return true
+        }
         if (pauseOverlay.visibility == View.VISIBLE) {
             pauseOverlay.visibility = View.GONE
             if (!playerView.isControllerFullyVisible) playerView.showController()
@@ -3743,6 +3796,151 @@ class ExoplayerView :
         }
         finishAndRemoveTask()
         return true
+    }
+
+    private fun openEpisodeComments(epKey: String) {
+        if (!isInitialized) return
+        commentPanelEpisode = epKey
+        episodeDrawer.closeDrawer(episodeDrawerContent)
+        episodeCommentTitle.text = getString(R.string.episode_comments, epKey)
+        episodeCommentAdapter?.submitList(emptyList())
+        episodeCommentProgress.visibility = View.VISIBLE
+        episodeCommentList.visibility = View.GONE
+        episodeCommentPanel.visibility = View.VISIBLE
+        episodeCommentPanel.requestFocus()
+        loadEpisodeComments(epKey)
+    }
+
+    private fun loadEpisodeComments(epKey: String) {
+        episodeCommentJob?.cancel()
+        episodeCommentJob = lifecycleScope.launch {
+            try {
+                val epNumber = epKey.toIntOrNull()
+                val sort = PrefManager.getVal(PrefName.CommentSortOrder, "newest")
+                val saninDeferred = async {
+                    try {
+                        withTimeoutOrNull(12_000L) {
+                            withContext(Dispatchers.IO) {
+                                CommentsAPI.getCommentsForId(media.id, page = 1, tag = epNumber, sort = sort)
+                            }?.comments ?: emptyList()
+                        } ?: emptyList()
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Logger.log(Log.ERROR, "Player: Sanin episode comments failed: ${e.message}")
+                        emptyList()
+                    }
+                }
+                val anikotoDeferred = async {
+                    if (epNumber == null || PrefManager.getVal<Int>(PrefName.AnikotoCommentsEnabled) != 1) {
+                        return@async emptyList()
+                    }
+                    val batch = mutableListOf<Comment>()
+                    try {
+                        withTimeoutOrNull(12_000L) {
+                            withContext(Dispatchers.IO) {
+                                AnikotoAPI.fetchAnikotoChunk(
+                                    media.id,
+                                    media.userPreferredName,
+                                    epNumber,
+                                    0,
+                                    1,
+                                    filterEpisode = epNumber,
+                                ) { newComments ->
+                                    batch.addAll(newComments)
+                                }
+                            }
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Logger.log(Log.ERROR, "Player: Anikoto episode comments failed: ${e.message}")
+                    }
+                    batch
+                }
+                val results = saninDeferred.await() + anikotoDeferred.await()
+                if (isFinishing || episodeCommentPanel.visibility != View.VISIBLE) return@launch
+                episodeCommentProgress.visibility = View.GONE
+                episodeCommentList.visibility = View.VISIBLE
+                episodeCommentAdapter?.submitList(results)
+                if (results.isEmpty()) {
+                    snackString(getString(R.string.no_episode_comments, epKey))
+                } else {
+                    episodeCommentList.post {
+                        episodeCommentList.findViewHolderForAdapterPosition(0)
+                            ?.itemView?.requestFocus()
+                            ?: episodeCommentList.requestFocus()
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Logger.log(Log.ERROR, "Player: episode comments load failed: ${e.message}")
+                episodeCommentProgress.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun closeEpisodeCommentPanel(returnToRail: Boolean) {
+        episodeCommentJob?.cancel()
+        episodeCommentPanel.visibility = View.GONE
+        episodeCommentList.visibility = View.GONE
+        episodeCommentProgress.visibility = View.GONE
+        val epKey = commentPanelEpisode
+        commentPanelEpisode = null
+        if (returnToRail && epKey != null) {
+            episodeDrawer.openDrawer(episodeDrawerContent)
+            focusRailCommentButton(epKey)
+        }
+    }
+
+    private fun focusRailCommentButton(epKey: String) {
+        val pos = episodeArr.indexOf(epKey)
+        if (pos < 0) return
+        episodeDrawerList.postDelayed({
+            episodeDrawerList.scrollToPosition(pos)
+            episodeDrawerList.post {
+                val holder = episodeDrawerList.findViewHolderForAdapterPosition(pos)
+                val commentBtn = holder?.itemView?.findViewById<View>(R.id.episodeRailComment)
+                if (commentBtn != null) {
+                    commentBtn.requestFocus()
+                } else {
+                    holder?.itemView?.requestFocus() ?: episodeDrawerList.requestFocus()
+                }
+            }
+        }, 300L)
+    }
+
+    private fun openPlayerCommentZoom(comment: Comment) {
+        if (supportFragmentManager.findFragmentByTag("playerCommentZoom") != null) return
+        val dialog = CommentZoomDialog()
+        dialog.arguments = Bundle().apply {
+            putInt("commentId", comment.commentId)
+            putString("content", comment.content)
+            putString("username", comment.username)
+            putString("avatarUrl", comment.profilePictureUrl)
+            putString("timestamp", comment.timestamp)
+            putInt("upvotes", comment.upvotes)
+            putInt("downvotes", comment.downvotes)
+            putInt("userVoteType", comment.userVoteType ?: 0)
+            putInt("replyCount", comment.replyCount ?: 0)
+            putBoolean("isAnikoto", comment.isAnikoto)
+            putInt("mediaId", media.id)
+            putInt("anikotoEpisode", comment.anikotoEpisode ?: 0)
+        }
+        // No listener: read-only, replies are still reachable inside the dialog.
+        dialog.setOnDismissListener {
+            if (episodeCommentPanel.visibility == View.VISIBLE) {
+                episodeCommentList.post {
+                    val lm = episodeCommentList.layoutManager as? LinearLayoutManager
+                    val first = lm?.findFirstVisibleItemPosition() ?: 0
+                    episodeCommentList.findViewHolderForAdapterPosition(first)
+                        ?.itemView?.requestFocus()
+                        ?: episodeCommentList.requestFocus()
+                }
+            }
+        }
+        dialog.show(supportFragmentManager, "playerCommentZoom")
     }
 
     private var seekRepeatHandler: Handler? = null
@@ -3777,6 +3975,9 @@ class ExoplayerView :
                 KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> {
                     if (episodeDrawer.isDrawerOpen(episodeDrawerContent)) {
                         episodeDrawer.closeDrawer(episodeDrawerContent)
+                        return true
+                    } else if (episodeCommentPanel.visibility == View.VISIBLE) {
+                        closeEpisodeCommentPanel(returnToRail = true)
                         return true
                     }
                 }
@@ -3931,6 +4132,7 @@ private class EpisodeRailDiff : DiffUtil.ItemCallback<Map.Entry<String, Episode>
 private class EpisodeRailAdapter(
     private val episodes: Map<String, Episode>,
     private val onEpisodeClick: (String) -> Unit,
+    private val onCommentClick: (String) -> Unit,
 ) : ListAdapter<Map.Entry<String, Episode>, EpisodeRailViewHolder>(EpisodeRailDiff()) {
 
     init {
@@ -3947,6 +4149,7 @@ private class EpisodeRailAdapter(
         val entry = getItem(position)
         holder.bind(entry.key, entry.value)
         holder.itemView.setOnClickListener { onEpisodeClick(entry.key) }
+        holder.commentButton.setOnClickListener { onCommentClick(entry.key) }
     }
 }
 
@@ -3957,9 +4160,11 @@ private class EpisodeRailViewHolder(val card: CardView) : ViewHolder(card) {
     private val desc = card.findViewById<TextView>(R.id.episodeRailDesc)
     private val date = card.findViewById<TextView>(R.id.episodeRailDate)
     private val rating = card.findViewById<TextView>(R.id.episodeRailRating)
+    val commentButton = card.findViewById<ImageButton>(R.id.episodeRailComment)
 
     init {
         FocusEffectUtil.applyFocusListener(card, borderDp = 5f)
+        FocusEffectUtil.applyFocusListener(commentButton)
     }
 
     fun bind(epKey: String, ep: Episode) {
@@ -3978,5 +4183,82 @@ private class EpisodeRailViewHolder(val card: CardView) : ViewHolder(card) {
         } else {
             thumb.setImageResource(android.R.color.transparent)
         }
+    }
+}
+
+private class EpisodeCommentPillAdapter(
+    private val onCommentClick: (Comment) -> Unit,
+) : RecyclerView.Adapter<EpisodeCommentPillViewHolder>() {
+
+    private val items = mutableListOf<Comment>()
+
+    fun submitList(list: List<Comment>) {
+        items.clear()
+        items.addAll(list)
+        notifyDataSetChanged()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EpisodeCommentPillViewHolder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_episode_comment_pill, parent, false) as MaterialCardView
+        return EpisodeCommentPillViewHolder(view)
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    override fun onBindViewHolder(holder: EpisodeCommentPillViewHolder, position: Int) {
+        val comment = items[position]
+        holder.bind(comment)
+        holder.itemView.setOnClickListener { onCommentClick(comment) }
+    }
+}
+
+private class EpisodeCommentPillViewHolder(val card: MaterialCardView) : ViewHolder(card) {
+    private val avatar = card.findViewById<ShapeableImageView>(R.id.pillAvatar)
+    private val username = card.findViewById<TextView>(R.id.pillUserName)
+    private val time = card.findViewById<TextView>(R.id.pillTime)
+    private val content = card.findViewById<TextView>(R.id.pillContent)
+    private val sourceBadge = card.findViewById<TextView>(R.id.pillSourceBadge)
+
+    init {
+        FocusEffectUtil.applyFocusListener(card, borderDp = 4f)
+    }
+
+    fun bind(comment: Comment) {
+        username.text = comment.username
+        time.text = formatCommentTime(comment.timestamp)
+        content.text = comment.content.replace(Regex("\\s+"), " ").trim()
+        if (comment.profilePictureUrl != null) {
+            avatar.loadImage(comment.profilePictureUrl)
+        } else {
+            avatar.setImageResource(R.drawable.ic_round_add_circle_24)
+        }
+        if (comment.isAnikoto) {
+            sourceBadge.text = "anikoto"
+            sourceBadge.setTextColor(0xFF00E5FF.toInt())
+        } else {
+            sourceBadge.text = "dantotsu"
+            sourceBadge.setTextColor(0xFFBB86FC.toInt())
+        }
+    }
+}
+
+private fun formatCommentTime(timestamp: String): String {
+    return try {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        val parsed = sdf.parse(timestamp) ?: return "now"
+        val diff = System.currentTimeMillis() - parsed.time
+        val days = diff / (24 * 60 * 60 * 1000)
+        val hours = diff / (60 * 60 * 1000) % 24
+        val minutes = diff / (60 * 1000) % 60
+        when {
+            days > 0 -> "${days}d"
+            hours > 0 -> "${hours}h"
+            minutes > 0 -> "${minutes}m"
+            else -> "now"
+        }
+    } catch (_: Exception) {
+        "now"
     }
 }
