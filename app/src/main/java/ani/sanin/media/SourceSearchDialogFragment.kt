@@ -1,6 +1,7 @@
 package ani.sanin.media
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -87,6 +88,25 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 binding.searchSourceTitle.text = srcName
                 binding.searchBarText.setText(media!!.mainName())
                 TvKeyboardUtil.setupTvInput(binding.searchBarText)
+                dialog?.window?.let { TvKeyboardUtil.retainWindowFocus(it) }
+                binding.searchBarText.nextFocusDownId = R.id.searchRecyclerView
+                if (TvKeyboardUtil.isTv(requireContext())) {
+                    binding.searchBarText.post { binding.searchBarText.requestFocus() }
+                }
+                dialog?.setOnKeyListener { _, keyCode, event ->
+                    if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_DOWN) {
+                        val keyboardOpen = when (TvKeyboardUtil.keyboardMode()) {
+                            1 -> TvKeyboardUtil.isKeyboardVisible(binding.searchBarText)
+                            2 -> TvKeyboardUtil.isCompactKeyboardVisible(binding.searchBarText)
+                            else -> false
+                        }
+                        if (keyboardOpen) {
+                            TvKeyboardUtil.hideKeyboard(binding.searchBarText)
+                            return@setOnKeyListener true
+                        }
+                    }
+                    false
+                }
                 binding.searchBar.setEndIconOnClickListener { search() }
                 binding.searchBarText.setOnEditorActionListener { _, actionId, _ ->
                     if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { search(); true } else false

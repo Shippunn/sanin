@@ -69,17 +69,18 @@ object TvKeyboardUtil {
         retainWindowFocus(editText)
         editText.showSoftInputOnFocus = false
         attachKeyboardToWindow(editText)
-        val activity = resolveActivity(editText.context) ?: return
         toggleButton.visibility = View.VISIBLE
         toggleButton.setOnClickListener {
-            val keyboard = getOrCreateKeyboard(activity)
-            tvkLog("toggle clicked, keyboardVisible=${keyboard.isKeyboardVisible()}")
-            if (keyboard.isKeyboardVisible()) {
+            val keyboard = getOrCreateKeyboard(editText)
+            tvkLog("toggle clicked, keyboardVisible=${keyboard?.isKeyboardVisible()}")
+            if (keyboard?.isKeyboardVisible() == true) {
                 keyboard.hide()
                 editText.clearFocus()
             } else {
-                keyboard.target = editText
-                keyboard.show()
+                keyboard?.apply {
+                    target = editText
+                    show()
+                }
             }
         }
         editText.setOnFocusChangeListener { v, hasFocus ->
@@ -214,9 +215,17 @@ object TvKeyboardUtil {
     fun hideKeyboard(view: View) {
         tvkLog("hideKeyboard ${describe(view)}")
         view.clearFocus()
-        if (keyboardMode() != 0) {
-            hideCustomKeyboard(view)
+        when (keyboardMode()) {
+            0 -> {}
+            1 -> hideCustomKeyboard(view)
+            2 -> hideCompactKeyboard(view)
         }
+    }
+
+    fun isKeyboardVisible(view: View): Boolean {
+        val visible = getOrCreateKeyboard(view)?.isKeyboardVisible() == true
+        tvkLog("isKeyboardVisible ${describe(view)} -> $visible")
+        return visible
     }
 
     fun retainWindowFocus(window: Window) {
@@ -289,15 +298,19 @@ object TvKeyboardUtil {
     private fun removeFocusBorder(v: View) = removeTvFocusBorder(v)
 
     private fun attachKeyboardToWindow(view: View) {
-        val activity = view.context as? Activity ?: return
-        getOrCreateKeyboard(activity)
+        if (view.isAttachedToWindow) {
+            getOrCreateKeyboard(view)
+        } else {
+            view.post { getOrCreateKeyboard(view) }
+        }
     }
 
-    private fun getOrCreateKeyboard(activity: Activity): TvKeyboardView {
-        val decorView = activity.window.decorView as? ViewGroup ?: error("Cannot access decor view")
+    private fun getOrCreateKeyboard(view: View): TvKeyboardView? {
+        if (!view.isAttachedToWindow) return null
+        val decorView = view.rootView as? ViewGroup ?: return null
         var keyboard = decorView.findViewWithTag<TvKeyboardView>(TAG_KEYBOARD)
         if (keyboard == null) {
-            keyboard = TvKeyboardView(activity).apply {
+            keyboard = TvKeyboardView(view.context).apply {
                 this.tag = TAG_KEYBOARD
                 visibility = View.GONE
             }
@@ -369,11 +382,10 @@ object TvKeyboardUtil {
 
     private fun showCustomKeyboard(view: View) {
         val editText = view as? EditText ?: return
-        val activity = editText.context as? Activity ?: return
-        val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        val imm = editText.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(editText.windowToken, 0)
         tvkLog("showCustomKeyboard ${describe(editText)}")
-        getOrCreateKeyboard(activity).apply {
+        getOrCreateKeyboard(editText)?.apply {
             target = editText
             show()
         }
@@ -390,8 +402,7 @@ object TvKeyboardUtil {
     }
 
     private fun hideCustomKeyboard(view: View) {
-        val activity = view.context as? Activity ?: return
         tvkLog("hideCustomKeyboard ${describe(view)}")
-        getOrCreateKeyboard(activity).hide()
+        getOrCreateKeyboard(view)?.hide()
     }
 }

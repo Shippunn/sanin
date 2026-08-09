@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView
 import ani.sanin.databinding.ItemCharacterBinding
 import ani.sanin.loadImage
 import ani.sanin.parsers.ShowResponse
+import ani.sanin.util.FocusEffectUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,6 +37,9 @@ abstract class SourceAdapter(
     inner class SourceViewHolder(val binding: ItemCharacterBinding) :
         RecyclerView.ViewHolder(binding.root) {
         init {
+            itemView.isFocusable = true
+            itemView.isFocusableInTouchMode = false
+            FocusEffectUtil.applyFocusListener(itemView, binding.itemCompactCard)
             itemView.setOnClickListener {
                 dialogFragment.dismiss()
                 scope.launch(Dispatchers.IO) { onItemClick(sources[bindingAdapterPosition]) }
