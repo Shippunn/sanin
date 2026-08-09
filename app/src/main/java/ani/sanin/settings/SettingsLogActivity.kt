@@ -5,11 +5,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.LinearLayoutManager
 import ani.sanin.R
-import ani.sanin.BuildConfig
 import ani.sanin.databinding.ActivitySettingsLogBinding
 import ani.sanin.initActivity
 import ani.sanin.navBarHeight
@@ -21,7 +19,6 @@ import ani.sanin.toast
 import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.LogcatBuffer
 import ani.sanin.util.Logger
-import java.io.File
 
 class SettingsLogActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsLogBinding
@@ -89,23 +86,14 @@ class SettingsLogActivity : AppCompatActivity() {
                                 toast("Enable Logging first")
                             } else {
                                 val logs = Logger.readLogcatLastMinutes(2)
-                                // Write to a temp file and share via FileProvider so huge
-                                // logs don't blow past the Intent/Binder size limit.
-                                val logFile = File(cacheDir, "logcat_last_2min.txt")
-                                logFile.writeText(logs)
+                                val truncated = if (logs.length > 500_000) {
+                                    "... (truncated, ${logs.length} chars total)\n\n" + logs.takeLast(500_000)
+                                } else logs
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(
-                                        Intent.EXTRA_STREAM,
-                                        FileProvider.getUriForFile(
-                                            context,
-                                            "${BuildConfig.APPLICATION_ID}.provider",
-                                            logFile,
-                                        )
-                                    )
                                     putExtra(Intent.EXTRA_SUBJECT, "Logcat - Last 2 Minutes")
+                                    putExtra(Intent.EXTRA_TEXT, truncated)
                                 }
-                                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 startActivity(Intent.createChooser(shareIntent, "Share logs"))
                             }
                         },
