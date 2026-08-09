@@ -350,6 +350,8 @@ class ExoplayerView :
     }
 
     private var isTimeStampsLoaded = false
+    private var timeStampsLoading = false
+    private var lastTimeStampAttempt = 0L
     private var isSeeking = false
     private var isFastForwarding = false
     private var playerErrorRetryCount = 0
@@ -1424,6 +1426,8 @@ class ExoplayerView :
                 val leavingEpisodeId = "${media.id}-${episodeArr[currentEpisodeIndex]}"
                 clearTransientSubtitleCache(leavingEpisodeId)
                 isTimeStampsLoaded = false
+                timeStampsLoading = false
+                lastTimeStampAttempt = 0L
                 episodeLength = 0f
                 media.anime!!.selectedEpisode = episodeArr[index]
                 model.setMedia(media)
@@ -3153,6 +3157,11 @@ class ExoplayerView :
     override fun onRenderedFirstFrame() {
         super.onRenderedFirstFrame()
 
+        // Load skip timestamps before any format-dependent work: on some devices
+        // videoFormat can be reported late, and skipping the load here leaves the
+        // skip button permanently missing.
+        maybeLoadTimeStamps()
+
         PrefManager.setCustomVal(
             "${media.id}_${media.anime!!.selectedEpisode}_max",
             exoPlayer.duration,
@@ -3183,24 +3192,6 @@ class ExoplayerView :
             exoPlayer.seekTo(0)
         }
 
-        if (!isTimeStampsLoaded && PrefManager.getVal(PrefName.TimeStampsEnabled)) {
-            val dur = exoPlayer.duration
-            val extTimestamps =
-                ((extractor?.server?.video?.timestamps ?: emptyList()) +
-                    (extractor?.timestamps ?: emptyList())).distinct()
-            lifecycleScope.launch(Dispatchers.IO) {
-                model.loadTimeStamps(
-                    media.idMAL,
-                    media.anime
-                        ?.selectedEpisode
-                        ?.trim()
-                        ?.toIntOrNull(),
-                    dur / 1000,
-                    PrefManager.getVal(PrefName.UseProxyForTimeStamps),
-                    extTimestamps,
-                )
-            }
-        }
     }
 
     // Link Preloading
@@ -3238,7 +3229,41 @@ class ExoplayerView :
     private var currentTimeStamp: AniSkip.Stamp? = null
     private var skippedTimeStamps: MutableList<AniSkip.Stamp> = mutableListOf()
 
+    private fun maybeLoadTimeStamps() {
+        if (!isInitialized || isTimeStampsLoaded || timeStampsLoading) return
+        if (!PrefManager.getVal(PrefName.TimeStampsEnabled)) return
+        // Rate-limit retries so a transient failure (e.g. on slower TV hardware)
+        // doesn't hammer the API every 500ms; playback keeps retrying until it
+        // succeeds or the episode changes.
+        val now = System.currentTimeMillis()
+        if (now - lastTimeStampAttempt < 10_000L) return
+        lastTimeStampAttempt = now
+        timeStampsLoading = true
+        val dur = exoPlayer.duration
+        val extTimestamps =
+            ((extractor?.server?.video?.timestamps ?: emptyList()) +
+                (extractor?.timestamps ?: emptyList())).distinct()
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                model.loadTimeStamps(
+                    media.idMAL,
+                    media.anime?.selectedEpisode?.trim()?.toIntOrNull(),
+                    dur / 1000,
+                    PrefManager.getVal(PrefName.UseProxyForTimeStamps),
+                    extTimestamps,
+                )
+                Logger.log(
+                    "Player: timestamps attempt finished for ep '${media.anime?.selectedEpisode}' " +
+                        "loaded=${model.timeStamps.value != null} dur=$dur"
+                )
+            } finally {
+                timeStampsLoading = false
+            }
+        }
+    }
+
     private fun updateTimeStamp() {
+        maybeLoadTimeStamps()
         if (isInitialized) {
             val playerCurrentTime = exoPlayer.currentPosition / 1000
             currentTimeStamp =
@@ -3514,6 +3539,8 @@ class ExoplayerView :
             if (episodeLength == 0f) {
                 episodeLength = exoPlayer.duration.toFloat()
             }
+            // Fallback trigger in case onRenderedFirstFrame never fired.
+            maybeLoadTimeStamps()
         }
         isBuffering = playbackState == Player.STATE_BUFFERING
         if (isBuffering) {

@@ -747,8 +747,11 @@ class MediaDetailsViewModel : ViewModel() {
         extensionTimestamps: List<eu.kanade.tachiyomi.animesource.model.TimeStamp> = emptyList()
     ) {
         episodeNum ?: return
-        if (timeStampsMap.containsKey(episodeNum))
-            return timeStamps.postValue(timeStampsMap[episodeNum])
+        val currentEpisode = media.value?.anime?.selectedEpisode?.trim()?.toIntOrNull()
+        if (timeStampsMap.containsKey(episodeNum)) {
+            if (currentEpisode == episodeNum) timeStamps.postValue(timeStampsMap[episodeNum])
+            return
+        }
         // Extension timestamps take priority; fall back to AniSkip when the extension has none
         var result: List<AniSkip.Stamp>? = if (extensionTimestamps.isNotEmpty()) {
             extensionTimestamps.map { it.toAniSkipStamp() }
@@ -764,7 +767,11 @@ class MediaDetailsViewModel : ViewModel() {
             result = AniSkip.getResult(malId, episodeNum, duration, useProxyForTimeStamps)
         }
         if (result != null) timeStampsMap[episodeNum] = result
-        timeStamps.postValue(result)
+        // Ignore results for an episode the user already navigated away from,
+        // so a slow request can't overwrite a newer episode's timestamps.
+        if (media.value?.anime?.selectedEpisode?.trim()?.toIntOrNull() == episodeNum) {
+            timeStamps.postValue(result)
+        }
     }
 
     private fun eu.kanade.tachiyomi.animesource.model.TimeStamp.toAniSkipStamp(): AniSkip.Stamp {

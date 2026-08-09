@@ -16,8 +16,12 @@ object AniSkip {
         episodeLength: Long,
         useProxyForTimeStamps: Boolean
     ): List<Stamp>? {
+        // ExoPlayer reports C.TIME_UNSET (Long.MIN_VALUE) when the stream duration
+        // isn't known yet; the AniSkip API rejects negative lengths with a 400, so
+        // fall back to a standard 24-minute episode in that case.
+        val safeEpisodeLength = if (episodeLength > 0) episodeLength else 1440L
         val url =
-            "https://api.aniskip.com/v2/skip-times/$malId/$episodeNumber?types[]=ed&types[]=mixed-ed&types[]=mixed-op&types[]=op&types[]=recap&episodeLength=$episodeLength"
+            "https://api.aniskip.com/v2/skip-times/$malId/$episodeNumber?types[]=ed&types[]=mixed-ed&types[]=mixed-op&types[]=op&types[]=recap&episodeLength=$safeEpisodeLength"
         val candidates = buildList {
             add(url)
             if (useProxyForTimeStamps) {
