@@ -8,6 +8,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -125,7 +126,12 @@ fun SaninLandscapeSplash(
     ).coerceIn(0f, 1f)
 
     BoxWithConstraints(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            // Opaque black backdrop: the background artwork
+            // fades in from black, never revealing the app
+            // content behind the splash.
+            .background(Color.Black)
     ) {
 
         /*

@@ -306,6 +306,9 @@ class MainActivity : AppCompatActivity() {
         val initComplete = CompletableDeferred<Unit>()
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             val splashView = ComposeView(this).apply {
+                // Opaque from the first frame so the home tab
+                // never shows through while the splash fades in.
+                setBackgroundColor(android.graphics.Color.BLACK)
                 setContent {
                     SaninLandscapeSplash(
                         onFinished = {
