@@ -591,6 +591,9 @@ class ExoplayerView :
         episodeDrawer.setDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
             override fun onDrawerOpened(drawerView: View) {
+                // Keep focus inside the rail: the background player controls are
+                // still visible next to it, so block them from receiving focus.
+                playerView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
                 val pos = currentEpisodeIndex.coerceIn(0, episodeDrawerAdapter?.itemCount?.minus(1) ?: 0)
                 episodeDrawerList.scrollToPosition(pos)
                 episodeDrawerList.post {
@@ -603,6 +606,7 @@ class ExoplayerView :
                 }
             }
             override fun onDrawerClosed(drawerView: View) {
+                playerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
                 if (episodeCommentPanel.visibility != View.VISIBLE) {
                     episodeTitleBtn.requestFocus()
                 }
@@ -3924,6 +3928,8 @@ class ExoplayerView :
         episodeCommentProgress.visibility = View.VISIBLE
         episodeCommentList.visibility = View.GONE
         episodeCommentPanel.visibility = View.VISIBLE
+        // Same containment as the rail: keep focus inside the comment panel.
+        playerView.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         episodeCommentPanel.requestFocus()
         loadEpisodeComments(epKey)
     }
@@ -4000,6 +4006,7 @@ class ExoplayerView :
 
     private fun closeEpisodeCommentPanel(returnToRail: Boolean) {
         episodeCommentJob?.cancel()
+        playerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         episodeCommentPanel.visibility = View.GONE
         episodeCommentList.visibility = View.GONE
         episodeCommentProgress.visibility = View.GONE
