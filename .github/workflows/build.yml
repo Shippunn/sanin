@@ -38,10 +38,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Decode release keystore
-        if: steps.config.outputs.is_release == 'true'
-        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > $GITHUB_WORKSPACE/release.keystore
-
       - name: Determine build type
         id: config
         run: |
@@ -60,6 +56,10 @@ jobs:
               echo "is_release=false" >> $GITHUB_OUTPUT
             fi
           fi
+
+      - name: Decode release keystore
+        if: steps.config.outputs.is_release == 'true'
+        run: echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > $GITHUB_WORKSPACE/release.keystore
 
       - name: Build
         run: |
