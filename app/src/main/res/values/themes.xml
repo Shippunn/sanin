@@ -25,7 +25,7 @@
             @color/bg_black
         </item>
         <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">
-            @mipmap/ic_launcher_xxxhdpi
+            @mipmap/ic_launcher
         </item>
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges
         </item>
