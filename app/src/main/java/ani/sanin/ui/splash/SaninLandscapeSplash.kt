@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.graphicsLayer
@@ -270,11 +271,24 @@ private fun LogoShine(
     progress: Float
 ) {
 
-    val shineX = lerp(
-        0.25f,
-        0.75f,
-        progress
-    )
+    /*
+     * Ping-pong sweep: left -> right -> left within the
+     * same shine window, so the light passes twice.
+     */
+    val shineX =
+        if (progress < 0.5f) {
+            lerp(
+                0.25f,
+                0.75f,
+                progress / 0.5f
+            )
+        } else {
+            lerp(
+                0.75f,
+                0.25f,
+                (progress - 0.5f) / 0.5f
+            )
+        }
 
     /*
      * Narrow highlight.
@@ -316,7 +330,7 @@ private fun LogoShine(
                      * The PNG remains exactly the same size.
                      */
 
-                    alpha = intensity * 0.85f
+                    alpha = intensity
 
                     compositingStrategy =
                         CompositingStrategy.Offscreen
@@ -345,10 +359,10 @@ private fun LogoShine(
                             colors = listOf(
                                 Color.Transparent,
                                 Color(
-                                    0.55f,
-                                    0.90f,
+                                    0.78f,
+                                    0.96f,
                                     1f,
-                                    0.85f
+                                    1f
                                 ),
                                 Color.Transparent
                             ),
@@ -361,6 +375,27 @@ private fun LogoShine(
                         ),
                         blendMode =
                             BlendMode.SrcIn
+                    )
+
+                    drawContext.canvas.restore()
+
+                    /*
+                     * Sparkles riding the band, clipped to
+                     * the same PNG alpha.
+                     */
+
+                    drawContext.canvas.saveLayer(
+                        Rect(Offset.Zero, size),
+                        Paint()
+                    )
+
+                    drawContent()
+
+                    drawLogoSparkles(
+                        bandX = shineX * size.width,
+                        logoWidth = size.width,
+                        logoHeight = size.height,
+                        intensity = intensity
                     )
 
                     drawContext.canvas.restore()
@@ -389,7 +424,7 @@ private fun LogoShine(
                      * Absolutely no scaling.
                      */
 
-                    alpha = intensity * 0.95f
+                    alpha = intensity
 
                     compositingStrategy =
                         CompositingStrategy.Offscreen
@@ -410,10 +445,10 @@ private fun LogoShine(
                             colors = listOf(
                                 Color.Transparent,
                                 Color(
-                                    0.55f,
-                                    0.90f,
+                                    0.78f,
+                                    0.96f,
                                     1f,
-                                    0.90f
+                                    1f
                                 ),
                                 Color.Transparent
                             ),
@@ -429,12 +464,137 @@ private fun LogoShine(
                     )
 
                     drawContext.canvas.restore()
+
+                    drawContext.canvas.saveLayer(
+                        Rect(Offset.Zero, size),
+                        Paint()
+                    )
+
+                    drawContent()
+
+                    drawLogoSparkles(
+                        bandX = shineX * size.width,
+                        logoWidth = size.width,
+                        logoHeight = size.height,
+                        intensity = intensity
+                    )
+
+                    drawContext.canvas.restore()
                 },
             contentScale = ContentScale.None
         )
     }
 }
 
+
+/*
+ * ==========================================================
+ * LOGO SPARKLES
+ * ==========================================================
+ *
+ * Small bright cross glints that ride along the shine band.
+ * Every sparkle draw uses SrcIn so it is clipped to the
+ * actual PNG alpha and never appears outside the logo.
+ */
+
+private fun DrawScope.drawLogoSparkles(
+    bandX: Float,
+    logoWidth: Float,
+    logoHeight: Float,
+    intensity: Float
+) {
+
+    if (intensity <= 0f) return
+
+    /*
+     * A few glints offset around the band, spread
+     * vertically across the logo.
+     */
+    val sparkles = listOf(
+        0.00f to 0.28f,
+        -0.030f to 0.52f,
+        0.025f to 0.72f,
+        -0.012f to 0.16f
+    )
+
+    sparkles.forEach { (xOffset, yFactor) ->
+
+        val cx =
+            bandX +
+                xOffset * logoWidth
+
+        val cy =
+            yFactor * logoHeight
+
+        /*
+         * Sparkle size scales with the logo.
+         */
+        val armRadius =
+            logoWidth * 0.018f
+
+        val strokeWidth =
+            logoWidth * 0.0035f
+
+        val alpha =
+            (intensity * 0.9f)
+                .coerceIn(0f, 1f)
+
+        drawLine(
+            color = Color(
+                0.90f,
+                0.98f,
+                1f,
+                alpha
+            ),
+            start = Offset(
+                cx - armRadius,
+                cy
+            ),
+            end = Offset(
+                cx + armRadius,
+                cy
+            ),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round,
+            blendMode = BlendMode.SrcIn
+        )
+
+        drawLine(
+            color = Color(
+                0.90f,
+                0.98f,
+                1f,
+                alpha
+            ),
+            start = Offset(
+                cx,
+                cy - armRadius
+            ),
+            end = Offset(
+                cx,
+                cy + armRadius
+            ),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round,
+            blendMode = BlendMode.SrcIn
+        )
+
+        /*
+         * Small bright core.
+         */
+        drawCircle(
+            color = Color(
+                1f,
+                1f,
+                1f,
+                alpha
+            ),
+            radius = strokeWidth * 0.9f,
+            center = Offset(cx, cy),
+            blendMode = BlendMode.SrcIn
+        )
+    }
+}
 
 /*
  * ==========================================================
