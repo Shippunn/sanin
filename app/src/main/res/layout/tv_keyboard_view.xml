@@ -2,9 +2,11 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/top_sheet_background"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp"
+    android:background="@drawable/tv_keyboard_background"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:paddingTop="12dp"
+    android:paddingBottom="14dp"
     android:paddingLeft="16dp"
     android:paddingRight="16dp">
 
@@ -18,7 +20,9 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="horizontal"
-            android:weightSum="10">
+            android:weightSum="10"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyQ" android:text="Q" style="@style/TvKeyboardKey" />
             <TextView android:id="@+id/keyW" android:text="W" style="@style/TvKeyboardKey" />
@@ -36,7 +40,9 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="horizontal"
-            android:weightSum="10">
+            android:weightSum="10"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyA" android:text="A" style="@style/TvKeyboardKey" />
             <TextView android:id="@+id/keyS" android:text="S" style="@style/TvKeyboardKey" />
@@ -54,7 +60,9 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="horizontal"
-            android:weightSum="10">
+            android:weightSum="10"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyZ" android:text="Z" style="@style/TvKeyboardKey" />
             <TextView android:id="@+id/keyX" android:text="X" style="@style/TvKeyboardKey" />
@@ -72,7 +80,9 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:orientation="horizontal"
-            android:layout_marginTop="4dp">
+            android:layout_marginTop="4dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyModeToggle" android:text="123" style="@style/TvKeyboardKey"
                 android:layout_width="0dp" android:layout_weight="1.5" />

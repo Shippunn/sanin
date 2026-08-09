@@ -2,13 +2,18 @@ package ani.sanin.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Outline
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
+import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -26,8 +31,14 @@ class TvKeyboardView(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     private val primaryColor = FocusEffectUtil.getPrimaryColor(context)
-    private val surfaceVariant: Int
-    private val surfaceVariantDim: Int
+    private val glassKeyRes = if (compact) R.drawable.tv_key_glass_compact else R.drawable.tv_key_glass
+    private val glassDangerRes =
+        if (compact) R.drawable.tv_key_glass_danger_compact else R.drawable.tv_key_glass_danger
+    private val keyCornerRadius =
+        (if (compact) 7f else 10f) * resources.displayMetrics.density
+    private val focusScale = if (compact) 1.08f else 1.12f
+    private val focusElevation =
+        (if (compact) 8f else 14f) * resources.displayMetrics.density
 
     private fun tvkLog(message: String) {
         Logger.log(Log.INFO, message, "TvKeyboard")
@@ -73,10 +84,6 @@ class TvKeyboardView(
 
     init {
         inflate(context, if (compact) R.layout.tv_keyboard_compact else R.layout.tv_keyboard_view, this)
-        val ta = context.theme.obtainStyledAttributes(intArrayOf(com.google.android.material.R.attr.colorSurfaceVariant))
-        surfaceVariant = ta.getColor(0, 0x1AFFFFFF.toInt())
-        ta.recycle()
-        surfaceVariantDim = (surfaceVariant and 0x00FFFFFF) or (0x4D shl 24)
         setupKeys()
     }
 
@@ -122,6 +129,17 @@ class TvKeyboardView(
                 if (hasFocus) applyKeyFocus(view)
                 else removeKeyFocus(view)
             }
+            v.outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setRoundRect(
+                        0,
+                        0,
+                        view.width.coerceAtLeast(1),
+                        view.height.coerceAtLeast(1),
+                        keyCornerRadius
+                    )
+                }
+            }
         }
 
         isShifted = true
@@ -129,31 +147,70 @@ class TvKeyboardView(
     }
 
     private fun applyKeyFocus(v: View) {
-        val scale = if (compact) 1.08f else 1.12f
-        if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.KeyboardKeyAnimations)) {
-            v.animate().scaleX(scale).scaleY(scale).setDuration(100).start()
-        } else {
-            v.scaleX = scale
-            v.scaleY = scale
+        val glow = resolveGlowColor()
+        val gap = (if (compact) 2f else 3f) * v.resources.displayMetrics.density
+        val strokePx = (if (compact) 1.5f else 2f) * v.resources.displayMetrics.density
+
+        val glowLayer = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor((glow and 0x00FFFFFF) or (0x59 shl 24))
+            cornerRadius = keyCornerRadius + gap
         }
-        val borderPx = (if (compact) 1f else 2f) * v.resources.displayMetrics.density
-        val corner = (if (compact) 3f else 6f) * v.resources.displayMetrics.density
-        v.background = GradientDrawable().apply {
-            setShape(GradientDrawable.RECTANGLE)
-            setColor(surfaceVariantDim)
-            setStroke(borderPx.toInt(), primaryColor)
-            cornerRadius = corner
+        val bodyLayer = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            orientation = GradientDrawable.Orientation.TOP_BOTTOM
+            colors = intArrayOf(
+                Color.argb(0x80, 255, 255, 255),
+                Color.argb(0x33, 255, 255, 255)
+            )
+            setStroke(strokePx.toInt(), (glow and 0x00FFFFFF) or (0xE6 shl 24))
+            cornerRadius = keyCornerRadius
+        }
+        val focused = LayerDrawable(arrayOf(glowLayer, bodyLayer))
+        val inset = gap.toInt().coerceAtLeast(1)
+        focused.setLayerInset(1, inset, inset, inset, inset)
+        v.background = focused
+
+        if (keyAnimationsEnabled()) {
+            v.animate()
+                .scaleX(focusScale)
+                .scaleY(focusScale)
+                .elevation(focusElevation)
+                .setDuration(150)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        } else {
+            v.scaleX = focusScale
+            v.scaleY = focusScale
+            v.elevation = focusElevation
         }
     }
 
     private fun removeKeyFocus(v: View) {
-        if (PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) && PrefManager.getVal<Boolean>(PrefName.KeyboardKeyAnimations)) {
-            v.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+        v.setBackgroundResource(if (v.id == R.id.keyHide) glassDangerRes else glassKeyRes)
+        if (keyAnimationsEnabled()) {
+            v.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .elevation(0f)
+                .setDuration(150)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
         } else {
             v.scaleX = 1f
             v.scaleY = 1f
+            v.elevation = 0f
         }
-        v.setBackgroundColor(surfaceVariant)
+    }
+
+    private fun keyAnimationsEnabled(): Boolean =
+        PrefManager.getVal<Boolean>(PrefName.AnimationsEnabled) &&
+            PrefManager.getVal<Boolean>(PrefName.KeyboardKeyAnimations)
+
+    private fun resolveGlowColor(): Int {
+        val luminance =
+            (Color.red(primaryColor) + Color.green(primaryColor) + Color.blue(primaryColor)) / 3
+        return if (luminance < 40) 0xFF7FCCFF.toInt() else primaryColor
     }
 
     private fun onKeyClick(view: TextView) {

@@ -2,8 +2,10 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@drawable/top_sheet_background"
-    android:padding="4dp">
+    android:background="@drawable/tv_keyboard_compact_background"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:padding="6dp">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -15,8 +17,10 @@
             android:id="@+id/keyPreview"
             android:layout_width="280dp"
             android:layout_height="32dp"
-            android:background="@drawable/snake_input_bg"
+            android:background="@drawable/tv_keyboard_preview_bg"
             android:padding="4dp"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="#8CFFFFFF"
             android:textSize="14sp"
             android:singleLine="true"
             android:focusable="true"
@@ -27,7 +31,9 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyQ" android:text="Q" style="@style/TvKeyboardKeyCompact" />
             <TextView android:id="@+id/keyW" android:text="W" style="@style/TvKeyboardKeyCompact" />
@@ -44,7 +50,9 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyA" android:text="A" style="@style/TvKeyboardKeyCompact" />
             <TextView android:id="@+id/keyS" android:text="S" style="@style/TvKeyboardKeyCompact" />
@@ -61,7 +69,9 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyZ" android:text="Z" style="@style/TvKeyboardKeyCompact" />
             <TextView android:id="@+id/keyX" android:text="X" style="@style/TvKeyboardKeyCompact" />
@@ -79,7 +89,9 @@
             android:layout_width="wrap_content"
             android:layout_height="32dp"
             android:orientation="horizontal"
-            android:layout_marginTop="2dp">
+            android:layout_marginTop="2dp"
+            android:clipChildren="false"
+            android:clipToPadding="false">
 
             <TextView android:id="@+id/keyModeToggle" android:text="123" style="@style/TvKeyboardKeyCompact"
                 android:layout_width="36dp" />

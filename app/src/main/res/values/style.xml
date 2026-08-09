@@ -117,10 +117,10 @@
         <item name="android:focusable">true</item>
         <item name="android:clickable">true</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
-        <item name="android:textSize">18sp</item>
+        <item name="android:textSize">19sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:background">?attr/colorSurfaceVariant</item>
-        <item name="android:layout_margin">2dp</item>
+        <item name="android:background">@drawable/tv_key_glass</item>
+        <item name="android:layout_margin">3dp</item>
     </style>
 
     <style name="TvKeyboardKeyDanger">
@@ -130,10 +130,10 @@
         <item name="android:focusable">true</item>
         <item name="android:clickable">true</item>
         <item name="android:textColor">#FF6B6B</item>
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">17sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:background">?attr/colorSurfaceVariant</item>
-        <item name="android:layout_margin">2dp</item>
+        <item name="android:background">@drawable/tv_key_glass_danger</item>
+        <item name="android:layout_margin">3dp</item>
     </style>
 
     <style name="TvKeyboardKeyCompact">
@@ -145,7 +145,7 @@
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:background">@drawable/tv_key_glass_compact</item>
         <item name="android:layout_margin">1dp</item>
     </style>
 
@@ -158,7 +158,7 @@
         <item name="android:textColor">#FF6B6B</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:background">?attr/colorSurfaceVariant</item>
+        <item name="android:background">@drawable/tv_key_glass_danger_compact</item>
         <item name="android:layout_margin">1dp</item>
     </style>
 </resources>
