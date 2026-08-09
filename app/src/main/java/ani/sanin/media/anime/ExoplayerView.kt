@@ -3231,11 +3231,11 @@ class ExoplayerView :
 
     private fun maybeLoadTimeStamps() {
         if (!isInitialized || isTimeStampsLoaded || timeStampsLoading) return
-        if (!PrefManager.getVal(PrefName.TimeStampsEnabled)) return
+        if (!PrefManager.getVal<Boolean>(PrefName.TimeStampsEnabled)) return
         // Rate-limit retries so a transient failure (e.g. on slower TV hardware)
         // doesn't hammer the API every 500ms; playback keeps retrying until it
         // succeeds or the episode changes.
-        val now = System.currentTimeMillis()
+        val now = java.lang.System.currentTimeMillis()
         if (now - lastTimeStampAttempt < 10_000L) return
         lastTimeStampAttempt = now
         timeStampsLoading = true
@@ -3249,7 +3249,7 @@ class ExoplayerView :
                     media.idMAL,
                     media.anime?.selectedEpisode?.trim()?.toIntOrNull(),
                     dur / 1000,
-                    PrefManager.getVal(PrefName.UseProxyForTimeStamps),
+                    PrefManager.getVal<Boolean>(PrefName.UseProxyForTimeStamps),
                     extTimestamps,
                 )
                 Logger.log(
