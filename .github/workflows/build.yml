@@ -63,8 +63,7 @@ jobs:
 
       - name: Build
         run: |
-          # lintVital is a release-quality gate; skip it so tester pushes build fast
-          ./gradlew assemble${{ steps.config.outputs.variant }} --build-cache --parallel -x lintVital${{ steps.config.outputs.variant }}
+          ./gradlew assemble${{ steps.config.outputs.variant }} --build-cache --parallel
 
       - name: Collect APKs
         run: |
