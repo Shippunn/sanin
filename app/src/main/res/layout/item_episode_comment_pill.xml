@@ -81,6 +81,16 @@
                     tools:text="2h" />
             </LinearLayout>
 
+            <ImageView
+                android:id="@+id/pillGifAbove"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                tools:ignore="ContentDescription" />
+
             <TextView
                 android:id="@+id/pillContent"
                 android:layout_width="match_parent"
@@ -93,6 +103,16 @@
                 android:textColor="#FFDDDDDD"
                 android:textSize="13sp"
                 tools:text="Comment text goes here. It can span multiple lines and gets clipped with an ellipsis after three lines." />
+
+            <ImageView
+                android:id="@+id/pillGifBelow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                tools:ignore="ContentDescription" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

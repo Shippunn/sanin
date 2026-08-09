@@ -25,6 +25,7 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings.System
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.Log
 import android.util.Rational
@@ -3929,7 +3930,7 @@ class ExoplayerView :
             putInt("anikotoEpisode", comment.anikotoEpisode ?: 0)
         }
         // No listener: read-only, replies are still reachable inside the dialog.
-        dialog.setOnDismissListener {
+        dialog.dismissCallback = {
             if (episodeCommentPanel.visibility == View.VISIBLE) {
                 episodeCommentList.post {
                     val lm = episodeCommentList.layoutManager as? LinearLayoutManager
@@ -4219,6 +4220,8 @@ private class EpisodeCommentPillViewHolder(val card: MaterialCardView) : ViewHol
     private val time = card.findViewById<TextView>(R.id.pillTime)
     private val content = card.findViewById<TextView>(R.id.pillContent)
     private val sourceBadge = card.findViewById<TextView>(R.id.pillSourceBadge)
+    private val gifAboveView = card.findViewById<ImageView>(R.id.pillGifAbove)
+    private val gifBelowView = card.findViewById<ImageView>(R.id.pillGifBelow)
 
     init {
         FocusEffectUtil.applyFocusListener(card, borderDp = 4f)
@@ -4227,7 +4230,32 @@ private class EpisodeCommentPillViewHolder(val card: MaterialCardView) : ViewHol
     fun bind(comment: Comment) {
         username.text = comment.username
         time.text = formatCommentTime(comment.timestamp)
-        content.text = comment.content.replace(Regex("\\s+"), " ").trim()
+        val gifMatch = GIF_IMAGE_REGEX.find(comment.content)
+        if (gifMatch != null) {
+            // Gif comments: text capped at one line, gif shown above or below
+            // depending on where it appears in the comment.
+            content.text = comment.content
+                .replace(GIF_IMAGE_REGEX, " ")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+            content.maxLines = 1
+            content.ellipsize = TextUtils.TruncateAt.END
+            val gifUrl = gifMatch.groupValues.getOrNull(1)
+            val gifAbove = comment.content.substring(0, gifMatch.range.first).isBlank()
+            gifAboveView.visibility =
+                if (gifAbove && gifUrl != null) View.VISIBLE else View.GONE
+            gifBelowView.visibility =
+                if (!gifAbove && gifUrl != null) View.VISIBLE else View.GONE
+            if (gifUrl != null) {
+                (if (gifAbove) gifAboveView else gifBelowView).loadImage(gifUrl)
+            }
+        } else {
+            content.text = comment.content.replace(Regex("\\s+"), " ").trim()
+            content.maxLines = 3
+            content.ellipsize = TextUtils.TruncateAt.END
+            gifAboveView.visibility = View.GONE
+            gifBelowView.visibility = View.GONE
+        }
         if (comment.profilePictureUrl != null) {
             avatar.loadImage(comment.profilePictureUrl)
         } else {
@@ -4248,10 +4276,10 @@ private fun formatCommentTime(timestamp: String): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
         sdf.timeZone = TimeZone.getTimeZone("UTC")
         val parsed = sdf.parse(timestamp) ?: return "now"
-        val diff = System.currentTimeMillis() - parsed.time
-        val days = diff / (24 * 60 * 60 * 1000)
-        val hours = diff / (60 * 60 * 1000) % 24
-        val minutes = diff / (60 * 1000) % 60
+        val diff = java.lang.System.currentTimeMillis() - parsed.time
+        val days = diff / (24L * 60 * 60 * 1000)
+        val hours = diff / (60L * 60 * 1000) % 24L
+        val minutes = diff / (60L * 1000) % 60L
         when {
             days > 0 -> "${days}d"
             hours > 0 -> "${hours}h"
@@ -4262,3 +4290,6 @@ private fun formatCommentTime(timestamp: String): String {
         "now"
     }
 }
+
+private val GIF_IMAGE_REGEX =
+    Regex("""!\[[^\]]*\]\((https?://[^\s)]+)\)""")

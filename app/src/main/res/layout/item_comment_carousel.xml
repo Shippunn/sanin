@@ -168,11 +168,21 @@
             </LinearLayout>
         </LinearLayout>
 
-        <FrameLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:foreground="?attr/selectableItemBackground">
+            android:foreground="?attr/selectableItemBackground"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/carouselGifAbove"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                tools:ignore="ContentDescription" />
 
             <TextView
                 android:id="@+id/carouselCommentText"
@@ -184,7 +194,17 @@
                 android:textColor="#FFDDDDDD"
                 android:textSize="15sp"
                 tools:ignore="HardcodedText" />
-        </FrameLayout>
+
+            <ImageView
+                android:id="@+id/carouselGifBelow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                tools:ignore="ContentDescription" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/carouselShowReplies"

@@ -1,5 +1,6 @@
 package ani.sanin.media.comments
 
+import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
@@ -30,6 +31,7 @@ class CommentZoomDialog : DialogFragment() {
     private var _binding: DialogCommentZoomBinding? = null
     private val binding get() = _binding!!
     var listener: ZoomActionListener? = null
+    var dismissCallback: (() -> Unit)? = null
     private var commentId: Int = 0
     private var userVoteType: Int = 0
     private var upvotes: Int = 0
@@ -251,6 +253,11 @@ class CommentZoomDialog : DialogFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        dismissCallback?.invoke()
     }
 
     private fun formatTimestamp(timestamp: String): String {

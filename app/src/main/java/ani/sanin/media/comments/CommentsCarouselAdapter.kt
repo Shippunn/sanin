@@ -75,13 +75,31 @@ class CommentsCarouselAdapter(
 
         b.carouselUserName.text = comment.username
         b.carouselTimestamp.text = formatTimestamp(comment.timestamp)
-        markwon.setMarkdown(b.carouselCommentText, comment.content)
-        if (comment.content.contains("![")) {
-            b.carouselCommentText.maxLines = Int.MAX_VALUE
-            b.carouselCommentText.ellipsize = null
+        val gifMatch = GIF_IMAGE_REGEX.find(comment.content)
+        if (gifMatch != null) {
+            // Gif comments: text capped at one line, gif shown above or below
+            // depending on where it appears in the comment.
+            markwon.setMarkdown(
+                b.carouselCommentText,
+                comment.content.replace(GIF_IMAGE_REGEX, "").trim()
+            )
+            b.carouselCommentText.maxLines = 1
+            b.carouselCommentText.ellipsize = TextUtils.TruncateAt.END
+            val gifUrl = gifMatch.groupValues.getOrNull(1)
+            val gifAbove = comment.content.substring(0, gifMatch.range.first).isBlank()
+            b.carouselGifAbove.visibility =
+                if (gifAbove && gifUrl != null) View.VISIBLE else View.GONE
+            b.carouselGifBelow.visibility =
+                if (!gifAbove && gifUrl != null) View.VISIBLE else View.GONE
+            if (gifUrl != null) {
+                (if (gifAbove) b.carouselGifAbove else b.carouselGifBelow).loadImage(gifUrl)
+            }
         } else {
+            markwon.setMarkdown(b.carouselCommentText, comment.content)
             b.carouselCommentText.maxLines = 3
             b.carouselCommentText.ellipsize = TextUtils.TruncateAt.END
+            b.carouselGifAbove.visibility = View.GONE
+            b.carouselGifBelow.visibility = View.GONE
         }
         b.carouselVoteCount.text = (comment.upvotes - comment.downvotes).toString()
 
@@ -211,3 +229,6 @@ class CommentsCarouselAdapter(
 
     class ViewHolder(val binding: ItemCommentCarouselBinding) : RecyclerView.ViewHolder(binding.root)
 }
+
+private val GIF_IMAGE_REGEX =
+    Regex("""!\[[^\]]*\]\((https?://[^\s)]+)\)""")
