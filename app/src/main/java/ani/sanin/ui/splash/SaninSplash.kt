@@ -37,7 +37,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toDp
 import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
@@ -263,8 +262,8 @@ internal fun SaninSplash(
                 SaninSplashGeometry(
                     wordmarkOffsetY = maxHeight * (config.wordmarkCenterY - 0.5f),
                     emblemOffsetY = maxHeight * (config.emblemCenterY - 0.5f),
-                    emblemWidth = emblemBitmap.width.toDp(),
-                    emblemHeight = emblemBitmap.height.toDp()
+                    emblemWidth = Dp(emblemBitmap.width / density.density),
+                    emblemHeight = Dp(emblemBitmap.height / density.density)
                 )
             }
         }
@@ -454,8 +453,10 @@ private fun LogoShine(
          */
 
         ShineLayer(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = geometry.wordmarkOffsetY),
             logoRes = config.wordmarkRes,
-            offsetY = geometry.wordmarkOffsetY,
             shineX = shineX,
             shineWidth = shineWidth,
             intensity = intensity
@@ -468,8 +469,10 @@ private fun LogoShine(
          */
 
         ShineLayer(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = geometry.emblemOffsetY),
             logoRes = config.emblemRes,
-            offsetY = geometry.emblemOffsetY,
             shineX = shineX,
             shineWidth = shineWidth,
             intensity = intensity
@@ -490,8 +493,8 @@ private fun LogoShine(
 
 @Composable
 private fun ShineLayer(
+    modifier: Modifier = Modifier,
     logoRes: Int,
-    offsetY: Dp,
     shineX: Float,
     shineWidth: Float,
     intensity: Float
@@ -502,9 +505,7 @@ private fun ShineLayer(
             logoRes
         ),
         contentDescription = null,
-        modifier = Modifier
-            .align(Alignment.Center)
-            .offset(y = offsetY)
+        modifier = modifier
             .graphicsLayer {
                 /*
                  * CRITICAL:
