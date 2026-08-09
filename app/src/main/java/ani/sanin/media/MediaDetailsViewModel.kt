@@ -747,9 +747,19 @@ class MediaDetailsViewModel : ViewModel() {
         extensionTimestamps: List<eu.kanade.tachiyomi.animesource.model.TimeStamp> = emptyList()
     ) {
         episodeNum ?: return
+        ani.sanin.util.Logger.log(
+            "loadTimeStamps: enter episodeNum=$episodeNum malId=$malId duration=$duration " +
+                "useProxy=$useProxyForTimeStamps extCount=${extensionTimestamps.size} " +
+                "selectedEpisode=${media.value?.anime?.selectedEpisode} " +
+                "cacheContainsKey=${timeStampsMap.containsKey(episodeNum)}"
+        )
         val currentEpisode = media.value?.anime?.selectedEpisode?.trim()?.toIntOrNull()
         if (timeStampsMap.containsKey(episodeNum)) {
             if (currentEpisode == episodeNum) timeStamps.postValue(timeStampsMap[episodeNum])
+            ani.sanin.util.Logger.log(
+                "loadTimeStamps: cache hit episodeNum=$episodeNum " +
+                    "cached=${timeStampsMap[episodeNum]?.size ?: "null"} currentEpisode=$currentEpisode"
+            )
             return
         }
         // Extension timestamps take priority; fall back to AniSkip when the extension has none
@@ -767,10 +777,16 @@ class MediaDetailsViewModel : ViewModel() {
             result = AniSkip.getResult(malId, episodeNum, duration, useProxyForTimeStamps)
         }
         if (result != null) timeStampsMap[episodeNum] = result
+        ani.sanin.util.Logger.log(
+            "loadTimeStamps: result for episodeNum=$episodeNum = ${result?.size ?: "null"} " +
+                "currentEpisode=${media.value?.anime?.selectedEpisode}"
+        )
         // Ignore results for an episode the user already navigated away from,
         // so a slow request can't overwrite a newer episode's timestamps.
         if (media.value?.anime?.selectedEpisode?.trim()?.toIntOrNull() == episodeNum) {
             timeStamps.postValue(result)
+        } else {
+            ani.sanin.util.Logger.log("loadTimeStamps: dropped stale result for episodeNum=$episodeNum")
         }
     }
 

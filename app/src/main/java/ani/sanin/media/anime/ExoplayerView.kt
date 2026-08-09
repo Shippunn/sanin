@@ -653,6 +653,11 @@ class ExoplayerView :
             // Only mark as loaded once real data arrives; the initial null emission
             // must not block the first load in onRenderedFirstFrame.
             if (it != null) isTimeStampsLoaded = true
+            Logger.log(
+                "Player: timeStamps observer fired for ep '${media.anime?.selectedEpisode}' " +
+                    "value=${if (it == null) "null" else "list(${it.size})"} " +
+                    "isTimeStampsLoaded=$isTimeStampsLoaded"
+            )
             exoSkipOpEd.visibility =
                 if (it != null) {
                     val adGroups =
@@ -1428,6 +1433,8 @@ class ExoplayerView :
                 isTimeStampsLoaded = false
                 timeStampsLoading = false
                 lastTimeStampAttempt = 0L
+                lastLoggedStampId = null
+                Logger.log("Player: episode change -> reset timestamps state for ep '${episodeArr[index]}'")
                 episodeLength = 0f
                 media.anime!!.selectedEpisode = episodeArr[index]
                 model.setMedia(media)
@@ -1732,6 +1739,7 @@ class ExoplayerView :
 
         // Start the recursive Fun
         if (PrefManager.getVal(PrefName.TimeStampsEnabled)) {
+            Logger.log("Player: updateTimeStamp loop starting")
             updateTimeStamp()
         }
 
@@ -3160,7 +3168,7 @@ class ExoplayerView :
         // Load skip timestamps before any format-dependent work: on some devices
         // videoFormat can be reported late, and skipping the load here leaves the
         // skip button permanently missing.
-        maybeLoadTimeStamps()
+        maybeLoadTimeStamps("firstFrame")
 
         PrefManager.setCustomVal(
             "${media.id}_${media.anime!!.selectedEpisode}_max",
@@ -3228,33 +3236,60 @@ class ExoplayerView :
     // TimeStamp Updating
     private var currentTimeStamp: AniSkip.Stamp? = null
     private var skippedTimeStamps: MutableList<AniSkip.Stamp> = mutableListOf()
+    private var lastLoggedStampId: String? = null
 
-    private fun maybeLoadTimeStamps() {
+    private fun maybeLoadTimeStamps(source: String) {
         if (!isInitialized || isTimeStampsLoaded || timeStampsLoading) return
         if (!PrefManager.getVal<Boolean>(PrefName.TimeStampsEnabled)) return
         // Rate-limit retries so a transient failure (e.g. on slower TV hardware)
         // doesn't hammer the API every 500ms; playback keeps retrying until it
         // succeeds or the episode changes.
         val now = java.lang.System.currentTimeMillis()
-        if (now - lastTimeStampAttempt < 10_000L) return
+        val sinceLastAttempt = now - lastTimeStampAttempt
+        if (sinceLastAttempt < 10_000L) return
         lastTimeStampAttempt = now
         timeStampsLoading = true
         val dur = exoPlayer.duration
         val extTimestamps =
             ((extractor?.server?.video?.timestamps ?: emptyList()) +
                 (extractor?.timestamps ?: emptyList())).distinct()
+        val episodeNum = media.anime?.selectedEpisode?.trim()?.toIntOrNull()
+        val serverVideo = extractor?.server?.video
+        val extServerCount = serverVideo?.timestamps?.size ?: -1
+        val extCount = extractor?.timestamps?.size ?: -1
+        Logger.log(
+            "Player: timestamps attempt for ep '${media.anime?.selectedEpisode}' " +
+                "source=$source episodeNum=$episodeNum malId=${media.idMAL} durMs=$dur durSec=${dur / 1000} " +
+                "isInitialized=$isInitialized isTimeStampsLoaded=$isTimeStampsLoaded " +
+                "timeStampsLoading=$timeStampsLoading " +
+                "timeStampsEnabled=${PrefManager.getVal<Boolean>(PrefName.TimeStampsEnabled)} " +
+                "showButton=${PrefManager.getVal<Boolean>(PrefName.ShowTimeStampButton)} " +
+                "autoHide=${PrefManager.getVal<Boolean>(PrefName.AutoHideTimeStamps)} " +
+                "autoSkipOpEd=${PrefManager.getVal<Boolean>(PrefName.AutoSkipOPED)} " +
+                "proxy=${PrefManager.getVal<Boolean>(PrefName.UseProxyForTimeStamps)} " +
+                "extractorNull=${extractor == null} extractor=${extractor?.javaClass?.simpleName} " +
+                "server=${extractor?.server?.name} serverVideoNull=${serverVideo == null} " +
+                "extServerTimestamps=$extServerCount extractorTimestamps=$extCount " +
+                "currentTimeStamps=${model.timeStamps.value?.size ?: -1} " +
+                "playerState=${exoPlayer.playbackState} posMs=${exoPlayer.currentPosition} " +
+                "sinceLastAttemptMs=$sinceLastAttempt"
+        )
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 model.loadTimeStamps(
                     media.idMAL,
-                    media.anime?.selectedEpisode?.trim()?.toIntOrNull(),
+                    episodeNum,
                     dur / 1000,
                     PrefManager.getVal<Boolean>(PrefName.UseProxyForTimeStamps),
                     extTimestamps,
                 )
                 Logger.log(
                     "Player: timestamps attempt finished for ep '${media.anime?.selectedEpisode}' " +
-                        "loaded=${model.timeStamps.value != null} dur=$dur"
+                        "episodeNum=$episodeNum malId=${media.idMAL} durMs=$dur " +
+                        "extServerTimestamps=$extServerCount extractorTimestamps=$extCount " +
+                        "extTotal=${extTimestamps.size} " +
+                        "result=${model.timeStamps.value?.size ?: "null"} " +
+                        "loaded=${model.timeStamps.value != null}"
                 )
             } finally {
                 timeStampsLoading = false
@@ -3263,7 +3298,7 @@ class ExoplayerView :
     }
 
     private fun updateTimeStamp() {
-        maybeLoadTimeStamps()
+        maybeLoadTimeStamps("tick")
         if (isInitialized) {
             val playerCurrentTime = exoPlayer.currentPosition / 1000
             currentTimeStamp =
@@ -3273,10 +3308,22 @@ class ExoplayerView :
                 }
 
             val new = currentTimeStamp
+            if (new?.skipId != lastLoggedStampId) {
+                lastLoggedStampId = new?.skipId
+                Logger.log(
+                    "Player: stamp active=${new?.skipType} id=${new?.skipId} " +
+                        "start=${new?.interval?.startTime}s end=${new?.interval?.endTime}s " +
+                        "pos=${playerCurrentTime}s timeStamps=${model.timeStamps.value?.size}"
+                )
+            }
             timeStampText.text =
                 if (new != null) {
                     fun disappearSkip() {
                         functionstarted = true
+                        Logger.log(
+                            "Player: skip button SHOWN (auto-hide) type=${new.skipType} " +
+                                "at ${playerCurrentTime}s"
+                        )
                         skipTimeButton.visibility = View.VISIBLE
                         exoSkip.visibility = View.GONE
                         skipTimeText.text = new.skipType.getType()
@@ -3318,6 +3365,10 @@ class ExoplayerView :
                         if (!functionstarted && !disappeared && PrefManager.getVal(PrefName.AutoHideTimeStamps)) {
                             disappearSkip()
                         } else if (!PrefManager.getVal<Boolean>(PrefName.AutoHideTimeStamps)) {
+                            Logger.log(
+                                "Player: skip button SHOWN (persistent) type=${new.skipType} " +
+                                    "at ${playerCurrentTime}s"
+                            )
                             skipTimeButton.visibility = View.VISIBLE
                             exoSkip.visibility = View.GONE
                             skipTimeText.text = new.skipType.getType()
@@ -3330,6 +3381,10 @@ class ExoplayerView :
                         (new.skipType == "op" || new.skipType == "ed") &&
                         !skippedTimeStamps.contains(new)
                     ) {
+                        Logger.log(
+                            "Player: AUTO-SKIP op/ed type=${new.skipType} " +
+                                "seek=${new.interval.endTime}s at ${playerCurrentTime}s"
+                        )
                         seekToMs((new.interval.endTime * 1000).toLong())
                         skippedTimeStamps.add(new)
                     }
@@ -3339,11 +3394,19 @@ class ExoplayerView :
                             new,
                         )
                     ) {
+                        Logger.log(
+                            "Player: AUTO-SKIP recap type=${new.skipType} " +
+                                "seek=${new.interval.endTime}s at ${playerCurrentTime}s"
+                        )
                         seekToMs((new.interval.endTime * 1000).toLong())
                         skippedTimeStamps.add(new)
                     }
                     new.skipType.getType()
                 } else {
+                    if (lastLoggedStampId != null) {
+                        Logger.log("Player: stamp ended at ${playerCurrentTime}s")
+                        lastLoggedStampId = null
+                    }
                     disappeared = false
                     functionstarted = false
                     skipTimeButton.visibility = View.GONE
@@ -3540,7 +3603,7 @@ class ExoplayerView :
                 episodeLength = exoPlayer.duration.toFloat()
             }
             // Fallback trigger in case onRenderedFirstFrame never fired.
-            maybeLoadTimeStamps()
+            maybeLoadTimeStamps("ready")
         }
         isBuffering = playbackState == Player.STATE_BUFFERING
         if (isBuffering) {
