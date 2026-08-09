@@ -194,6 +194,7 @@ enum class PrefName(val data: Pref) {
     GlassEffectSourceSelector(Pref(Location.UI, Boolean::class, true)),
     GlassEffectEpisodeDrawer(Pref(Location.UI, Boolean::class, true)),
     GlassEffectSubtitleSync(Pref(Location.UI, Boolean::class, true)),
+    GlassEffectKeyboard(Pref(Location.UI, Boolean::class, true)),
     GlassEffectBlurRadius(Pref(Location.UI, Float::class, 25f)),
     GlassEffectTintOpacity(Pref(Location.UI, Float::class, 0.4f)),
     GlassEffectVibrancy(Pref(Location.UI, Float::class, 1.0f)),

@@ -67,6 +67,7 @@ class SettingsAppearanceActivity : AppCompatActivity() {
             binding.appearanceGlassListEditor,
             binding.appearanceGlassSourceSelector,
             binding.appearanceGlassEpisodeDrawer,
+            binding.appearanceGlassKeyboard,
             binding.appearanceGlassBlurRadius,
             binding.appearanceGlassTintOpacity,
             binding.appearanceGlassVibrancy,
@@ -265,6 +266,10 @@ class SettingsAppearanceActivity : AppCompatActivity() {
         binding.appearanceGlassSubtitleSync.isChecked = PrefManager.getVal(PrefName.GlassEffectSubtitleSync)
         binding.appearanceGlassSubtitleSync.setOnCheckedChangeListener { _, isChecked ->
             PrefManager.setVal(PrefName.GlassEffectSubtitleSync, isChecked)
+        }
+        binding.appearanceGlassKeyboard.isChecked = PrefManager.getVal(PrefName.GlassEffectKeyboard)
+        binding.appearanceGlassKeyboard.setOnCheckedChangeListener { _, isChecked ->
+            PrefManager.setVal(PrefName.GlassEffectKeyboard, isChecked)
         }
 
         binding.appearanceGlassBlurRadius.isFocusable = true

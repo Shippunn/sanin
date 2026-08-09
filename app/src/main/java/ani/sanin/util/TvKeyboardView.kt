@@ -85,6 +85,19 @@ class TvKeyboardView(
     init {
         inflate(context, if (compact) R.layout.tv_keyboard_compact else R.layout.tv_keyboard_view, this)
         setupKeys()
+        applyGlassIfEnabled()
+    }
+
+    private fun applyGlassIfEnabled() {
+        if (!GlassEffectManager.isComponentEnabled(GlassComponent.Keyboard)) return
+        val savedTag = tag
+        GlassEffectManager.applyGlass(
+            this,
+            GlassComponent.Keyboard,
+            if (compact) 18f else 20f,
+            GlassEffectManager.getTintColor()
+        )
+        tag = savedTag
     }
 
     @SuppressLint("ClickableViewAccessibility")
