@@ -175,14 +175,14 @@ class TvKeyboardView(
             v.animate()
                 .scaleX(focusScale)
                 .scaleY(focusScale)
-                .elevation(focusElevation)
+                .translationZ(focusElevation)
                 .setDuration(150)
                 .setInterpolator(DecelerateInterpolator())
                 .start()
         } else {
             v.scaleX = focusScale
             v.scaleY = focusScale
-            v.elevation = focusElevation
+            v.translationZ = focusElevation
         }
     }
 
@@ -192,14 +192,14 @@ class TvKeyboardView(
             v.animate()
                 .scaleX(1f)
                 .scaleY(1f)
-                .elevation(0f)
+                .translationZ(0f)
                 .setDuration(150)
                 .setInterpolator(DecelerateInterpolator())
                 .start()
         } else {
             v.scaleX = 1f
             v.scaleY = 1f
-            v.elevation = 0f
+            v.translationZ = 0f
         }
     }
 
