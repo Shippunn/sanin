@@ -86,12 +86,11 @@ class AniVaultProvider : NativeAnimeParser() {
         if (anilistId == null || anilistId <= 0 || episodeNum == null) return emptyList()
         return withContext(Dispatchers.IO) {
             try {
-                // Expose both sub & dub rows; the sub/dub toggle only decides which language sorts first.
-                val types = if (selectDub) listOf("dub", "sub") else listOf("sub", "dub")
                 val servers = mutableListOf<VideoServer>()
                 val seenStreams = mutableSetOf<String>()
-                for (type in types) {
-                    val watch = fetchWatch(anilistId, episodeNum, type, null) ?: continue
+
+                suspend fun fetchType(type: String) {
+                    val watch = fetchWatch(anilistId, episodeNum, type, null) ?: return
                     val defaultName = (watch["server"] as? JsonPrimitive)?.contentOrNull
                     for (name in serverNames(watch)) {
                         val perServer = if (name == defaultName) watch
@@ -106,6 +105,12 @@ class AniVaultProvider : NativeAnimeParser() {
                         servers.add(buildServer(name, type, streamUrl, perServer))
                     }
                 }
+
+                // Dub mode: list dub servers only, and fall back to sub when the episode has no dub.
+                // Sub mode: sub servers first, then dub.
+                val requested = if (selectDub) listOf("dub") else listOf("sub", "dub")
+                requested.forEach { fetchType(it) }
+                if (selectDub && servers.isEmpty()) fetchType("sub")
                 servers
             } catch (e: Exception) {
                 Logger.log("AniVault loadVideoServers error: ${e.message}")
