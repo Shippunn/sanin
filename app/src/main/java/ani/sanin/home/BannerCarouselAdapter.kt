@@ -28,7 +28,12 @@ class BannerCarouselAdapter(
     private val onItemClick: (Media) -> Unit,
     private var backdropUrls: Map<Int, String?> = emptyMap(),
     private var logoUrls: Map<Int, String?> = emptyMap(),
+    var nextFocusDownId: Int = View.NO_ID,
 ) : RecyclerView.Adapter<BannerCarouselAdapter.ViewHolder>() {
+
+    val actualCount: Int get() = items.size
+
+    fun realPosition(virtualPos: Int): Int = virtualPos % items.size
 
     fun updateUrls(backdrops: Map<Int, String?>, logos: Map<Int, String?>) {
         backdropUrls = backdrops
@@ -43,7 +48,7 @@ class BannerCarouselAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val media = items[position]
+        val media = items[realPosition(position)]
         val ctx = holder.itemView.context
 
         // --- Banner image (AniZip backdrop, fallback AniList banner/cover) ---
@@ -209,14 +214,14 @@ class BannerCarouselAdapter(
         holder.itemView.isFocusableInTouchMode = false
 
         // --- D-pad focus chain ---
-        holder.itemView.nextFocusLeftId = View.NO_ID
-        holder.itemView.nextFocusRightId = View.NO_ID
-        holder.playBtn.nextFocusDownId = R.id.homeContinueWatch
-        holder.favBtn.nextFocusDownId = R.id.homeContinueWatch
+        if (nextFocusDownId != View.NO_ID) {
+            holder.playBtn.nextFocusDownId = nextFocusDownId
+            holder.favBtn.nextFocusDownId = nextFocusDownId
+        }
 
         // --- Preload adjacent items ---
         for (offset in listOf(-1, 1)) {
-            val pos = position + offset
+            val pos = realPosition(position + offset)
             if (pos in items.indices) {
                 val item = items[pos]
                 val url = backdropUrls[item.id] ?: item.banner ?: item.cover
@@ -227,7 +232,7 @@ class BannerCarouselAdapter(
         }
     }
 
-    override fun getItemCount() = items.size
+    override fun getItemCount() = if (items.isEmpty()) 0 else Int.MAX_VALUE
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val bannerBg: ImageView = view.findViewById(R.id.bannerBg)

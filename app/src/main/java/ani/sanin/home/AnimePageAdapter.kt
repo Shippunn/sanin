@@ -114,8 +114,9 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
         bannerSnap = PagerSnapHelper()
         bannerSnap?.attachToRecyclerView(rv)
         rv.overScrollMode = RecyclerView.OVER_SCROLL_NEVER
-        rv.isFocusable = false
+        rv.isFocusable = true
         rv.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        rv.nextFocusDownId = R.id.animeSeasons
         val scope = CoroutineScope(Dispatchers.Main)
         bannerAdapter = BannerCarouselAdapter(
             media, scope, { item ->
@@ -127,9 +128,12 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
                         .putExtra("anime", true),
                     null
                 )
-            }
+            },
+            nextFocusDownId = R.id.animeSeasons
         )
         rv.adapter = bannerAdapter
+        val start = Int.MAX_VALUE / 2 - (Int.MAX_VALUE / 2 % media.size)
+        rv.scrollToPosition(start)
         setupTrendingDots(rv, media.size)
         rv.layoutAnimation = LayoutAnimationController(setSlideIn(), 0.25f)
         trendingBinding.titleContainer.startAnimation(setSlideUp())
@@ -138,10 +142,10 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
         trendingAutoScrollHandler?.removeCallbacksAndMessages(null)
         trendingAutoScrollHandler = android.os.Handler(android.os.Looper.getMainLooper())
         trendingAutoScrollRunnable = object : Runnable {
-            private var currentIndex = 0
+            private var currentIndex = start
             override fun run() {
                 if (media.isEmpty()) return
-                currentIndex = (currentIndex + 1) % media.size
+                currentIndex++
                 rv.smoothScrollToPosition(currentIndex)
                 trendingAutoScrollHandler?.postDelayed(this, 5000L)
             }
@@ -174,7 +178,12 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
             else
                 ContextCompat.getDrawable(rv.context, R.drawable.banner_dot_inactive)
             dot.setOnClickListener {
-                rv.smoothScrollToPosition(i)
+                val lm = rv.layoutManager as LinearLayoutManager
+                val current = lm.findFirstVisibleItemPosition()
+                val currentReal = current % itemCount
+                if (i == currentReal) return@setOnClickListener
+                if (i > currentReal) rv.smoothScrollToPosition(current + (i - currentReal))
+                else rv.smoothScrollToPosition(current - (currentReal - i))
             }
             dots.addView(dot)
             dotsList.add(dot)
@@ -185,7 +194,7 @@ class AnimePageAdapter : RecyclerView.Adapter<AnimePageAdapter.AnimePageViewHold
             override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     val lm = rv.layoutManager as LinearLayoutManager
-                    val pos = lm.findFirstVisibleItemPosition()
+                    val pos = lm.findFirstVisibleItemPosition() % itemCount
                     for (i in 0 until dotsList.size) {
                         val dot = dotsList[i]
                         val lp = dot.layoutParams

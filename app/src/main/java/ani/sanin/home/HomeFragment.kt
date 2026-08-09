@@ -688,7 +688,7 @@ class HomeFragment : Fragment() {
     private fun setupBannerCarousel() {
         val rv = binding.homeBannerCarousel
         rv.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        rv.isFocusable = false
+        rv.isFocusable = true
         rv.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         rv.nextFocusDownId = R.id.homeContinueWatch
         bannerSnapHelper.attachToRecyclerView(rv)
@@ -698,15 +698,20 @@ class HomeFragment : Fragment() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     val urls = items.associate { it.id to ani.sanin.connections.anizip.AniZip.getBackdropUrl(it.id) }
                     withContext(Dispatchers.Main) {
-                        bannerCarouselAdapter = BannerCarouselAdapter(items, lifecycleScope, { media ->
-                            val intent = Intent(requireContext(), ani.sanin.media.MediaDetailsActivity::class.java)
-                            intent.putExtra("media", media)
-                            intent.putExtra("anime", true)
-                            startActivity(intent)
-                        }, urls)
+                        bannerCarouselAdapter = BannerCarouselAdapter(
+                            items, lifecycleScope, { media ->
+                                val intent = Intent(requireContext(), ani.sanin.media.MediaDetailsActivity::class.java)
+                                intent.putExtra("media", media)
+                                intent.putExtra("anime", true)
+                                startActivity(intent)
+                            }, urls,
+                            nextFocusDownId = R.id.homeContinueWatch
+                        )
                         rv.adapter = bannerCarouselAdapter
+                        val start = Int.MAX_VALUE / 2 - (Int.MAX_VALUE / 2 % items.size)
+                        rv.scrollToPosition(start)
                         setupBannerDots(rv, items.size)
-                        startBannerAutoScroll(rv, items.size)
+                        startBannerAutoScroll(rv, items.size, start)
                     }
                 }
             }
@@ -730,7 +735,12 @@ class HomeFragment : Fragment() {
             else
                 ContextCompat.getDrawable(requireContext(), R.drawable.banner_dot_inactive)
             dot.setOnClickListener {
-                rv.smoothScrollToPosition(i)
+                val lm = rv.layoutManager as LinearLayoutManager
+                val current = lm.findFirstVisibleItemPosition()
+                val currentReal = current % itemCount
+                if (i == currentReal) return@setOnClickListener
+                val diff = i - currentReal
+                rv.smoothScrollToPosition(current + diff)
             }
             dots.addView(dot)
             dotsList.add(dot)
@@ -741,7 +751,7 @@ class HomeFragment : Fragment() {
             override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     val lm = rv.layoutManager as LinearLayoutManager
-                    val pos = lm.findFirstVisibleItemPosition()
+                    val pos = lm.findFirstVisibleItemPosition() % itemCount
                     for (i in 0 until dotsList.size) {
                         val dot = dotsList[i]
                         val lp = dot.layoutParams
@@ -757,16 +767,16 @@ class HomeFragment : Fragment() {
         })
     }
 
-    private fun startBannerAutoScroll(rv: RecyclerView, itemCount: Int) {
+    private fun startBannerAutoScroll(rv: RecyclerView, itemCount: Int, startPos: Int) {
         bannerAutoScrollHandler?.removeCallbacksAndMessages(null)
         bannerAutoScrollHandler = Handler(Looper.getMainLooper())
         bannerAutoScrollRunnable = object : Runnable {
-            private var currentIndex = 0
+            private var currentIndex = startPos
             override fun run() {
                 if (itemCount == 0) return
-                currentIndex = (currentIndex + 1) % itemCount
+                currentIndex++
                 rv.smoothScrollToPosition(currentIndex)
-            bannerAutoScrollHandler?.postDelayed(this, 5000L)
+                bannerAutoScrollHandler?.postDelayed(this, 5000L)
             }
         }
         bannerAutoScrollHandler?.postDelayed(bannerAutoScrollRunnable!!, 5000L)
