@@ -229,13 +229,13 @@ object TvKeyboardUtil {
     }
 
     fun retainWindowFocus(window: Window) {
-        if (Build.VERSION.SDK_INT >= 24) {
+        if (Build.VERSION.SDK_INT >= 24 && keyboardMode() != 0) {
             window.addFlags(WindowManager.LayoutParams.FLAG_LOCAL_FOCUS_MODE)
         }
     }
 
     private fun retainWindowFocus(view: View) {
-        if (Build.VERSION.SDK_INT < 24) return
+        if (Build.VERSION.SDK_INT < 24 || keyboardMode() == 0) return
         resolveActivity(view.context)?.window?.addFlags(WindowManager.LayoutParams.FLAG_LOCAL_FOCUS_MODE)
     }
 
