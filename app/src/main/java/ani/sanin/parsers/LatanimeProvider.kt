@@ -32,32 +32,44 @@ class LatanimeProvider : NativeAnimeParser() {
     override suspend fun search(query: String): List<ShowResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val html = latGet("$baseUrl/buscar?q=${encode(query)}", "$baseUrl/")
-                Regex(
-                    """<a\b[^>]*href="https://latanime\.org/anime/([^"/]+)"[^>]*>([\s\S]*?)</a>""",
-                    setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
-                ).findAll(html).mapNotNull { match ->
-                    val slug = match.groupValues[1]
-                    val block = match.groupValues[2]
-                    val title = Regex("""<h3[^>]*>([\s\S]*?)</h3>""", RegexOption.IGNORE_CASE)
-                        .find(block)?.groupValues?.get(1)?.let(::stripTags)
-                        ?.takeIf { it.isNotBlank() }
-                        ?: slug.replace('-', ' ')
-                    val cover = Regex("""<img\b[^>]*src="([^"]+)"""", RegexOption.IGNORE_CASE)
-                        .find(block)?.groupValues?.get(1)?.takeIf { it.startsWith("http") } ?: defaultImage
-                    ShowResponse(
-                        name = title,
-                        link = slug,
-                        coverUrl = cover,
-                        extra = mutableMapOf("slug" to slug)
-                    )
-                }.distinctBy { it.extra?.get("slug") }.toList()
+                var html = latGet("$baseUrl/buscar?q=${encode(query)}", "$baseUrl/")
+                var results = searchResults(html)
+                if (results.isEmpty()) {
+                    val simplified = searchableQuery(query)
+                    if (simplified.isNotBlank() && simplified != query.trim()) {
+                        Logger.log("Latanime search: 0 results for '$query', retrying with '$simplified'")
+                        html = latGet("$baseUrl/buscar?q=${encode(simplified)}", "$baseUrl/")
+                        results = searchResults(html)
+                    }
+                }
+                results
             } catch (e: Exception) {
                 Logger.log("Latanime search error: ${e.message}")
                 emptyList()
             }
         }
     }
+
+    private fun searchResults(html: String): List<ShowResponse> = Regex(
+        """<a\b[^>]*href="https://latanime\.org/anime/([^"/]+)"[^>]*>([\s\S]*?)</a>""",
+        setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
+    ).findAll(html).mapNotNull { match ->
+        val slug = match.groupValues[1]
+        val block = match.groupValues[2]
+        val title = Regex("""<h3[^>]*>([\s\S]*?)</h3>""", RegexOption.IGNORE_CASE)
+            .find(block)?.groupValues?.get(1)?.let(::stripTags)
+            ?.takeIf { it.isNotBlank() }
+            ?: slug.replace('-', ' ')
+        val cover = Regex("""<img\b[^>]*src="([^"]+)"""", RegexOption.IGNORE_CASE)
+            .find(block)?.groupValues?.get(1)?.takeIf { it.startsWith("http") } ?: defaultImage
+        ShowResponse(
+            name = title,
+            link = slug,
+            coverUrl = cover,
+            extra = mutableMapOf("slug" to slug)
+        )
+    }.distinctBy { it.extra?.get("slug") }.toList()
+
 
     override suspend fun loadEpisodes(animeLink: String, extra: Map<String, String>?, sAnime: SAnime): List<Episode> {
         val slug = extra?.get("slug") ?: animeLink.substringAfterLast('/')
@@ -564,3 +576,4 @@ private fun jsUnescape(value: String): String {
     }
     return sb.toString()
 }
+

@@ -7,10 +7,13 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
 import ani.sanin.currContext
+import ani.sanin.media.Media
 import ani.sanin.okHttpClient
 import ani.sanin.settings.saving.PrefManager
 import ani.sanin.settings.saving.PrefName
+import ani.sanin.util.Logger
 import eu.kanade.tachiyomi.PreferenceScreen
+import me.xdrop.fuzzywuzzy.FuzzySearch
 import okhttp3.Request
 import java.io.IOException
 import java.net.URLEncoder
@@ -274,7 +277,107 @@ abstract class NativeAnimeParser : AnimeParser() {
         }
     }
 
+    /**
+     * Auto-matches a media entry to this source.
+     *
+     * Tries the main name first, then a simplified query (season tokens stripped),
+     * then romaji variants. Prefers the entry whose season matches, which fixes
+     * sites like Latanime that split seasons into separate entries.
+     */
+    override suspend fun autoSearch(mediaObj: Media): ShowResponse? {
+        val saved = loadSavedShowResponse(mediaObj.id)
+        if (saved != null) {
+            saveShowResponse(mediaObj.id, saved, true)
+            return saved
+        }
+        setUserText("Searching : ${mediaObj.mainName()}")
+        Logger.log("Searching : ${mediaObj.mainName()}")
+
+        val mediaSeason = seasonFromText("${mediaObj.mainName()} ${mediaObj.nameRomaji}")
+        val queries = buildList {
+            add(mediaObj.mainName())
+            val simplified = searchableQuery(mediaObj.mainName())
+            if (simplified.isNotBlank() && simplified != mediaObj.mainName().trim()) {
+                add(simplified)
+            }
+            if (mediaObj.nameRomaji.isNotBlank()) {
+                add(mediaObj.nameRomaji)
+                val simplifiedRomaji = searchableQuery(mediaObj.nameRomaji)
+                if (simplifiedRomaji.isNotBlank() && simplifiedRomaji != mediaObj.nameRomaji.trim()) {
+                    add(simplifiedRomaji)
+                }
+            }
+        }.distinct()
+
+        var best: ShowResponse? = null
+        var bestScore = 0.0
+        queries.forEach { query ->
+            searchWithFallback(query).forEach { result ->
+                var score = FuzzySearch.ratio(result.name.lowercase(), query.lowercase()).toDouble()
+                val resultSeason = seasonFromText(result.name)
+                if (mediaSeason != null && resultSeason == mediaSeason) score += 40.0
+                if (score > bestScore) {
+                    bestScore = score
+                    best = result
+                }
+            }
+        }
+        Logger.log(
+            "$name autoSearch for '${mediaObj.mainName()}': " +
+                "picked '${best?.name ?: "none"}' (score $bestScore)"
+        )
+        if (best != null) saveShowResponse(mediaObj.id, best)
+        return best
+    }
+
+    /**
+     * Site searches often choke on season suffixes ("Season 4" / "3rd Season").
+     * Try the raw query first, then a simplified one stripped of season tokens and punctuation.
+     */
+    protected suspend fun searchWithFallback(query: String): List<ShowResponse> {
+        var results = search(query)
+        if (results.isEmpty()) {
+            val simplified = searchableQuery(query)
+            if (simplified.isNotBlank() && simplified != query.trim()) {
+                Logger.log("$name search: 0 results for '$query', retrying with '$simplified'")
+                results = search(simplified)
+            }
+        }
+        return results
+    }
+
+    protected fun searchableQuery(query: String): String {
+        var q = query
+        q = Regex("""(?i)(?:season|temporada|part)\s*\d+""").replace(q, " ")
+        q = Regex("""(?i)\d+(?:st|nd|rd|th)?\s+season""").replace(q, " ")
+        q = q.replace(Regex("""[^\p{L}\p{N} ]+"""), " ")
+        q = Regex("""\s+""").replace(q, " ").trim()
+        return q
+    }
+
+    protected fun seasonFromText(text: String): Int? {
+        val t = text.lowercase()
+        Regex("""(?:season|temporada|part)\s*(\d+)""").find(t)?.let {
+            return it.groupValues[1].toIntOrNull()
+        }
+        Regex("""(\d+)(?:st|nd|rd|th)?\s+season""").find(t)?.let {
+            return it.groupValues[1].toIntOrNull()
+        }
+        Regex("""\bs(\d+)\b""").find(t)?.let {
+            return it.groupValues[1].toIntOrNull()
+        }
+        Regex("""\b([ivx]+)\b""").find(t)?.let {
+            return romanToInt[it.groupValues[1]]
+        }
+        return null
+    }
+
     companion object {
         const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     }
 }
+
+private val romanToInt = mapOf(
+    "i" to 1, "ii" to 2, "iii" to 3, "iv" to 4, "v" to 5,
+    "vi" to 6, "vii" to 7, "viii" to 8, "ix" to 9, "x" to 10
+)
