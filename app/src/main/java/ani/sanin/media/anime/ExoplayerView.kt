@@ -1652,32 +1652,14 @@ class ExoplayerView :
         }
 
         if (PrefManager.getVal(PrefName.AutoPlay)) {
-            var touchTimer = Timer()
-
-            fun touched() {
-                interacted = true
-                touchTimer.apply {
-                    cancel()
-                    purge()
-                }
-                touchTimer = Timer()
-                touchTimer.schedule(
-                    object : TimerTask() {
-                        override fun run() {
-                            interacted = false
-                        }
-                    },
-                    1000 * 60 * 60,
-                )
-            }
             playerView.findViewById<View>(R.id.exo_touch_view).setOnTouchListener { _, _ ->
-                touched()
+                markInteracted()
                 false
             }
-            playerView.setOnClickListener { touched() }
+            playerView.setOnClickListener { markInteracted() }
             playerView.isFocusable = true
             playerView.setOnKeyListener { _, _, _ ->
-                touched()
+                markInteracted()
                 false
             }
         }
@@ -3623,6 +3605,7 @@ class ExoplayerView :
 
     private var isBuffering = true
     private var userPaused = false
+    private var interactionTimer: Timer? = null
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         val epLabel = media.anime?.selectedEpisode ?: "?"
@@ -3642,7 +3625,12 @@ class ExoplayerView :
         if (playbackState == Player.STATE_ENDED) {
             Logger.log("Player: ENDED on ep '$epLabel'")
             if (PrefManager.getVal(PrefName.AutoPlay)) {
-                if (interacted) {
+                val browsingEpisodes =
+                    episodeDrawer.isDrawerOpen(episodeDrawerContent) ||
+                        episodeCommentPanel.visibility == View.VISIBLE
+                if (browsingEpisodes) {
+                    Logger.log("Player: ENDED while browsing episodes, autoplay deferred")
+                } else if (interacted) {
                     exoNext.performClick()
                 } else {
                     toast(getString(R.string.autoplay_cancelled))
@@ -4092,7 +4080,24 @@ class ExoplayerView :
         seekRepeatHandler = null
     }
 
+    private fun markInteracted() {
+        if (!PrefManager.getVal(PrefName.AutoPlay)) return
+        interacted = true
+        interactionTimer?.cancel()
+        interactionTimer = Timer().apply {
+            schedule(
+                object : TimerTask() {
+                    override fun run() {
+                        interacted = false
+                    }
+                },
+                1000L * 60 * 60,
+            )
+        }
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) markInteracted()
         if (!isInitialized) return super.dispatchKeyEvent(event)
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
