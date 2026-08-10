@@ -4081,7 +4081,7 @@ class ExoplayerView :
     }
 
     private fun markInteracted() {
-        if (!PrefManager.getVal(PrefName.AutoPlay)) return
+        if (!PrefManager.getVal<Boolean>(PrefName.AutoPlay)) return
         interacted = true
         interactionTimer?.cancel()
         interactionTimer = Timer().apply {
