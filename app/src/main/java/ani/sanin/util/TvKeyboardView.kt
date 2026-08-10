@@ -40,6 +40,8 @@ class TvKeyboardView(
     private val focusElevation =
         (if (compact) 8f else 14f) * resources.displayMetrics.density
 
+    private val keyboardPanel: View get() = findViewById(R.id.keyboardPanel)
+
     private fun tvkLog(message: String) {
         Logger.log(Log.INFO, message, "TvKeyboard")
     }
@@ -90,14 +92,12 @@ class TvKeyboardView(
 
     private fun applyGlassIfEnabled() {
         if (!GlassEffectManager.isComponentEnabled(GlassComponent.Keyboard)) return
-        val savedTag = tag
         GlassEffectManager.applyGlass(
-            this,
+            keyboardPanel,
             GlassComponent.Keyboard,
             if (compact) 18f else 20f,
             GlassEffectManager.getTintColor()
         )
-        tag = savedTag
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -356,8 +356,8 @@ class TvKeyboardView(
             animate().translationY(0f).setDuration(200).withEndAction {
                 // Re-capture the blur at the resting position so the backdrop
                 // lines up with the keyboard instead of the slide-in offset.
-                (background as? GlassEffectDrawable)?.invalidateCache()
-                invalidate()
+                (keyboardPanel.background as? GlassEffectDrawable)?.invalidateCache()
+                keyboardPanel.invalidate()
             }.start()
         }
     }
