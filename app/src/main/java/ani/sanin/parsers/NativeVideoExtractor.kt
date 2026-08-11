@@ -88,6 +88,15 @@ class NativeVideoExtractor(override val server: VideoServer) : VideoExtractor() 
 
                 val baseUri = URI(masterUrl)
                 val lines = body.lines()
+                // When the master uses a separate audio group, the variant playlists are
+                // video-only and play silently on their own. Keep just the master so the
+                // player resolves the audio group (e.g. AniZone "Multi" has sound, but the
+                // individual qualities were silent).
+                val hasAudioGroup = lines.any {
+                    it.trim().startsWith("#EXT-X-MEDIA:", ignoreCase = true) &&
+                        it.contains("TYPE=AUDIO", ignoreCase = true)
+                }
+                if (hasAudioGroup) return@withContext emptyList()
                 val videos = mutableListOf<Video>()
                 var i = 0
                 while (i < lines.size) {
