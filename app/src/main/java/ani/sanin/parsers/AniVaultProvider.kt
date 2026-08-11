@@ -111,10 +111,28 @@ class AniVaultProvider : NativeAnimeParser() {
                 val requested = if (selectDub) listOf("dub") else listOf("sub", "dub")
                 requested.forEach { fetchType(it) }
                 if (selectDub && servers.isEmpty()) fetchType("sub")
+                if (selectDub) verifyDubServers(anilistId, episodeNum, servers)
                 servers
             } catch (e: Exception) {
                 Logger.log("AniVault loadVideoServers error: ${e.message}")
                 emptyList()
+            }
+        }
+    }
+
+    /**
+     * Some mirrors answer a "dub" request with the sub stream (the backend returns the
+     * same stream URL for both types). Detect that by comparing each server's dub stream
+     * with its sub stream and relabeling the server as SUB when they match.
+     */
+    private suspend fun verifyDubServers(anilistId: Int, episodeNum: Int, servers: MutableList<VideoServer>) {
+        servers.forEach { server ->
+            val subWatch = fetchWatch(anilistId, episodeNum, "sub", server.name) ?: return@forEach
+            val subUrl = (subWatch["m3u8"] as? JsonPrimitive)?.contentOrNull
+                ?: (subWatch["hlsProxyUrl"] as? JsonPrimitive)?.contentOrNull
+                ?: return@forEach
+            if (subUrl == server.embed.url) {
+                (server.extraData as? MutableMap<String, String>)?.put("audio", "SUB")
             }
         }
     }
