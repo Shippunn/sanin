@@ -289,6 +289,7 @@ class SearchActivity : AppCompatActivity() {
                         val newResults = it.results.distinctBy { it.id }.filter { newItem -> model.aniMangaSearchResults.results.none { oldItem -> oldItem.id == newItem.id } }
                         model.aniMangaSearchResults.results.addAll(newResults)
                         mediaAdaptor.notifyItemRangeInserted(prev, newResults.size)
+                        if (prev == 0) binding.searchRecyclerView.scrollToPosition(0)
 
                         progressAdapter.bar?.isVisible = it.hasNextPage
                     }
@@ -309,6 +310,7 @@ class SearchActivity : AppCompatActivity() {
                         val newResults = (it.results as List<Character>).distinctBy { it.id }.filter { newItem -> (model.characterSearchResults.results as List<Character>).none { oldItem -> oldItem.id == newItem.id } }
                         model.characterSearchResults.results.addAll(newResults)
                         characterAdaptor.notifyItemRangeInserted(prev, newResults.size)
+                        if (prev == 0) binding.searchRecyclerView.scrollToPosition(0)
 
                         progressAdapter.bar?.isVisible = it.hasNextPage
                     }
@@ -329,6 +331,7 @@ class SearchActivity : AppCompatActivity() {
                         val newResults = (it.results as List<Studio>).distinctBy { it.id }.filter { newItem -> (model.studioSearchResults.results as List<Studio>).none { oldItem -> oldItem.id == newItem.id } }
                         model.studioSearchResults.results.addAll(newResults)
                         studioAdaptor.notifyItemRangeInserted(prev, newResults.size)
+                        if (prev == 0) binding.searchRecyclerView.scrollToPosition(0)
 
                         progressAdapter.bar?.isVisible = it.hasNextPage
                     }
@@ -349,6 +352,7 @@ class SearchActivity : AppCompatActivity() {
                         val newResults = (it.results as List<Author>).distinctBy { it.id }.filter { newItem -> (model.staffSearchResults.results as List<Author>).none { oldItem -> oldItem.id == newItem.id } }
                         model.staffSearchResults.results.addAll(newResults)
                         staffAdaptor.notifyItemRangeInserted(prev, newResults.size)
+                        if (prev == 0) binding.searchRecyclerView.scrollToPosition(0)
 
                         progressAdapter.bar?.isVisible = it.hasNextPage
                     }
@@ -369,6 +373,7 @@ class SearchActivity : AppCompatActivity() {
                         val newResults = (it.results as List<User>).distinctBy { it.id }.filter { newItem -> (model.userSearchResults.results as List<User>).none { oldItem -> oldItem.id == newItem.id } }
                         model.userSearchResults.results.addAll(newResults)
                         usersAdapter.notifyItemRangeInserted(prev, newResults.size)
+                        if (prev == 0) binding.searchRecyclerView.scrollToPosition(0)
 
                         progressAdapter.bar?.isVisible = it.hasNextPage
                     }
@@ -448,7 +453,6 @@ class SearchActivity : AppCompatActivity() {
                     usersAdapter.notifyItemRangeRemoved(0, size)
                 }
             }
-            binding.searchRecyclerView.scrollToPosition(0)
         }
 
         progressAdapter.bar?.visibility = View.VISIBLE

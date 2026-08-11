@@ -21,7 +21,6 @@ import ani.sanin.parsers.AnimeSources
 import ani.sanin.parsers.HAnimeSources
 import ani.sanin.px
 import ani.sanin.tryWithSuspend
-import ani.sanin.util.FocusEffectUtil
 import ani.sanin.util.TvKeyboardUtil
 import ani.sanin.util.GlassComponent
 import ani.sanin.util.GlassEffectManager
@@ -46,7 +45,6 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = BottomSheetSourceSearchBinding.inflate(inflater, container, false)
-        FocusEffectUtil.applyFocusListener(binding.root)
         return binding.root
     }
 
@@ -72,7 +70,6 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                 fun search(keepFocus: Boolean = false) {
                     if (!keepFocus) {
                         binding.searchBarText.clearFocus()
-                        binding.mediaListContainer.requestFocus()
                     }
                     scope.launch {
                         val src = source as? AnimeParser
