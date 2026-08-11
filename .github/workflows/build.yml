@@ -105,7 +105,7 @@ jobs:
             SHA=$(echo "$line" | awk '{print $1}')
             MSG=$(echo "$line" | cut -d' ' -f2-)
             NOTES="$NOTES"$'\n\n'"### ${SHA} — ${MSG}"
-            BODY=$(git log --format="%b" -1 "$SHA" | tr '\n' ' ' | sed 's/  */ /g' | xargs)
+            BODY=$(git log --format="%b" -1 "$SHA" | tr '\n' ' ' | sed 's/  */ /g' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
             if [ -n "$BODY" ]; then
               NOTES="$NOTES"$'\n'"$BODY"
             else
