@@ -118,6 +118,10 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                     if (j != null) {
                         binding.searchRecyclerView.visibility = View.VISIBLE
                         binding.searchProgress.visibility = View.GONE
+                        // Drop any focus/scroll position from the previous result set before
+                        // swapping the adapter, so RecyclerView doesn't restore an old (middle) card.
+                        binding.searchRecyclerView.clearFocus()
+                        binding.searchRecyclerView.scrollToPosition(0)
                         binding.searchRecyclerView.adapter =
                             AnimeSourceAdapter(j, model, i!!, media!!.id, this, scope)
                         binding.searchRecyclerView.layoutManager = GridLayoutManager(
@@ -128,6 +132,15 @@ class SourceSearchDialogFragment : BottomSheetDialogFragment() {
                                 4
                             )
                         )
+                        // After the new results are laid out, land on the first card unless the
+                        // user is still typing in the search bar (e.g. the initial auto-search).
+                        binding.searchRecyclerView.post {
+                            binding.searchRecyclerView.scrollToPosition(0)
+                            if (!binding.searchBarText.hasFocus()) {
+                                binding.searchRecyclerView.findViewHolderForAdapterPosition(0)
+                                    ?.itemView?.requestFocus()
+                            }
+                        }
                     }
                 }
             }

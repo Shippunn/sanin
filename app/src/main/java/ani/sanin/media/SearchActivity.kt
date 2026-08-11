@@ -382,6 +382,9 @@ class SearchActivity : AppCompatActivity() {
     fun emptyMediaAdapter() {
         searchTimer.cancel()
         searchTimer.purge()
+        // Same as search(): forget the focused card before removing it, so the next
+        // result set doesn't restore/scroll back to its old position.
+        binding.searchRecyclerView.clearFocus()
         when (searchType) {
             SearchType.ANIME, SearchType.MANGA -> {
                 mediaAdaptor.notifyItemRangeRemoved(0, model.aniMangaSearchResults.results.size)
@@ -420,6 +423,9 @@ class SearchActivity : AppCompatActivity() {
         headerAdaptor.setHistoryVisibility(false)
         val size = model.size(searchType)
         model.clearResults(searchType)
+        // Drop any focused card before the old results are removed, otherwise RecyclerView
+        // restores that position (and scrolls to it) after the new results are laid out.
+        binding.searchRecyclerView.clearFocus()
         binding.searchRecyclerView.post {
             when (searchType) {
                 SearchType.ANIME, SearchType.MANGA -> {
@@ -442,6 +448,7 @@ class SearchActivity : AppCompatActivity() {
                     usersAdapter.notifyItemRangeRemoved(0, size)
                 }
             }
+            binding.searchRecyclerView.scrollToPosition(0)
         }
 
         progressAdapter.bar?.visibility = View.VISIBLE
