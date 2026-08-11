@@ -88,6 +88,7 @@ class SenshiProvider : NativeAnimeParser() {
 
                 val servers = mutableListOf<VideoServer>()
                 val extraData = mutableMapOf("referer" to "$baseUrl/")
+                extraData["audio"] = if (dubPreferred) "dub" else "sub"
 
                 val maskedBase = (embed["masked_base_url"] as? JsonPrimitive)?.contentOrNull
                 if (!maskedBase.isNullOrBlank()) {
@@ -114,11 +115,12 @@ class SenshiProvider : NativeAnimeParser() {
 
                 servers.add(VideoServer("Senshi", hlsUrl, extraData))
 
+                val audioTag = if (dubPreferred) "dub" else "sub"
                 (embed["server2"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }?.let { embedUrl ->
-                    servers.add(VideoServer("StreamNin", embedUrl))
+                    servers.add(VideoServer("StreamNin", embedUrl, mapOf("audio" to audioTag)))
                 }
                 (embed["serverFM"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotBlank() }?.let { embedUrl ->
-                    servers.add(VideoServer("FileMoon", embedUrl))
+                    servers.add(VideoServer("FileMoon", embedUrl, mapOf("audio" to audioTag)))
                 }
 
                 servers

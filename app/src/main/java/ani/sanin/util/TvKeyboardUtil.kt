@@ -36,7 +36,22 @@ object TvKeyboardUtil {
         return null
     }
 
-    fun keyboardMode(): Int = PrefManager.getVal(PrefName.KeyboardMode)
+    private const val KEYBOARD_AUTO = -1
+
+    /**
+     * Effective keyboard mode: -1 (Auto) resolves per device.
+     * Phones and regular Android TV use the system keyboard; Amazon Fire TV
+     * (whose system IME is unreliable) falls back to the custom compact keyboard.
+     */
+    fun keyboardMode(): Int {
+        val saved = PrefManager.getVal(PrefName.KeyboardMode)
+        if (saved != KEYBOARD_AUTO) return saved
+        return if (isFireTvDevice()) 2 else 0
+    }
+
+    private fun isFireTvDevice(): Boolean =
+        Build.MANUFACTURER.equals("Amazon", ignoreCase = true) &&
+            Build.MODEL.startsWith("AFT", ignoreCase = true)
 
     private fun tvkLog(message: String) {
         Logger.log(Log.INFO, message, "TvKeyboard")

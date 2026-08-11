@@ -83,12 +83,6 @@ class AnimeWatchAdapter(
                 null
             )
         }
-        binding.animeSourceDubbed.isChecked = media.selected!!.preferDub
-        binding.animeSourceDubbedText.text =
-            if (media.selected!!.preferDub) currActivity()!!.getString(R.string.dubbed) else currActivity()!!.getString(
-                R.string.subbed
-            )
-
         // PreferDub
         var changing = false
         binding.animeSourceDubbed.setOnCheckedChangeListener { _, isChecked ->
@@ -121,7 +115,13 @@ class AnimeWatchAdapter(
         setLanguageList(media.selected!!.langIndex, source)
         if (watchSources.names.isNotEmpty() && source in 0 until watchSources.names.size) {
             watchSources[source].apply {
-                this.selectDub = media.selected!!.preferDub
+                changing = true
+                binding.animeSourceDubbed.isChecked = selectDub
+                changing = false
+                binding.animeSourceDubbedText.text =
+                    if (selectDub) currActivity()!!.getString(R.string.dubbed) else currActivity()!!.getString(
+                        R.string.subbed
+                    )
                 binding.mediaSourceTitle.text = showUserText
                 showUserTextListener = {
                     MainScope().launch {

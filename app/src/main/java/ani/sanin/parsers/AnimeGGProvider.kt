@@ -77,16 +77,23 @@ class AnimeGGProvider : NativeAnimeParser() {
             val allUrls = hls + mp4Urls.map { absoluteUrl(embed, it) }
             allUrls.forEach { url ->
                 val type = if (url.contains(".m3u8", ignoreCase = true)) "hls" else "mp4"
-                servers += VideoServer("$serverName (${servers.size + 1})", url, mapOf("referer" to embed, "type" to type))
+                servers += VideoServer(
+                    "$serverName (${servers.size + 1})",
+                    url,
+                    mapOf("referer" to embed, "type" to type, "audio" to audio)
+                )
             }
             if (animeGgEmbedCanPlay(embedHtml, allUrls.isNotEmpty())) {
-                servers += VideoServer("$serverName embed", embed, mapOf("referer" to baseUrl, "type" to "embed"))
+                servers += VideoServer(
+                    "$serverName embed",
+                    embed,
+                    mapOf("referer" to baseUrl, "type" to "embed", "audio" to audio)
+                )
             }
         }
         return servers
     }
 
-    override var selectDub: Boolean = false
 }
 
 private fun animeGgEmbedCanPlay(html: String, hasExtractedMedia: Boolean): Boolean {

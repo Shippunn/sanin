@@ -29,6 +29,13 @@ abstract class NativeAnimeParser : AnimeParser() {
     val baseUrl: String
         get() = providerBaseUrl(saveName) ?: defaultBaseUrl
 
+    /** Dub/sub preference is remembered per provider (falls back to the global default). */
+    override var selectDub: Boolean
+        get() = PrefManager.getProviderDub(saveName)
+        set(value) {
+            PrefManager.setProviderDub(saveName, value)
+        }
+
     /** Server names the user can disable from this provider's settings screen. */
     open val knownServers: List<String> = emptyList()
 
@@ -43,9 +50,9 @@ abstract class NativeAnimeParser : AnimeParser() {
             key = "prefer_dub_$saveName"
             title = "Prefer Dub"
             summary = "Prefer dubbed audio when available"
-            isChecked = PrefManager.getVal(PrefName.PreferDub)
+            isChecked = selectDub
             setOnPreferenceChangeListener { _, newValue ->
-                PrefManager.setVal(PrefName.PreferDub, newValue as Boolean)
+                selectDub = newValue as Boolean
                 true
             }
         })

@@ -48,7 +48,6 @@ class SubscriptionHelper {
                 saveSelected(id, selected)
             }
             val parser = sources[selected.sourceIndex]
-            parser.selectDub = selected.preferDub
             return parser
         }
 

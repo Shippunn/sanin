@@ -167,7 +167,7 @@ enum class PrefName(val data: Pref) {
     FocusEffect(Pref(Location.UI, Int::class, 0)),
     CardStyle(Pref(Location.UI, Int::class, 0)),
     UseCustomKeyboard(Pref(Location.UI, Boolean::class, true)),
-    KeyboardMode(Pref(Location.UI, Int::class, 2)), // 0=System, 1=ToggleButton (hidden), 2=Custom
+    KeyboardMode(Pref(Location.UI, Int::class, -1)), // -1=Auto, 0=System, 1=ToggleButton (hidden), 2=Custom
 
     UIScale(Pref(Location.UI, Float::class, 1.0f)),
 

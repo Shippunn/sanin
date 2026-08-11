@@ -2107,7 +2107,8 @@ class ExoplayerView :
                 .setRendererDisabled(TRACK_TYPE_TEXT, false)
                 .setMaxVideoSize(3840, 2160)
         // .setOverrideForType(TrackSelectionOverride(trackSelector, TRACK_TYPE_VIDEO))
-        if (PrefManager.getVal(PrefName.PreferDub)) {
+        val activeParser = (if (media.isAdult) HAnimeSources else AnimeSources)[media.selected?.sourceIndex ?: 0]
+        if (activeParser.selectDub) {
             parameters.setPreferredAudioLanguage(Locale.getDefault().language)
         }
         trackSelector.setParameters(parameters)

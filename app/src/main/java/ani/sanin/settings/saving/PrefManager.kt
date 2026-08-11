@@ -335,6 +335,16 @@ object PrefManager {
     fun getAnimeDownloadPreferences(): SharedPreferences =
         animeDownloadsPreferences!!  //needs to be used externally
 
+    /** Per-provider dub/sub preference, falling back to the global default. */
+    fun getProviderDub(saveName: String): Boolean {
+        val fallback = getVal(PrefName.PreferDub)
+        return generalPreferences?.getBoolean("prefer_dub_$saveName", fallback) ?: fallback
+    }
+
+    fun setProviderDub(saveName: String, value: Boolean) {
+        generalPreferences?.edit()?.putBoolean("prefer_dub_$saveName", value)?.apply()
+    }
+
     fun exportAllPrefs(prefLocation: List<Location>): String {
         return PreferencePackager.pack(
             prefLocation.associateWith { getPrefLocation(it) }

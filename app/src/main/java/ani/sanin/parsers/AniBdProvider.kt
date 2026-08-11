@@ -103,6 +103,7 @@ class AniBdProvider : NativeAnimeParser() {
                     if (hls != null) {
                         val serverName = (player["server"] as? JsonPrimitive)?.contentOrNull ?: "AniBD"
                         val extraData = mutableMapOf("referer" to "$origin/")
+                        extraData["audio"] = audio
                         val subs = AniBdParser.trackSubtitles(html)
                         if (subs.isNotEmpty()) extraData["subtitles"] = subs
                         servers.add(VideoServer("AniBD $serverName", hls, extraData))
@@ -113,7 +114,7 @@ class AniBdProvider : NativeAnimeParser() {
                     players.mapNotNull { it as? JsonObject }.firstOrNull()?.let { player ->
                         val playerUrl = (player["link"] as? JsonPrimitive)?.contentOrNull
                         if (!playerUrl.isNullOrBlank()) {
-                            servers.add(VideoServer("AniBD embed", playerUrl))
+                            servers.add(VideoServer("AniBD embed", playerUrl, mapOf("audio" to audio)))
                         }
                     }
                 }
