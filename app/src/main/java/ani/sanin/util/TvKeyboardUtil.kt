@@ -44,7 +44,7 @@ object TvKeyboardUtil {
      * (whose system IME is unreliable) falls back to the custom compact keyboard.
      */
     fun keyboardMode(): Int {
-        val saved = PrefManager.getVal(PrefName.KeyboardMode)
+        val saved = PrefManager.getVal<Int>(PrefName.KeyboardMode)
         if (saved != KEYBOARD_AUTO) return saved
         return if (isFireTvDevice()) 2 else 0
     }

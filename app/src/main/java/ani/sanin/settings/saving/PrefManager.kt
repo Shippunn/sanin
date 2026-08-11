@@ -337,7 +337,7 @@ object PrefManager {
 
     /** Per-provider dub/sub preference, falling back to the global default. */
     fun getProviderDub(saveName: String): Boolean {
-        val fallback = getVal(PrefName.PreferDub)
+        val fallback = getVal<Boolean>(PrefName.PreferDub)
         return generalPreferences?.getBoolean("prefer_dub_$saveName", fallback) ?: fallback
     }
 
