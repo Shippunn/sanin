@@ -185,9 +185,16 @@ class SelectorDialogFragment : DialogFragment() {
                         )
                     val adapter = ExtractorAdapter(onEpisodeDownloadHandler)
                     binding.selectorRecyclerView.adapter = adapter
-                    // NyanTV approach: always force fresh fetch from source
-                    ep.allStreams = false
-                    ep.extractors = null
+                    // Reuse already-loaded servers when reopening the same episode from the
+                    // same source; only force a fresh fetch when there's no cache or the
+                    // cache came from a different source (e.g. right after a source switch).
+                    if (!ep.allStreams || ep.extractors.isNullOrEmpty() ||
+                        ep.extractorsSource != media!!.selected?.sourceIndex
+                    ) {
+                        ep.allStreams = false
+                        ep.extractors = null
+                        ep.extractorsSource = null
+                    }
                     // Show servers progressively as each one finishes loading
                     ep.extractorCallback = { extractor ->
                         scope.launch(Dispatchers.Main) {
@@ -315,7 +322,11 @@ class SelectorDialogFragment : DialogFragment() {
                                 } else failToList()
                             }
 
-                            if (ep.extractors?.filter { it?.server?.name == selected }.isNullOrEmpty()) {
+                            val cachedFromCurrentSource =
+                                ep.extractorsSource == media!!.selected!!.sourceIndex
+                            if (!cachedFromCurrentSource ||
+                                ep.extractors?.filter { it?.server?.name == selected }.isNullOrEmpty()
+                            ) {
                                 scope.launch{
                                     val success = withContext(Dispatchers.IO){
                                         loadEpisodeSingleServer(ep.number, selected!!)

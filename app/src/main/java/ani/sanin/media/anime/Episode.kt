@@ -20,10 +20,10 @@ data class Episode(
     @Transient var extractors: MutableList<VideoExtractor>? = null,
     @Transient var extractorCallback: ((VideoExtractor) -> Unit)? = null,
     var allStreams: Boolean = false,
+    @Transient var extractorsSource: Int? = null,
     var watched: Long? = null,
     var maxLength: Long? = null,
     val extra: Map<String, String>? = null,
     val sEpisode: eu.kanade.tachiyomi.animesource.model.SEpisode? = null
 ) : Serializable
-
 

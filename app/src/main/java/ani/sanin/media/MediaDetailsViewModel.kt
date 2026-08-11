@@ -714,6 +714,7 @@ class MediaDetailsViewModel : ViewModel() {
                     ep.allStreams = true
                 else if (existingExtractors.isNotEmpty())
                     ep.extractors = existingExtractors
+                ep.extractorsSource = i
             }
         }
         val extractorList = ep.extractors?.filterNotNull().orEmpty()
@@ -864,6 +865,13 @@ class MediaDetailsViewModel : ViewModel() {
         val server = selectedServerName ?: selected.server ?: return false
         val link = ep.link ?: return false
 
+        // A cached extractor from a previous source must not be reused after a
+        // source switch; drop it so the fresh server is loaded from the new source.
+        if (ep.extractorsSource != selected.sourceIndex) {
+            ep.extractors = null
+            ep.extractorsSource = null
+            ep.allStreams = false
+        }
         if (ep.extractors?.find{ it.server.name == server } == null) {
             Logger.log("Watch: loading single video server '$server' for episode '${ep.number}' source idx=${selected.sourceIndex}")
             if(ep.extractors == null){
@@ -891,6 +899,7 @@ class MediaDetailsViewModel : ViewModel() {
                 } ?: return false)
             }
             ep.allStreams = false
+            ep.extractorsSource = selected.sourceIndex
         }
         if (post) {
             episode.postValue(ep)
